@@ -16,11 +16,12 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   road_texture_ = LoadTexture("textures/road.jpg");
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, true);
   road_vao_handle_ = CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices);
-
 }
 
 void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
     std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, const bool &is_road) {
+  // New Seed
+  srand(time(NULL));
   // Setup Vars
   float MIN_POSITION = -10.0f;
   float POSITION_RANGE = 20.0f;
