@@ -21,23 +21,19 @@
 #include <GL/glut.h>
 #endif
 
+// Object call contains a model by inhertiance
+//  Adds extra methods and members to control matrix transformations
+//  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
-    // Enum for vertex coordinates
-    //   used in GetMax
-    enum CoordEnum {
-      kX = 0,
-      kY = 1, 
-      kZ = 2,
-      kx = 0, 
-      ky = 1, 
-      kz = 2,
-      kMin = 3,
-      kMax = 3,
-    };  
+    // Default constructor make identity transform with no scaling
+    Object();
+    // Construct with position setting parameters
+    Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale = glm::vec3(1,1,1));
 
-    // Construct with parameters required to construct model
-    Object(const GLuint &program_id, const std::string &model_filename);
+    // Updates the transform matrix using glLookAt
+    //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
+    void UpdateTransform();
     ////////////
     // ACCESSORS
     // Accessor for the current transformation matrix
@@ -61,9 +57,8 @@ class Object {
     inline void set_up(glm::vec3 new_up);
 
   private:
-    // Model Assosciated with Object
-    Model * model_;
     // Transformation matrix Assosciated with object
+    //  Use UpdateTransform() to update
     //  @warn Needs to be updated everytime glLookAt vectors (below) are changed
     glm::mat4 transform_;
 
@@ -89,36 +84,36 @@ class Object {
 ////////////
 // ACCESSORS
 // Accessor for the current transformation matrix
-inline glm::mat4 transform() const {
+inline glm::mat4 Object::transform() const {
   return transform_;
 }
 // Accessor for the position vector
-inline glm::vec3 position() const {
+inline glm::vec3 Object::position() const {
   return position_;
 }
 // Accessor for the direction vector
-inline glm::vec3 direction() const {
+inline glm::vec3 Object::direction() const {
   return direction_;
 }
 // Accessor for the up vector
-inline glm::vec3 up() const {
+inline glm::vec3 Object::up() const {
   return up_;
 }
 ///////////
 // MUTATORS
 // Sets the position
 //   @warn requires a call to UpdateTransform() afterwards
-inline void set_position(glm::vec3 new_position) {
+inline void Object::set_position(glm::vec3 new_position) {
   position_ = new_position;
 }
 // Sets the direction
 //   @warn requires a call to UpdateTransform() afterwards
-inline void set_direction(glm::vec3 new_direction) {
+inline void Object::set_direction(glm::vec3 new_direction) {
   direction_ = new_direction;
 }
 // Sets the up
 //   @warn requires a call to UpdateTransform() afterwards
-inline void set_up(glm::vec3 new_up) {
+inline void Object::set_up(glm::vec3 new_up) {
   up_ = new_up;
 }
 #endif
