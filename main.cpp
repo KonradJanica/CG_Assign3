@@ -311,15 +311,15 @@ int main(int argc, char **argv) {
   glEnable(GL_DEPTH_TEST);
   glFrontFace(GL_CCW);
 
-  g_program_id[0] = LoadShaders("wireframe.vert", "wireframe.frag");
+  g_program_id[0] = LoadShaders("shaders/wireframe.vert", "shaders/wireframe.frag");
   if (g_program_id[0] == 0)
     return 1;
 
-  g_program_id[1] = LoadShaders("coord.vert", "coord.frag");
+  g_program_id[1] = LoadShaders("shaders/coord.vert", "shaders/coord.frag");
   if (g_program_id[1] == 0)
     return 1;
 
-  g_program_id[2] = LoadShaders("shaded.vert", "shaded.frag");
+  g_program_id[2] = LoadShaders("shaders/shaded.vert", "shaders/shaded.frag");
   if (g_program_id[2] == 0)
     return 1;
 
