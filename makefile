@@ -22,7 +22,7 @@ ifneq (, $(findstring Darwin, $(PLATFORM)))
 endif
 
 CC = g++
-LINK = model_data.o shader.o model.o terrain.o camera.o renderer.o main.o
+LINK = model_data.o shader.o model.o object.o terrain.o camera.o renderer.o main.o
 
 .PHONY:  clean
 
@@ -43,8 +43,11 @@ camera.o : camera.cc camera.h
 terrain.o : terrain.cc terrain.h
 	$(CC) $(CPPFLAGS) -c terrain.cc
 
-model.o: model.cc model.h model_data.h
+model.o: model.cc model.h object.h model_data.h
 	$(CC) $(CPPFLAGS) -c model.cc
+
+object.o: object.cc object.h
+	$(CC) $(CPPFLAGS) -c object.cc
 
 shader.o : shader.cpp shader.hpp
 	$(CC) $(CPPFLAGS) -c shader.cpp
