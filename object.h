@@ -4,10 +4,6 @@
 #include <vector>
 #include <string>
 #include <cassert>
-#include "model_data.h"
-#include "model.h"
-#include "camera.h"
-#include "terrain.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -55,6 +51,51 @@ class Object {
     // Sets the up
     //   @warn requires a call to UpdateTransform() afterwards
     inline void set_up(glm::vec3 new_up);
+    ///////////////
+    // VIRTUAL CHILD (Model) METHODS
+    // Accessor for current shader program.
+    //   @return program_id_, the shader used by the model
+    virtual GLuint *program_id() const = 0;
+    // Accessor for each shapes VAO and it's corresponding texture
+    //   Each VAO includes indices, vertices and UV coordinates
+    //   @return vao_texture_handle_, a container for all VAOs and their corresponding textures
+    virtual std::vector<std::pair<unsigned int, GLuint> > vao_texture_handle() const = 0;
+    // Accessor for largest vertex
+    //   @param enum value
+    //   @return max_$_, the maximum cartesian coordinate of given input
+    virtual float GetMax( int e_numb ) const = 0;
+    // Accessor for smallest vertex
+    //   @param enum value
+    //   @return min_$_, the minimum cartesian coordinate of given input
+    virtual float GetMin( int e_numb ) const = 0;
+    // Accessor for the points of a given VAO shape
+    //   @param index of shape
+    //   @return unsigned int, amount of points in the VAO shape
+    //   @warn throws exception on error
+    virtual unsigned int points_per_shape_at(unsigned int x) const = 0;
+    // Accessor for the Ambient Surface Colours vector
+    //   @param index of colour
+    //   @return ambient_surface_colours_, a vector of vec3 corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    virtual glm::vec3 ambient_surface_colours_at(unsigned int index) const = 0;
+    // Accessor for the Diffuse Surface Colours vector
+    //   @param index of colour
+    //   @return diffuse_surface_colours_, a vector of vec3 corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    virtual glm::vec3 diffuse_surface_colours_at(unsigned int index) const = 0;
+    // Accessor for the Specular Surface Colours vector
+    //   @param index of colour
+    //   @return glm::vec3, a vec3 corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    virtual glm::vec3 specular_surface_colours_at(unsigned int index) const = 0;
+    // Accessor for the Shininess vector
+    //   @param index of shininess
+    //   @return float, a float corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    virtual float shininess_at(unsigned int index) const = 0;
+    // Accessor for all of the points in the shape
+    //   @return amount_points_, the total amount of points => used for rendering
+    virtual unsigned int amount_points() const = 0;
 
   private:
     // Transformation matrix Assosciated with object
