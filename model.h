@@ -5,6 +5,7 @@
 #include <string>
 #include <cassert>
 #include "model_data.h"
+#include "object.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -20,7 +21,10 @@
 
 #include "stb_image.h"
 
-class Model {
+// Is a child of Object, inherits extra transformation members and methods
+//   Creates and stores VAO and Material data for rendering
+//   @usage Object * car = new model(program_id, "car-n.obj")
+class Model : public Object {
   public:
     // Enum for vertex coordinates
     //   used in GetMax
@@ -35,7 +39,9 @@ class Model {
       kMax = 3,
     };  
 
-    Model(GLuint *program_id, const std::string &model_filename, const bool &is_wireframe = false);
+    Model(GLuint *program_id, const std::string &model_filename, 
+        // Below are optional variables for object (parent) construction
+        const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &direction = glm::vec3(0,0,1), const glm::vec3 &up = glm::vec3(0,1,0), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
@@ -97,8 +103,6 @@ class Model {
     ModelData *model_data_;
     // The file path to the mtl file (and hopefully the textures)
     std::string subdir_;
-    // Is the Model a Wireframe Model Only
-    bool is_wireframe_;
     // Each pair is a VAO with its texture
     std::vector<std::pair<unsigned int, GLuint> > vao_texture_handle_;
     // Each index represents the points per shape in vao_texture_handle_
@@ -125,9 +129,7 @@ class Model {
     float max_;
 
     //Constructor Helpers
-    void ConstructWireframeModel();
     void ConstructShadedModel();
-    unsigned int CreateVaoWireframe(const RawModelData::Shape *shape);
     unsigned int CreateVao(const RawModelData::Shape *shape);
     GLuint CreateTextures(const RawModelData::Material *material);
 };

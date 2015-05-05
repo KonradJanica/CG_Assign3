@@ -1,6 +1,10 @@
 #include "model.h"
 
-Model::Model(GLuint *program_id, const std::string &model_filename, const bool &is_wireframe) : program_id_( program_id ), amount_points_(0), is_wireframe_(is_wireframe) {
+Model::Model(GLuint *program_id, const std::string &model_filename,
+    // Next line of parameters are optional variables for object (parent) construction
+    const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale)
+: Object(position, direction, up, scale), program_id_( program_id ), amount_points_(0) {
+
   model_data_ = new ModelData( model_filename );
   subdir_ = model_filename.substr(0, model_filename.find_last_of('/') + 1);
   max_x_ = model_data_->GetMax( ModelData::kX );
@@ -20,29 +24,7 @@ Model::Model(GLuint *program_id, const std::string &model_filename, const bool &
   if (min_z_ < min_)
     min_ = min_z_;
 
-  if (is_wireframe_) {
-    ConstructWireframeModel();
-  } else {
-    ConstructShadedModel();
-  }
-
   delete model_data_;
-}
-
-void Model::ConstructWireframeModel() {
-  // Add VAO for every shape
-  RawModelData::Shape* next_shape = model_data_->shape_at(0);
-  assert(next_shape != NULL && "There are no shapes");  
-  unsigned int shape_index = 0;
-  std::pair<unsigned int, GLuint> next_handle;
-  while (next_shape != NULL) {
-    // Pair VAO and Texture into vao_texture_handle_
-    next_handle.first = CreateVaoWireframe(next_shape);
-    next_handle.second = 0;
-    vao_texture_handle_.push_back(next_handle);
-    shape_index++;
-    next_shape = model_data_->shape_at(shape_index);
-  }
 }
 
 void Model::ConstructShadedModel() {
@@ -81,47 +63,6 @@ void Model::ConstructShadedModel() {
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer
-//   Creates only wireframe VAOs
-//   Now we are associating two attributes with our VAO
-//   @return vao_handle, the vao handle
-unsigned int Model::CreateVaoWireframe(const RawModelData::Shape *shape) {
-  glUseProgram( *program_id_ );
-  const std::vector<unsigned int>& indices = shape->indices;
-  const std::vector<glm::vec3>& vertices = shape->vertices;
-  assert( indices.size() % 3 == 0 );
-  amount_points_ += indices.size();
-  points_per_shape_.push_back(indices.size());
-
-  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
-
-  unsigned int vao_handle;
-  glGenVertexArrays(1, &vao_handle);
-  glBindVertexArray(vao_handle);
-
-  int vertLoc = glGetAttribLocation(*program_id_, "a_vertex");
-
-  // Buffers to store position, colour and index data
-  unsigned int buffer[2];
-  glGenBuffers(2, buffer);
-
-  // Set vertex position
-  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size() , &vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertLoc);
-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
-  // We don't attach this to a shader label, instead it controls how rendering is performed
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-      sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);   
-  // Un-bind
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  return vao_handle;
-}
-
-// Creates a new vertex array object and loads in data into a vertex attribute buffer
 //   Now we are associating two attributes with our VAO
 //   @return vao_handle, the vao handle
 unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
@@ -151,7 +92,7 @@ unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
 
   int vertLoc = glGetAttribLocation(*program_id_, "a_vertex");
   int textureLoc = glGetAttribLocation(*program_id_, "a_texture");
-	int normLoc = glGetAttribLocation(*program_id_, "a_normal");
+  int normLoc = glGetAttribLocation(*program_id_, "a_normal");
 
   // Buffers to store position, colour and index data
   unsigned int buffer[4];
@@ -162,11 +103,11 @@ unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size() , &vertices[0], GL_STATIC_DRAW);
   glEnableVertexAttribArray(vertLoc);
   glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	// Normal attributes
-	glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(normLoc);
-	glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // Normal attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(normLoc);
+  glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
   // Texture attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
