@@ -76,7 +76,7 @@ class Renderer {
     inline Camera * camera();
 
   private:
-    // All the models in the scene
+    // All the models and their transforms in the scene
     std::vector<Object *> objects_;
     // The camera object
     Camera * camera_;
