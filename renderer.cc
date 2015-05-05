@@ -23,11 +23,12 @@ Renderer::Renderer(const int &width, const int &height) : coord_vao_handle(0), i
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
 void Renderer::AddModel(GLuint &program_id, const std::string &model_filename) {
-  Model *model = new Model(&program_id, model_filename);
-  models_.push_back(model);
+  // Model *model = new Model(&program_id, model_filename);
+  Object * object = new Model(&program_id, model_filename);
+  objects_.push_back(object);
 
   SetupLighting(program_id, glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
-  float max_z = model->GetMax(Model::kZ);
+  float max_z = object->GetMax(Model::kZ);
   // Only Move Camera Back if Z is bigger in new model
   if (camera_->UpdateMaxZ(max_z)) {
     glm::vec3 cam_start_pos = glm::vec3(0.0f, 0.0f, (max_z + 1) * 2);
@@ -48,8 +49,8 @@ void Renderer::Render() {
 //   @param unsigned int index, index of model in the member vector
 //   @warn does NOT draw axis coordinates
 void Renderer::Render(unsigned int index) {
-  assert(index < models_.size() && "Trying to access index outside of Models_ vector");
-  GLuint *program_id = models_.at(index)->program_id();
+  assert(index < objects_.size() && "Trying to access index outside of objects_ vector");
+  GLuint *program_id = objects_.at(index)->program_id();
   glUseProgram(*program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glLineWidth(1.0f);
@@ -104,19 +105,19 @@ void Renderer::Render(unsigned int index) {
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
-  const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = models_.at(index)->vao_texture_handle();
+  const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = objects_.at(index)->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
     // Pass Surface Colours to Shader
-    const glm::vec3 &vao_ambient = models_.at(index)->ambient_surface_colours_at(y);
-    const glm::vec3 &vao_diffuse = models_.at(index)->diffuse_surface_colours_at(y);
-    const glm::vec3 &vao_specular = models_.at(index)->specular_surface_colours_at(y);
+    const glm::vec3 &vao_ambient = objects_.at(index)->ambient_surface_colours_at(y);
+    const glm::vec3 &vao_diffuse = objects_.at(index)->diffuse_surface_colours_at(y);
+    const glm::vec3 &vao_specular = objects_.at(index)->specular_surface_colours_at(y);
     float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
     float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
     float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
     glUniform3fv(mtlambientHandle, 1, mtlambient);
     glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
     glUniform3fv(mtlspecularHandle, 1, mtlspecular);
-    float mtlshininess = models_.at(index)->shininess_at(y);
+    float mtlshininess = objects_.at(index)->shininess_at(y);
     glUniform1fv(shininessHandle, 1, &mtlshininess);
 
     // Bind VAO
@@ -127,7 +128,7 @@ void Renderer::Render(unsigned int index) {
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
-    glDrawElements(GL_TRIANGLES, models_.at(index)->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
+    glDrawElements(GL_TRIANGLES, objects_.at(index)->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
 }
 

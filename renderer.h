@@ -8,6 +8,7 @@
 #include "model.h"
 #include "camera.h"
 #include "terrain.h"
+#include "object.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -76,7 +77,7 @@ class Renderer {
 
   private:
     // All the models in the scene
-    std::vector<Model *> models_;
+    std::vector<Object *> objects_;
     // The camera object
     Camera * camera_;
     // Width of the OpenGL Window
@@ -108,16 +109,16 @@ inline void Renderer::SetLightPosition(const float &x, const float &y, const flo
 //   @param enum value
 //   @return max_$_, the maximum cartesian coordinate of given input
 inline float Renderer::GetMax(unsigned int index, int e_numb) const {
-  assert(index < models_.size() && "Trying to access Models_ out of range");
+  assert(index < objects_.size() && "Trying to access Models_ out of range");
   switch(e_numb) {
     case 0: 
-      return models_.at(index)->GetMax(0);
+      return objects_.at(index)->GetMax(0);
     case 1: 
-      return models_.at(index)->GetMax(1);
+      return objects_.at(index)->GetMax(1);
     case 2:
-      return models_.at(index)->GetMax(2);
+      return objects_.at(index)->GetMax(2);
     case 3:
-      return models_.at(index)->GetMax(3);
+      return objects_.at(index)->GetMax(3);
     default:
       assert(false);
   }
@@ -127,16 +128,16 @@ inline float Renderer::GetMax(unsigned int index, int e_numb) const {
 //   @param enum value
 //   @return min_$_, the minimum cartesian coordinate of given input
 inline float Renderer::GetMin(unsigned int index, int e_numb) const {
-  assert(index < models_.size() && "Trying to access Models_ out of range");
+  assert(index < objects_.size() && "Trying to access Models_ out of range");
   switch(e_numb) {
     case 0: 
-      return models_.at(index)->GetMin(0);
+      return objects_.at(index)->GetMin(0);
     case 1: 
-      return models_.at(index)->GetMin(1);
+      return objects_.at(index)->GetMin(1);
     case 2:
-      return models_.at(index)->GetMin(2);
+      return objects_.at(index)->GetMin(2);
     case 3:
-      return models_.at(index)->GetMin(3);
+      return objects_.at(index)->GetMin(3);
     default:
       assert(false);
   }
