@@ -24,6 +24,8 @@ Model::Model(GLuint *program_id, const std::string &model_filename,
   if (min_z_ < min_)
     min_ = min_z_;
 
+  ConstructShadedModel();
+
   delete model_data_;
 }
 
