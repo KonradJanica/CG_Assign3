@@ -29,28 +29,28 @@ LINK = model_data.o shader.o model.o terrain.o camera.o renderer.o main.o
 all : run$(EXT)
 
 run$(EXT) : $(LINK)
-	$(CC) $(CPPFLAGS) -o assign2 $(LINK) $(GL_LIBS)
+	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(GL_LIBS)
 
 main.o : model_data.h shader.hpp model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
 
 renderer.o : renderer.cc renderer.h camera.h terrain.h model.h
-	$(CC) $(CPPFLAGS) -c renderer.h renderer.cc
+	$(CC) $(CPPFLAGS) -c renderer.cc
 
 camera.o : camera.cc camera.h
-	$(CC) $(CPPFLAGS) -c camera.h camera.cc
+	$(CC) $(CPPFLAGS) -c camera.cc
 
 terrain.o : terrain.cc terrain.h
-	$(CC) $(CPPFLAGS) -c terrain.h terrain.cc
+	$(CC) $(CPPFLAGS) -c terrain.cc
 
 model.o: model.cc model.h model_data.h
-	$(CC) $(CPPFLAGS) -c model.h model.cc
+	$(CC) $(CPPFLAGS) -c model.cc
 
 shader.o : shader.cpp shader.hpp
 	$(CC) $(CPPFLAGS) -c shader.cpp
 
 model_data.o: model_data.cc model_data.h
-	$(CC) $(CPPFLAGS) -c model_data.h model_data.cc
+	$(CC) $(CPPFLAGS) -c model_data.cc
 
 clean:
-	rm -f *.o assign2$(EXT)
+	rm -f *.o assign3$(EXT)
