@@ -24,7 +24,7 @@ Renderer::Renderer(const int &width, const int &height) : coord_vao_handle(0), i
 //   @warn the model is created on the heap and memory must be freed afterwards
 void Renderer::AddModel(GLuint &program_id, const std::string &model_filename) {
   // Model *model = new Model(&program_id, model_filename);
-  Object * object = new Model(&program_id, model_filename);
+  Object * object = new Model(program_id, model_filename);
   objects_.push_back(object);
 
   SetupLighting(program_id, glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
@@ -50,28 +50,28 @@ void Renderer::Render() {
 //   @warn does NOT draw axis coordinates
 void Renderer::Render(unsigned int index) {
   assert(index < objects_.size() && "Trying to access index outside of objects_ vector");
-  GLuint *program_id = objects_.at(index)->program_id();
-  glUseProgram(*program_id);
+  GLuint program_id = objects_.at(index)->program_id();
+  glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glLineWidth(1.0f);
   // Projection Setup
   glm::mat4 projection;
   projection = glm::perspective(camera_->aspect(), float(width_ / height_), 0.1f, 100.0f);
   // Load it to the shader program
-  int projHandle = glGetUniformLocation(*program_id, "projection_matrix");
+  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
   assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
   glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
   // Other Handles Setup
-  int texHandle = glGetUniformLocation(*program_id, "texMap");
+  int texHandle = glGetUniformLocation(program_id, "texMap");
   if (texHandle == -1) {
     if (is_debugging_) {
       fprintf(stderr, "Could not find uniform variables\n");
       exit(1);
     }
   }
-  int mvHandle = glGetUniformLocation(*program_id, "modelview_matrix");
-  int normHandle = glGetUniformLocation(*program_id, "normal_matrix");
-  int lightposHandle = glGetUniformLocation(*program_id, "light_pos");
+  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
+  int lightposHandle = glGetUniformLocation(program_id, "light_pos");
   if (mvHandle == -1 || normHandle==-1 || lightposHandle == -1) {
     if (is_debugging_) {
       assert(0 && "Error: can't find matrix uniforms\n");
@@ -84,10 +84,10 @@ void Renderer::Render(unsigned int index) {
 
   // Uniform variables defining material colours
   // These can be changed for each sphere, to compare effects
-  int mtlambientHandle = glGetUniformLocation(*program_id, "mtl_ambient");
-  int mtldiffuseHandle = glGetUniformLocation(*program_id, "mtl_diffuse");
-  int mtlspecularHandle = glGetUniformLocation(*program_id, "mtl_specular");
-  int shininessHandle = glGetUniformLocation(*program_id, "shininess");
+  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(program_id, "shininess");
   if ( mtlambientHandle == -1 ||
       mtldiffuseHandle == -1 ||
       mtlspecularHandle == -1 ||

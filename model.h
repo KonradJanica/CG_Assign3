@@ -39,13 +39,13 @@ class Model : public Object {
       kMax = 3,
     };  
 
-    Model(GLuint *program_id, const std::string &model_filename, 
+    Model(const GLuint &program_id, const std::string &model_filename, 
         // Below are optional variables for object (parent) construction
         const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &direction = glm::vec3(0,0,1), const glm::vec3 &up = glm::vec3(0,1,0), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
-    inline GLuint *program_id() const;
+    inline GLuint program_id() const;
 
     // Accessor for each shapes VAO and it's corresponding texture
     //   Each VAO includes indices, vertices and UV coordinates
@@ -98,7 +98,7 @@ class Model : public Object {
 
   private:
     // Shader program
-    GLuint *program_id_;
+    GLuint program_id_;
     // RawModelData
     ModelData *model_data_;
     // The file path to the mtl file (and hopefully the textures)
@@ -136,7 +136,7 @@ class Model : public Object {
 
 // Returns the program_id_ (i.e. the shader) that the model uses
 //   @return program_id_, the shader member variable
-inline GLuint *Model::program_id () const {
+inline GLuint Model::program_id () const {
   return program_id_;
 }
 

@@ -1,6 +1,6 @@
 #include "model.h"
 
-Model::Model(GLuint *program_id, const std::string &model_filename,
+Model::Model(const GLuint &program_id, const std::string &model_filename,
     // Next line of parameters are optional variables for object (parent) construction
     const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale)
 : Object(position, direction, up, scale), program_id_( program_id ), amount_points_(0) {
@@ -68,7 +68,7 @@ void Model::ConstructShadedModel() {
 //   Now we are associating two attributes with our VAO
 //   @return vao_handle, the vao handle
 unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
-  glUseProgram( *program_id_ );
+  glUseProgram( program_id_ );
   const std::vector<unsigned int>& indices = shape->indices;
   const std::vector<glm::vec3>& vertices = shape->vertices;
   const std::vector<glm::vec3>& normals = shape->normals;
@@ -92,9 +92,9 @@ unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
   glGenVertexArrays(1, &vao_handle);
   glBindVertexArray(vao_handle);
 
-  int vertLoc = glGetAttribLocation(*program_id_, "a_vertex");
-  int textureLoc = glGetAttribLocation(*program_id_, "a_texture");
-  int normLoc = glGetAttribLocation(*program_id_, "a_normal");
+  int vertLoc = glGetAttribLocation(program_id_, "a_vertex");
+  int textureLoc = glGetAttribLocation(program_id_, "a_texture");
+  int normLoc = glGetAttribLocation(program_id_, "a_normal");
 
   // Buffers to store position, colour and index data
   unsigned int buffer[4];

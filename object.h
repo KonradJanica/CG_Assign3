@@ -55,7 +55,7 @@ class Object {
     // VIRTUAL CHILD (Model) METHODS
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
-    virtual GLuint *program_id() const = 0;
+    virtual GLuint program_id() const = 0;
     // Accessor for each shapes VAO and it's corresponding texture
     //   Each VAO includes indices, vertices and UV coordinates
     //   @return vao_texture_handle_, a container for all VAOs and their corresponding textures
