@@ -324,7 +324,7 @@ void Renderer::RenderTerrain() {
 
   //////////////////////////
   // ROADS
-  amount /= 8;
+  amount = terrain_->road_indice_count();
   glm::mat4 translated_road;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
@@ -345,7 +345,7 @@ void Renderer::RenderTerrain() {
   for (float x = -5; x < 5; ++x) {
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  translated_road = glm::translate(camera_matrix, glm::vec3(0,0.5f,x*2.0f));
+  translated_road = glm::translate(camera_matrix, glm::vec3(0,0,x*2.0f));
   normMatrix = glm::mat3(mvHandle);
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
@@ -365,5 +365,5 @@ void Renderer::RenderTerrain() {
 //   Creates Terrain VAOs
 //   @warn terrain_ on heap, must be deleted after
 void Renderer::EnableTerrain(const GLuint &program_id) {
-  terrain_ = new Terrain(program_id, 32, 32);
+  terrain_ = new Terrain(program_id);
 }

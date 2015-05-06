@@ -23,7 +23,7 @@
 class Terrain {
   public:
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width, const int &height);
+    Terrain(const GLuint &program_id, const int &width = 32, const int &height = 32);
 
     // // Render the scene (all member models)
     // void Render();
@@ -48,8 +48,11 @@ class Terrain {
     // Accessor for the height (Amount of Grid boxes height-wise)
     inline int height() const;
     // Accessor for the amount of indices
-    //   Used in render to efficiently draw triangle_strip(s)
+    //   Used in render to efficiently draw triangles
     inline int indice_count() const;
+    // Accessor for the amount of indices
+    //   Used in render to efficiently draw triangles
+    inline int road_indice_count() const;
 
   private:
     // All the heightmaps in the scene
@@ -60,6 +63,8 @@ class Terrain {
     int height_;
     // The amount of indices, used to render efficiently
     int indice_count_;
+    // The amount of indices in a straight road piece, used to render efficiently
+    int road_indice_count_;
     // The shader to use to render heightmap
     GLuint terrain_program_id_;
     // The texture to be used to Wrap Terrain
@@ -112,9 +117,14 @@ inline int Terrain::height() const {
   return height_;
 }
 // Accessor for the amount of indices
-//   Used in render to efficiently draw triangle_strip(s)
+//   Used in render to efficiently draw triangles
 inline int Terrain::indice_count() const {
   return indice_count_;
+}
+// Accessor for the amount of indices
+//   Used in render to efficiently draw triangles
+inline int Terrain::road_indice_count() const {
+  return road_indice_count_;
 }
 
 #endif

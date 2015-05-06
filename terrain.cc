@@ -31,13 +31,14 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
     x_length = width_/8;
     z_length = height_/8;
   // MIN_POSITION = -0.35f; // Good for 0 height
-  MIN_POSITION = -0.25f;
+  MIN_POSITION = 0.0f;
   POSITION_RANGE = 2.0f;
   }
 
   std::vector<float> float_heights_y;
   float_heights_y.clear();
-  float_heights_y.resize(x_length*z_length, -0.5f);
+  // float_heights_y.resize(x_length*z_length, -0.5f);
+  float_heights_y.resize(x_length*z_length, 0.0f);
   if (!is_road) {
     for (unsigned int y = 0; y < z_length; ++y) {
       for (unsigned int x = 0; x < x_length; ++x) {
@@ -193,6 +194,8 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
   }
   if (!is_road) {
     indice_count_ = indices.size();
+  } else {
+    road_indice_count_ = indices.size();
   }
 
   // Create UV Coordinates
