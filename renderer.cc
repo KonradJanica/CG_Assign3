@@ -24,17 +24,10 @@ Renderer::Renderer(const int &width, const int &height) : coord_vao_handle(0), i
 //   @warn the model is created on the heap and memory must be freed afterwards
 void Renderer::AddModel(GLuint &program_id, const std::string &model_filename) {
   // Model *model = new Model(&program_id, model_filename);
-  Object * object = new Model(program_id, model_filename);
+  Object * object = new Model(program_id, model_filename, glm::vec3(0,0,-10));
   objects_.push_back(object);
 
   SetupLighting(program_id, glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
-  float max_z = object->GetMax(Model::kZ);
-  // Only Move Camera Back if Z is bigger in new model
-  if (camera_->UpdateMaxZ(max_z)) {
-    glm::vec3 cam_start_pos = glm::vec3(0.0f, 0.0f, (max_z + 1) * 2);
-    camera_->ResetPosition(cam_start_pos);
-    camera_->UpdateCamera();
-  }
 }
 
 // Renders all models in the vector member
@@ -102,7 +95,9 @@ void Renderer::Render(unsigned int index) {
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   normMatrix = glm::mat3(mvHandle);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) );	// Middle
+  const glm::mat4 &transform_matrix = objects_.at(index)->transform();
+  glm::mat4 position_matrix = camera_matrix * transform_matrix;
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = objects_.at(index)->vao_texture_handle();
@@ -311,53 +306,40 @@ void Renderer::RenderTerrain() {
   float mtlshininess = 0.8f; 
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
-  // Bind VAO Terrain
-  glBindVertexArray(terrain_->terrain_vao_handle()); 
-  glBindTexture(GL_TEXTURE_2D, terrain_->texture());
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  // We are using texture unit 0 (the default)
-  glUniform1i(texHandle, 0);
+  // Bind VAO and texture - Terrain
+  const std::vector<unsigned int> &terrain_vao_handle = terrain_->terrain_vao_handle();
+  for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
+    glBindVertexArray(terrain_vao_handle.at(x)); 
+    glBindTexture(GL_TEXTURE_2D, terrain_->texture());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
 
-  int amount = terrain_->indice_count();
-  glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+    int amount = terrain_->indice_count();
+    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+  }
 
   //////////////////////////
   // ROADS
-  amount = terrain_->road_indice_count();
+  int amount = terrain_->road_indice_count();
   glm::mat4 translated_road;
-  // We compute the normal matrix from the current modelview matrix
-  // and give it to our program
-  translated_road = glm::translate(camera_matrix, glm::vec3(0,0,5*2.0f-0.2));
-  translated_road = glm::rotate(translated_road, 25.0f, glm::vec3(0,1,0));
-  normMatrix = glm::mat3(mvHandle);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
-  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-  // Bind VAO Road
-  glBindVertexArray(terrain_->road_vao_handle()); 
-  glBindTexture(GL_TEXTURE_2D, terrain_->road_texture());
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  // We are using texture unit 0 (the default)
-  glUniform1i(texHandle, 0);
-
-  glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   for (float x = -5; x < 5; ++x) {
-  // We compute the normal matrix from the current modelview matrix
-  // and give it to our program
-  translated_road = glm::translate(camera_matrix, glm::vec3(0,0,x*2.0f));
-  normMatrix = glm::mat3(mvHandle);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
-  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-  // Bind VAO Road
-  glBindVertexArray(terrain_->road_vao_handle()); 
-  glBindTexture(GL_TEXTURE_2D, terrain_->road_texture());
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  // We are using texture unit 0 (the default)
-  glUniform1i(texHandle, 0);
+    // We compute the normal matrix from the current modelview matrix
+    // and give it to our program
+    translated_road = glm::translate(camera_matrix, glm::vec3(0,0,x*2.0f));
+    normMatrix = glm::mat3(mvHandle);
+    glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
+    glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+    // Bind VAO Road
+    glBindVertexArray(terrain_->road_vao_handle()); 
+    glBindTexture(GL_TEXTURE_2D, terrain_->road_texture());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
 
-  glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 }
 

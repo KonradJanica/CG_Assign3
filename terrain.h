@@ -33,7 +33,7 @@ class Terrain {
     // Create Road over terrain
     void BuildRoad();
     // Accessor for the VAO
-    inline unsigned int terrain_vao_handle() const;
+    inline std::vector<unsigned int> terrain_vao_handle() const;
     // Accessor for the program id (shader)
     inline GLuint terrain_program_id() const;
     // TODO
@@ -55,8 +55,6 @@ class Terrain {
     inline int road_indice_count() const;
 
   private:
-    // All the heightmaps in the scene
-    std::vector<std::vector<float> > heightmap_;
     // Width of the heightmap
     int width_;
     // Height of the heightmap
@@ -72,13 +70,16 @@ class Terrain {
     // The texture to be used for the road
     GLuint road_texture_;
     // The VAO handle for the terrain
-    unsigned int terrain_vao_handle_;
+    std::vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     unsigned int road_vao_handle_;
+    // The current X,Z displacement from zero
+    //   Used for joining tiles
+    glm::vec2 next_tile_start_;
 
     // TODO
     void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, const bool &is_road = false);
+        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights, const bool &is_road = false);
     // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
@@ -88,7 +89,7 @@ class Terrain {
 };
 
 // Accessor for the VAO
-inline unsigned int Terrain::terrain_vao_handle() const {
+inline std::vector<unsigned int> Terrain::terrain_vao_handle() const {
   return terrain_vao_handle_;
 }
 // Accessor for the program id (shader)

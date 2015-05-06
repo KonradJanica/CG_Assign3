@@ -56,9 +56,6 @@ class Camera {
     inline glm::mat4 camera_matrix() const;
     // Mutates the cameras position
     inline void ResetPosition(const glm::vec3 &camera_position);
-    // If input is larger than Max Z, then updates Max Z
-    //   @return true if max_z_ is replaced
-    inline bool UpdateMaxZ(const float &model_max_z);
     // Accessor for the Current Zoom Aspect Ratio
     //  To be used in render
     inline float aspect() const;
@@ -92,8 +89,6 @@ class Camera {
     GLfloat yaw_;
     // The Pitch (Left/Right) of the Camera
     GLfloat pitch_;
-    // Boundry of Z, furthest Z vertice in the model
-    float max_z_;
     // Hash representing Glut Special Keys Pressed
     std::vector<bool> is_key_pressed_hash_;
     // Time between current frame and last frame
@@ -135,16 +130,6 @@ inline void Camera::ResetPosition(const glm::vec3 &camera_position) {
   cam_up_.x = 0.0f;
   cam_up_.y = 1.0f;
   cam_up_.z = 0.0f;
-}
-// If input is larger than Max Z, then updates Max Z
-//   @param the max Z vertice of the model
-//   @return true if max_z_ is replaced
-inline bool Camera::UpdateMaxZ(const float &model_max_z) {
-  if (model_max_z > max_z_) {
-    max_z_ = model_max_z;
-    return true;
-  }
-  return false;
 }
 // Accessor for the Current Zoom Aspect Ratio
 //  To be used in render

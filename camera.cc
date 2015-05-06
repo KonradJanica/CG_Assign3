@@ -1,8 +1,8 @@
 #include "camera.h"
 
-// Default Constructor sets starting position of Camera at 0,0,3
-Camera::Camera() : cam_pos_(glm::vec3(0.0f,0.0f,3.0f)), cam_front_(glm::vec3(0.0f, 0.0f, -1.0f)), cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)), 
-  aspect_(45.0f), yaw_(-kPi/2), pitch_(0.0f), delta_time_(0.0f), last_frame_(0.0f) {
+// Default Constructor sets starting position of Camera at 0,5,-10 (Above Road)
+Camera::Camera() : cam_pos_(glm::vec3(0.0f,5.0f,-10.0f)), cam_front_(glm::vec3(0.0f, -0.5f, 1.0f)), cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)), 
+  aspect_(45.0f), yaw_(kPi/2), pitch_(0.0f), delta_time_(0.0f), last_frame_(0.0f) {
   camera_matrix_ = glm::lookAt(cam_pos_, cam_pos_ + cam_front_, cam_up_);
   is_key_pressed_hash_.reserve(256);
   is_key_pressed_hash_.resize(256);
