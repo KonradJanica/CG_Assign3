@@ -345,7 +345,7 @@ void Renderer::RenderTerrain() {
     // We compute the normal matrix from the current modelview matrix
     // and give it to our program
     translated_road = glm::rotate(camera_matrix, 45.0f, glm::vec3(0,1,0));
-    translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.1f,x*2.0f));
+    translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.3f,x*2.0f));
     normMatrix = glm::mat3(mvHandle);
     glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
     glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));

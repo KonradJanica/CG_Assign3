@@ -439,7 +439,7 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
       float zSquare = zPosition * zPosition; //x^2
 
-      xPosition = zSquare/40 + xPosition;
+      xPosition = zSquare/(POSITION_RANGE*2) + xPosition;
       // xPosition = zPosition + xPosition;
 
       // xPosition = zPosition + xPosition;
