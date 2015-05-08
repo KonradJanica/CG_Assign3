@@ -99,6 +99,8 @@ vec3 phongPointLight(in vec4 position, in vec3 norm)
 
 #define waveWidth 0.6
 
+// Inspiration for wave function from 
+// https://tutorialsplay.com/opengl/2014/09/26/lesson-15-water-with-opengl-on-the-gpu-with-glsl/
 
 
 void main(void) {
