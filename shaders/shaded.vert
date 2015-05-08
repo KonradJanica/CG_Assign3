@@ -29,6 +29,8 @@ uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 uniform mat3 normal_matrix;
 
+uniform float time;
+
 uniform vec4 light_pos;			// Light position in eye-space
 
 uniform vec3 light_ambient;     // Light ambient RGBA values
@@ -99,7 +101,7 @@ void main(void) {
 
   // Convert normal and position to eye coords
   vec3 eyeNorm = normalize( normal_matrix * a_normal);
-  vec4 eyePos = modelview_matrix * vec4(a_vertex, 1.0);
+  vec4 eyePos = modelview_matrix * vec4(a_vertex.x,a_vertex.y + time, a_vertex.z, 1.0);
 
 if (light_toggle == 1) {
   litColour = vec4(phongPointLight(eyePos, eyeNorm), 1.0);

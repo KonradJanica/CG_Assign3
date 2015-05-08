@@ -152,6 +152,16 @@ void idle() {
     g_renderer->SetLightPosition(x,y,z,1.0f);
   }
 
+  // Send a timer over to the vertex shader
+  
+  int timeHandle = glGetUniformLocation(g_program_id[2], "time");
+  if(timeHandle == -1)
+  {
+    printf("Could not get handle for time var \n");
+  }
+  printf("sending time %d\n", time);
+  glUniform1i(timeHandle, time); 
+
   glutPostRedisplay();
 }
 
@@ -203,6 +213,14 @@ void keyboardDown(unsigned char key, int x, int y) {
   // We simply check the key argument against characters we care about, in this case A and D
   switch(key) 
   {
+    case 'g':
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glutPostRedisplay();
+      break;
+    case 'f':
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      glutPostRedisplay();
+      break;
     case 27: // escape key pressed
       exit(0);
       break;
@@ -289,6 +307,8 @@ void keyboardDown(unsigned char key, int x, int y) {
 int main(int argc, char **argv) {
 
   // assert(argc > 1 && "provide Arg1 of .obj file");
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   std::cout << "Movement: Arrow keys move forward/backward and strafe left/right\n";
   std::cout << "Movement: Hold left mouse button to change direction\n";

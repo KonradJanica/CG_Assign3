@@ -45,7 +45,7 @@ void Renderer::Render(unsigned int index) {
   assert(index < objects_.size() && "Trying to access index outside of objects_ vector");
   GLuint program_id = objects_.at(index)->program_id();
   glUseProgram(program_id);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glLineWidth(1.0f);
   
   // Other Handles Setup
@@ -134,6 +134,13 @@ void Renderer::RenderAxis() {
     int modelviewHandle1 = glGetUniformLocation(axis_program_id, "modelview_matrix");
     if (modelviewHandle1 == -1)
       exit(1);
+
+    glm::mat4 projection;
+    
+      projection = glm::perspective(camera_->aspect(), float(width_ / height_), 0.1f, 100.0f);
+      int projHandle = glGetUniformLocation(axis_program_id, "projection_matrix");
+      assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
+      glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
 
     const glm::mat4 &camera_matrix = camera_->camera_matrix();
     glUniformMatrix4fv( modelviewHandle1, 1, false, glm::value_ptr(camera_matrix));
@@ -233,7 +240,8 @@ void Renderer::RenderTerrain() {
   glUseProgram(program_id);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // glLineWidth(1.0f);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
   // Setup Handles
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");
@@ -299,8 +307,13 @@ void Renderer::RenderTerrain() {
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
+  /*
   //////////////////////////
-  // ROADS
+  //      ROADS           //
+  /////////////////////////
+
+  // @Mitch - The reason this is in a for loop is because the road itself is quite small
+  // and doing this will stretch it across the cliff!
   int amount = terrain_->road_indice_count();
   glm::mat4 translated_road;
   for (float x = -5; x < 5; ++x) {
@@ -320,24 +333,8 @@ void Renderer::RenderTerrain() {
 
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
-  for (float x = 5; x < 15; ++x) {
-    // We compute the normal matrix from the current modelview matrix
-    // and give it to our program
-    translated_road = glm::rotate(camera_matrix, 45.0f, glm::vec3(0,1,0));
-    translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.3f,x*2.0f));
-    normMatrix = glm::mat3(mvHandle);
-    glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
-    glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-    // Bind VAO Road
-    glBindVertexArray(terrain_->road_vao_handle()); 
-    glBindTexture(GL_TEXTURE_2D, terrain_->road_texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-    // We are using texture unit 0 (the default)
-    glUniform1i(texHandle, 0);
-
-    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
-  }
+  */
+  
 }
 
 // Creates the Terrain object for RenderTerrain()
