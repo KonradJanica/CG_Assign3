@@ -10,7 +10,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   std::vector<int> indices;
   std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
   heights.resize(width_ * height_, 0.15f);
-  next_tile_start_ = glm::vec2(-10,-10);
+  next_tile_start_ = glm::vec2(20,-10);
 
   // Terrain
   // 1st buffer
@@ -19,6 +19,9 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
   // 3rd buffer
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // 
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
   // Road
@@ -173,6 +176,8 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
 
   float max_z = -FLT_MAX; // Used to calculate next_tile_start_
   // TODO min_x, max_x for turning
+  float min_x = FLT_MAX;
+  float max_x = -FLT_MAX;
   // First, build the data for the vertex buffer
   for (int y = 0; y < z_length; y++) {
     for (int x = 0; x < x_length; x++) {
@@ -198,10 +203,20 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
       //   Z always moves backwards
       if (zPosition + next_tile_start_.y > max_z)
         max_z = zPosition + next_tile_start_.y;
+      // Calulate next_tile_start_x position
+      //   X moves left and right
+      if (xPosition < min_x)
+        min_x = xPosition;
+      if (xPosition > max_x)
+        max_x = xPosition;
     }
   }
   if (!is_road) {
+      // Calculate next_tile_start_.y position (next Z tile position)
     next_tile_start_.y = max_z;
+
+      // Calculate next_tile_start_.x position (next X tile position)
+    next_tile_start_.x = max_x;
   }
 
   // Create Index Data
@@ -421,6 +436,8 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
   float max_z = -FLT_MAX; // Used to calculate next_tile_start_
   // TODO min_x, max_x for turning
+  float min_x = FLT_MAX;
+  float max_x = -FLT_MAX;
   // First, build the data for the vertex buffer
   for (int y = 0; y < z_length; y++) {
     for (int x = 0; x < x_length; x++) {
@@ -454,10 +471,18 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
       //   Z always moves backwards
       if (zPosition + next_tile_start_.y > max_z)
         max_z = zPosition + next_tile_start_.y;
+      // Calulate next_tile_start_x position
+      //   X moves left and right
+      if (xPosition < min_x)
+        min_x = xPosition;
+      if (xPosition > max_x)
+        max_x = xPosition;
     }
   }
   if (!is_road) {
     next_tile_start_.y = max_z;
+
+    next_tile_start_.x = max_x;
   }
 
   // Create Index Data
