@@ -19,7 +19,7 @@
   application.  All use of these programs is entirely at the user's own risk.
  *********************************************************/
 
-#version 150
+#version 130
 
 // manyAttributes.vp
 // This shader passes on colour values to be interpolated by the fixed functionality
@@ -35,6 +35,7 @@ uniform vec3 light_ambient;     // Light ambient RGBA values
 uniform vec3 light_diffuse;     // Light diffuse RGBA values  
 uniform vec3 light_specular;    // Light specular RGBA values
 uniform int light_toggle;      // Toggles lighting on off - false = off
+uniform float spotCutOff = 30;
 
 uniform vec3 mtl_ambient;  // Ambient surface colour
 uniform vec3 mtl_diffuse;  // Diffuse surface colour
@@ -91,7 +92,17 @@ vec3 phongPointLight(in vec4 position, in vec3 norm)
     spec = light_specular * mtl_specular *
       pow( max( dot(r,v), 0.0 ), shininess );
 
-  return ambient + diffuse + spec;
+  // Test
+  float angle = doddddt (normalize(v), -normalize(s));
+  angle = max(angle, 0);
+
+  if (acos(angle) < radians(spotCutOff)) {
+    return ambient + diffuse + spec;
+  }
+  else {
+    return vec3(0.0, 0.0, 0.0);
+  }
+
   //return diffuse + spec;
 }
 
@@ -105,7 +116,7 @@ if (light_toggle == 1) {
   litColour = vec4(phongPointLight(eyePos, eyeNorm), 1.0);
 } else {
   //litColour = a_colour;
-  litColour = vec4(1,1,1,1);;
+  litColour = vec4(1,1,1,1);
 }
 
   gl_Position = projection_matrix * eyePos;

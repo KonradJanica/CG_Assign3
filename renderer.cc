@@ -47,13 +47,7 @@ void Renderer::Render(unsigned int index) {
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glLineWidth(1.0f);
-  // Projection Setup
-  glm::mat4 projection;
-  projection = glm::perspective(camera_->aspect(), float(width_ / height_), 0.1f, 100.0f);
-  // Load it to the shader program
-  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
-  assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
-  glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
+  
   // Other Handles Setup
   int texHandle = glGetUniformLocation(program_id, "texMap");
   if (texHandle == -1) {
@@ -94,7 +88,7 @@ void Renderer::Render(unsigned int index) {
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  normMatrix = glm::mat3(mvHandle);
+  normMatrix = glm::mat3(camera_matrix);
   const glm::mat4 &transform_matrix = objects_.at(index)->transform();
   glm::mat4 position_matrix = camera_matrix * transform_matrix;
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
@@ -135,14 +129,6 @@ void Renderer::RenderAxis() {
   //Render Axis if VAO exists
   if (coord_vao_handle != 0) {
     glUseProgram(axis_program_id);
-
-    // Projection Setup
-    glm::mat4 projection;
-    projection = glm::perspective(camera_->aspect(), float(width_ / height_), 0.1f, 100.0f);
-    // Load it to the shader program
-    int projHandle = glGetUniformLocation(axis_program_id, "projection_matrix");
-    assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
-    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
 
     // Modelview Setup
     int modelviewHandle1 = glGetUniformLocation(axis_program_id, "modelview_matrix");
@@ -248,13 +234,6 @@ void Renderer::RenderTerrain() {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  // Projection Setup
-  glm::mat4 projection;
-  projection = glm::perspective(camera_->aspect(), float(width_ / height_), 0.1f, 100.0f);
-  // Load it to the shader program
-  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
-  assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
-  glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
   // Setup Handles
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");
@@ -289,7 +268,7 @@ void Renderer::RenderTerrain() {
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(mvHandle);
+  normMatrix = glm::mat3(camera_matrix);
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 

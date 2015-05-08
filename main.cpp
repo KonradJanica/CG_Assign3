@@ -78,20 +78,32 @@ Camera * g_camera;
 int g_window_x = 640;
 int g_window_y = 480;
 
+void UpdateProjection() {
+    glm::mat4 projection;
+    for (unsigned int i = 0; i < 3; i++) {
+      projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
+      int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
+      assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
+      glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
+  }
+}
+
 /**
  * Renders a frame of the state and shaders we have set up to the window
  */
 void render() {
-
 
   glClearColor(g_colour.x, g_colour.y, g_colour.z, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   g_camera->UpdateCamera();
 
+  UpdateProjection();
+
   // Render ALL
   //g_renderer->Render();
 
+  // This renders model 0
   g_renderer->Render(0);
 
   if (g_coord_axis) {
@@ -136,7 +148,7 @@ void idle() {
     x = g_camera->cam_pos().x;
     y = g_camera->cam_pos().y;
     z = g_camera->cam_pos().z;
-    g_renderer->SetLightPosition(x,y,z,0.0f);
+    g_renderer->SetLightPosition(x,y,z,1.0f);
   }
 
   glutPostRedisplay();
@@ -176,6 +188,7 @@ void SpecialReleased( int key, int x, int y )
 {
   g_camera->KeyReleased(key);
 }
+
 
 /**
  * Called while a keyboard key press is detected
@@ -266,7 +279,6 @@ void keyboardDown(unsigned char key, int x, int y) {
       glutPostRedisplay();
       break;
   }
-
 }
 
 /**

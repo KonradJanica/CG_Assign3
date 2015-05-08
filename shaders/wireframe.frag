@@ -19,7 +19,7 @@ not been tested to the degree that would be advisable in any important
 application.  All use of these programs is entirely at the user's own risk.
 *********************************************************/
 
-#version 150
+#version 130
 
 // manyAttributes.fp
 // An example of using interpolated values from the previous stage
