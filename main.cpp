@@ -101,7 +101,7 @@ void render() {
   UpdateProjection();
 
   // Render ALL
-  // Meep moop
+  // Meep moop ming
   //g_renderer->Render();
 
   // This renders model 0
