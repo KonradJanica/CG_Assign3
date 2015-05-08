@@ -37,7 +37,7 @@ class Terrain {
     // Accessor for the program id (shader)
     inline GLuint terrain_program_id() const;
     // TODO
-    inline unsigned int road_vao_handle() const;
+    inline std::vector<unsigned int> road_vao_handle() const;
     // TODO
     inline GLuint road_texture() const;
     // Accessor for the loaded texture
@@ -72,18 +72,24 @@ class Terrain {
     // The VAO handle for the terrain
     std::vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
-    unsigned int road_vao_handle_;
+    std::vector<unsigned int> road_vao_handle_;
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
     float prev_max_x_;  // Used for updating next_tile_start_.x
 
     // TODO
+    // Straight Terrain Piece
+    //   Mutates all the input parameters for CreateVAO
+    //   @warn creates and pushes back a road VAO based on the terrain middle section
     void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights, const bool &is_road = false);
+        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
     // TODO
+    // Turning Terrain Piece
+    //   Mutates all the input parameters for CreateVAO
+    //   @warn creates and pushes back a road VAO based on the terrain middle section
     void GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights, const bool &is_road = false);
+        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
     // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
@@ -101,7 +107,7 @@ inline GLuint Terrain::terrain_program_id() const {
   return terrain_program_id_;
 }
 // TODO
-inline unsigned int Terrain::road_vao_handle() const {
+inline std::vector<unsigned int> Terrain::road_vao_handle() const {
   return road_vao_handle_;
 }
 // TODO
