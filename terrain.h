@@ -76,6 +76,7 @@ class Terrain {
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
+    float prev_max_x_;  // Used for updating next_tile_start_.x
 
     // TODO
     void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,

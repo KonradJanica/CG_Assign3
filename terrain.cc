@@ -10,19 +10,59 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   std::vector<int> indices;
   std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
   heights.resize(width_ * height_, 0.15f);
-  next_tile_start_ = glm::vec2(20,-10);
+  next_tile_start_ = glm::vec2(-10,-10);
+  prev_max_x_ = 20.0f; // Must start at straight road with this magic number derived from MIN_POSITION
 
   // Terrain
   // 1st buffer
   texture_ = LoadTexture("textures/rock01.jpg");
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
   // 3rd buffer
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
   // 
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  // 
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  // 
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
+  //
+  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  printf("next_tile_start_.x = %f\n", next_tile_start_.x);
 
   // Road
   road_texture_ = LoadTexture("textures/road.jpg");
@@ -166,9 +206,6 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
   }
 
   // Construct Heightmap
-  int POSITION_DATA_SIZE_IN_ELEMENTS = 3;
-  int floatsPerVertex = POSITION_DATA_SIZE_IN_ELEMENTS;
-
   vertices.clear();
   vertices.resize(x_length * z_length);
 
@@ -208,6 +245,7 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
       if (xPosition < min_x)
         min_x = xPosition;
       if (xPosition > max_x)
+        // max_x = xPosition + next_tile_start_.x;
         max_x = xPosition;
     }
   }
@@ -216,7 +254,9 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
     next_tile_start_.y = max_z;
 
       // Calculate next_tile_start_.x position (next X tile position)
-    next_tile_start_.x = max_x;
+      float displacement_x = max_x - prev_max_x_;
+      prev_max_x_ = max_x - displacement_x;
+    next_tile_start_.x += displacement_x;
   }
 
   // Create Index Data
@@ -426,9 +466,6 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
   }
 
   // Construct Heightmap
-  int POSITION_DATA_SIZE_IN_ELEMENTS = 3;
-  int floatsPerVertex = POSITION_DATA_SIZE_IN_ELEMENTS;
-
   vertices.clear();
   vertices.resize(x_length * z_length);
 
@@ -456,7 +493,7 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
       float zSquare = zPosition * zPosition; //x^2
 
-      xPosition = zSquare/(POSITION_RANGE*2) + xPosition;
+      xPosition = zSquare/(POSITION_RANGE*1) + xPosition;
       // xPosition = zPosition + xPosition;
 
       // xPosition = zPosition + xPosition;
@@ -482,7 +519,10 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
   if (!is_road) {
     next_tile_start_.y = max_z;
 
-    next_tile_start_.x = max_x;
+      // Calculate next_tile_start_.x position (next X tile position)
+      float displacement_x = max_x - prev_max_x_;
+      prev_max_x_ = max_x - displacement_x;
+    next_tile_start_.x += displacement_x;
   }
 
   // Create Index Data
