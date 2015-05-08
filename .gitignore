@@ -2,4 +2,5 @@
 ###################
 *.o
 *.exe
+*.stackdump # Created after application crashes on windows
 assign3
