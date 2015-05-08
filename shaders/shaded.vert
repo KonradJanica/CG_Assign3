@@ -29,7 +29,7 @@ uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 uniform mat3 normal_matrix;
 
-uniform float time;
+uniform float elapsed;
 
 uniform vec4 light_pos;			// Light position in eye-space
 
@@ -97,11 +97,17 @@ vec3 phongPointLight(in vec4 position, in vec3 norm)
   //return diffuse + spec;
 }
 
-void main(void) {
+#define waveWidth 0.6
 
+
+
+void main(void) {
+  
   // Convert normal and position to eye coords
   vec3 eyeNorm = normalize( normal_matrix * a_normal);
-  vec4 eyePos = modelview_matrix * vec4(a_vertex.x,a_vertex.y + time, a_vertex.z, 1.0);
+  float newElapsed = elapsed/1000.0;
+  float newy = (sin(waveWidth * a_vertex.x + newElapsed) * cos(waveWidth * a_vertex.y + newElapsed) * 0.3);
+  vec4 eyePos = modelview_matrix * vec4(a_vertex.x, newy , a_vertex.z, 1.0);
 
 if (light_toggle == 1) {
   litColour = vec4(phongPointLight(eyePos, eyeNorm), 1.0);

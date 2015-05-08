@@ -52,6 +52,7 @@
 #include "stb_image.h"
 
 Renderer *g_renderer;
+float wavey = 0.0;
 
 // Our shader program
 GLuint g_program_id[3];
@@ -154,13 +155,14 @@ void idle() {
 
   // Send a timer over to the vertex shader
   
-  int timeHandle = glGetUniformLocation(g_program_id[2], "time");
+  int timeHandle = glGetUniformLocation(g_program_id[2], "elapsed");
   if(timeHandle == -1)
   {
     printf("Could not get handle for time var \n");
   }
   printf("sending time %d\n", time);
-  glUniform1i(timeHandle, time); 
+  glUseProgram(g_program_id[2]);
+  glUniform1f(timeHandle, time+1); 
 
   glutPostRedisplay();
 }
