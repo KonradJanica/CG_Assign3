@@ -341,6 +341,24 @@ void Renderer::RenderTerrain() {
 
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
+  for (float x = 5; x < 15; ++x) {
+    // We compute the normal matrix from the current modelview matrix
+    // and give it to our program
+    translated_road = glm::rotate(camera_matrix, 45.0f, glm::vec3(0,1,0));
+    translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.3f,x*2.0f));
+    normMatrix = glm::mat3(mvHandle);
+    glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(translated_road));	// Middle
+    glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+    // Bind VAO Road
+    glBindVertexArray(terrain_->road_vao_handle()); 
+    glBindTexture(GL_TEXTURE_2D, terrain_->road_texture());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
+
+    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+  }
 }
 
 // Creates the Terrain object for RenderTerrain()

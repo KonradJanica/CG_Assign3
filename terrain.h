@@ -81,6 +81,9 @@ class Terrain {
     void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
         std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights, const bool &is_road = false);
     // TODO
+    void GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
+        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights, const bool &is_road = false);
+    // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
 
