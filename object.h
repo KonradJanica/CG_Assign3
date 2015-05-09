@@ -1,5 +1,5 @@
-#ifndef ASSIGN2_OBJECT_H_
-#define ASSIGN2_OBJECT_H_
+#ifndef ASSIGN3_OBJECT_H_
+#define ASSIGN3_OBJECT_H_
 
 #include <vector>
 #include <string>
@@ -7,7 +7,7 @@
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "shader.hpp"
+#include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 

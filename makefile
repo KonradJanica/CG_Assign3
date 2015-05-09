@@ -22,8 +22,8 @@ ifneq (, $(findstring Darwin, $(PLATFORM)))
 endif
 
 CC = g++
-LINK = model_data.o shader.o model.o object.o terrain.o camera.o renderer.o main.o
-LIB = lib/tiny_obj_loader/tiny_obj_loader.o
+LINK = model_data.o model.o object.o terrain.o camera.o renderer.o main.o
+LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
 
 .PHONY:  clean
 
@@ -32,7 +32,7 @@ all : assign3$(EXT)
 assign3$(EXT) : $(LINK) $(LIB)
 	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
 
-main.o : model_data.h shader.hpp model.h camera.h renderer.h main.cpp 
+main.o : model_data.h model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
 
 renderer.o : renderer.cc renderer.h camera.h terrain.h model.h
@@ -50,15 +50,14 @@ model.o: model.cc model.h object.h model_data.h
 object.o: object.cc object.h
 	$(CC) $(CPPFLAGS) -c object.cc
 
-shader.o : shader.cpp shader.hpp
-	$(CC) $(CPPFLAGS) -c shader.cpp
-
 model_data.o: model_data.cc model_data.h
 	$(CC) $(CPPFLAGS) -c model_data.cc
 
 $(LIB) :
 	$(MAKE) -C lib/tiny_obj_loader
+	$(MAKE) -C lib/shader
 
 clean:
 	rm -f *.o assign3$(EXT)
 	$(MAKE) -C lib/tiny_obj_loader clean
+	$(MAKE) -C lib/shader clean
