@@ -1,44 +1,74 @@
-/*********************************************************
-Version 1.000
-
-Code provided by Michael Hemsley and Anthony Dick
-for the course 
-COMP SCI 3014/7090 Computer Graphics
-School of Computer Science
-University of Adelaide
-
-Permission is granted for anyone to copy, use, modify, or distribute this
-program and accompanying programs and documents for any purpose, provided
-this copyright notice is retained and prominently displayed, along with
-a note saying that the original programs are available from the aforementioned 
-course web page. 
-
-The programs and documents are distributed without any warranty, express or
-implied.  As the programs were written for research purposes only, they have
-not been tested to the degree that would be advisable in any important
-application.  All use of these programs is entirely at the user's own risk.
-*********************************************************/
-
 #version 130
 
-// manyAttributes.fp
-// An example of using interpolated values from the previous stage
+// Toggles lighting - 0 = off, 1 = on 
+uniform int light_toggle;
 
-				// Take note that _per-vertex attributes_ are sent from previous stage
-				// whereas uniforms are available for access in both stages
+// Light properties
+uniform vec4 light_pos;
+uniform vec3 light_ambient;
+uniform vec3 light_diffuse;
+uniform vec3 light_specular;
 
-in vec2 text_coord;
+// Material properties
+uniform vec3 mtl_ambient;
+uniform vec3 mtl_diffuse;
+uniform vec3 mtl_specular;
+uniform float shininess;
+
 uniform sampler2D texMap;
 
-in vec4 litColour;
+in vec4 a_vertex_mv;
+in vec3 a_normal_mv;
+in vec2 a_tex_coord;
 
 out vec4 fragColour;
 
+vec3 phongLight(in vec4 position, in vec3 norm)
+{
+  // Direction from the light to the vertex
+  vec3 s;
+  if (light_pos.w == 0.0) {
+    s = normalize(light_pos.xyz); // light_pos is a direction
+  }
+  else {
+    s = normalize(vec3(light_pos - position)); // light_pos is a point
+  }
+
+  // Direction from the eye to the vertex
+  vec3 v = normalize(-position.xyz);
+
+  // Direction of light reflected from the vertex
+  vec3 r = reflect( -s, norm );
+
+  vec3 ambient = light_ambient * mtl_ambient;
+
+  // The diffuse component
+  float sDotN = max( dot(s,norm), 0.0 );
+  vec3 diffuse = light_diffuse * mtl_diffuse * sDotN;
+
+  // Specular component
+  vec3 spec = vec3(0.0);
+  if ( sDotN > 0.0 )
+    spec = light_specular * mtl_specular *
+      pow( max( dot(r,v), 0.0 ), shininess );
+
+  return ambient + diffuse + spec;
+}
+
 void main(void) {
 
+  // Cannot trust pipeline interpolation to generate normalized normals
+  vec4 vertex_mv = a_vertex_mv;
+  vec3 normal_mv = normalize(a_normal_mv); 
 
-	//fragColour = texture(texMap, text_coord);	// We now just have to set the already smoothed colour as our frag colour
-	fragColour = litColour*texture(texMap, text_coord);	// We now just have to set the already smoothed colour as our frag colour
+  vec4 litColour;
 
+  if (light_toggle == 1) {
+    litColour = vec4(phongLight(vertex_mv, normal_mv), 1.0);
+  }
+  else {
+    litColour = vec4(1.0, 1.0, 1.0, 1.0);
+  }
 
+	fragColour = litColour * texture(texMap, a_tex_coord);
 }
