@@ -76,8 +76,10 @@ class Renderer {
     inline Camera * camera();
 
   private:
-    // All the models and their transforms in the scene
+    // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
+    // The moving car
+    // TODO
     // The camera object
     Camera * camera_;
     // Width of the OpenGL Window

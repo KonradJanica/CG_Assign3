@@ -19,15 +19,26 @@
 
 // Object call contains a model by inhertiance
 //  Adds extra methods and members to control matrix transformations
+//  Can also hold physics information if it is a moving object
+//  Physics are enabled if Physics * physics_extension_ != 0
 //  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
+    struct Physics {
+      float velocity;
+      float acceleration;
+      float turn_rate;
+      Physics(const float &v, const float &a, const float &t)
+        : velocity(v), acceleration(a), turn_rate(t) {};
+    };
+
     // Default constructor make identity transform with no scaling
     Object();
     // Construct with position setting parameters
     Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Updates the transform matrix using glLookAt
+    //  Includes physics movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateTransform();
     ////////////
@@ -51,6 +62,19 @@ class Object {
     // Sets the up
     //   @warn requires a call to UpdateTransform() afterwards
     inline void set_up(glm::vec3 new_up);
+    ///////////
+    // PHYSICS
+    // Enables the physics extension
+    //  @warn Is created on heap, needs to be deleted afterwards
+    void EnablePhysics(const float &velocity, const float &acceleration, const float &turn_rate);
+    // Tests for whether Physics are enabled for the object
+    bool IsPhysics() const;
+    // Increases the acceleration of the object by given amount
+    //   TODO a maximum acceleration?
+    void Accelerate(const float &amount);
+    // Decreases the acceleration of the object by given amount
+    //   TODO a minimum acceleration?
+    void Deccelerate(const float &amount);
     ///////////////
     // VIRTUAL CHILD (Model) METHODS
     // Accessor for current shader program.
@@ -117,6 +141,9 @@ class Object {
     // The scale of the object
     glm::vec3 scale_;
 
+    // The physics extension for moving objects
+    //  Will be 0 (null_ptr) if doesn't exist
+    Physics * physics_extension_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);
