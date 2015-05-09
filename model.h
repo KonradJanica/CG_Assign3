@@ -19,7 +19,7 @@
 #include <GL/glut.h>
 #endif
 
-#include "stb_image.h"
+#include "lib/stb_image/stb_image.h"
 
 // Is a child of Object, inherits extra transformation members and methods
 //   Creates and stores VAO and Material data for rendering
