@@ -19,8 +19,7 @@ void main()
   a_normal_mv = normalize(normal_matrix * a_normal);
 
   // Texture coordinates 
-  a_tex_coord.x = a_texture.x;
-  a_tex_coord.y = -a_texture.y;
+  a_tex_coord = a_texture;
 
   // Apply full MVP transformation
   gl_Position = projection_matrix * a_vertex_mv;
