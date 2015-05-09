@@ -23,13 +23,14 @@ endif
 
 CC = g++
 LINK = model_data.o shader.o model.o object.o terrain.o camera.o renderer.o main.o
+LIB = lib/tiny_obj_loader/tiny_obj_loader.o
 
 .PHONY:  clean
 
-all : run$(EXT)
+all : assign3$(EXT)
 
-run$(EXT) : $(LINK)
-	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(GL_LIBS)
+assign3$(EXT) : $(LINK) $(LIB)
+	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
 
 main.o : model_data.h shader.hpp model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
@@ -55,5 +56,9 @@ shader.o : shader.cpp shader.hpp
 model_data.o: model_data.cc model_data.h
 	$(CC) $(CPPFLAGS) -c model_data.cc
 
+$(LIB) :
+	$(MAKE) -C lib/tiny_obj_loader
+
 clean:
 	rm -f *.o assign3$(EXT)
+	$(MAKE) -C lib/tiny_obj_loader clean

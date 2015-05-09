@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include "glm/glm.hpp"
+
+#include "lib/tiny_obj_loader/tiny_obj_loader.h"
 
 // Stores the Data from OBJ files. Sample Usage:
 //  RawModelData.shapes[3].vertices[1].x

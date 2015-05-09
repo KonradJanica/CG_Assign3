@@ -1,14 +1,4 @@
-// TODO 
-
 #include "model_data.h"
-#include "tiny_obj_loader.cc"
-#include "glm/glm.hpp"
-
-#include <iostream>
-#include <vector>
-#include <string>
-#include <cstdlib>
-
 
 ModelData::ModelData(const std::string& inputfile) : max_x_(0), max_y_(0), max_z_(0) {
 
