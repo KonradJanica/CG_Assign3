@@ -22,10 +22,14 @@ Renderer::Renderer(const int &width, const int &height) : coord_vao_handle(0), i
 //   @param program_id, a shader program
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
-void Renderer::AddModel(GLuint &program_id, const std::string &model_filename) {
-  // Model *model = new Model(&program_id, model_filename);
-  Object * object = new Model(program_id, model_filename, glm::vec3(0,0,-10));
-  objects_.push_back(object);
+void Renderer::AddModel(GLuint &program_id, const std::string &model_filename, const bool &is_car) {
+  if (is_car) {
+    car_ = new Model(program_id, model_filename, glm::vec3(-0.8,-0.3,10), glm::vec3(0,0,-1), glm::vec3(0,1,0), glm::vec3(0.3,0.3,0.3));
+    car_->EnablePhysics(0.001,0.0001,0);
+  } else {
+    Object * object = new Model(program_id, model_filename, glm::vec3(0,0,-10));
+    objects_.push_back(object);
+  }
 
   SetupLighting(program_id, glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
 }
@@ -47,7 +51,7 @@ void Renderer::Render(unsigned int index) {
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glLineWidth(1.0f);
-  
+
   // Other Handles Setup
   int texHandle = glGetUniformLocation(program_id, "texMap");
   if (texHandle == -1) {
@@ -119,6 +123,92 @@ void Renderer::Render(unsigned int index) {
 
     glDrawElements(GL_TRIANGLES, objects_.at(index)->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
+}
+
+// Draws only the moving car model
+//   Should be called in the render loop
+//   TODO later turn this into Draw(Object * object) and replace Render(index)
+void Renderer::DrawCar() {
+  assert(car_ != 0 && "Trying to access index outside of objects_ vector");
+  GLuint program_id = car_->program_id();
+  glUseProgram(program_id);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glLineWidth(1.0f);
+
+  // Other Handles Setup
+  int texHandle = glGetUniformLocation(program_id, "texMap");
+  if (texHandle == -1) {
+    if (is_debugging_) {
+      fprintf(stderr, "Could not find uniform variables\n");
+      exit(1);
+    }
+  }
+  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
+  int lightposHandle = glGetUniformLocation(program_id, "light_pos");
+  if (mvHandle == -1 || normHandle==-1 || lightposHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  // Update the light position
+  float lightPos[4] = { light_pos_.x, light_pos_.y, light_pos_.z, light_pos_.w };	
+  glUniform4fv(lightposHandle, 1, lightPos); 
+
+  // Uniform variables defining material colours
+  // These can be changed for each sphere, to compare effects
+  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(program_id, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find material uniform variables\n");
+    }
+  }
+
+  const glm::mat4 &camera_matrix = camera_->camera_matrix();
+  glm::mat3 normMatrix;
+  // We compute the normal matrix from the current modelview matrix
+  // and give it to our program
+  normMatrix = glm::mat3(camera_matrix);
+  const glm::mat4 &transform_matrix = car_->transform();
+  glm::mat4 position_matrix = camera_matrix * transform_matrix;
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
+  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = car_->vao_texture_handle();
+  for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
+    // Pass Surface Colours to Shader
+    const glm::vec3 &vao_ambient = car_->ambient_surface_colours_at(y);
+    const glm::vec3 &vao_diffuse = car_->diffuse_surface_colours_at(y);
+    const glm::vec3 &vao_specular = car_->specular_surface_colours_at(y);
+    float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
+    float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
+    float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
+    glUniform3fv(mtlambientHandle, 1, mtlambient);
+    glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+    glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+    float mtlshininess = car_->shininess_at(y);
+    glUniform1fv(shininessHandle, 1, &mtlshininess);
+
+    // Bind VAO
+    glBindTexture( GL_TEXTURE_2D, vao_texture_handle.at(y).second );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    glBindVertexArray( vao_texture_handle.at(y).first ); 
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
+
+    glDrawElements(GL_TRIANGLES, car_->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
+  }
+
+  // Update Physics
+  car_->UpdateTransform();
 }
 
 // Render Coordinate Axis 
@@ -321,10 +411,10 @@ void Renderer::RenderTerrain() {
   //   glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   // }
   // for (float x = 5; x < 15; ++x) {
-    // We compute the normal matrix from the current modelview matrix
-    // and give it to our program
-    // translated_road = glm::rotate(camera_matrix, 45.0f, glm::vec3(0,1,0));
-    // translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.3f,x*2.0f));
+  // We compute the normal matrix from the current modelview matrix
+  // and give it to our program
+  // translated_road = glm::rotate(camera_matrix, 45.0f, glm::vec3(0,1,0));
+  // translated_road = glm::translate(translated_road, glm::vec3(-7.3f,0.3f,x*2.0f));
   const std::vector<unsigned int> &road_vao_handle = terrain_->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
     // Bind VAO Road

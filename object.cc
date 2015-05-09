@@ -38,10 +38,11 @@ void Object::Deccelerate(const float &amount) {
 }
 
 // Updates the transform matrix using glLookAt
-//  Includes physics movements if they exist
+//  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateTransform() {
   if (IsPhysics()) {
+    physics_extension_->velocity += physics_extension_->acceleration;
     position_ += physics_extension_->velocity * direction_;
   }
   transform_ = glm::lookAt(position_, position_+ direction_, up_);

@@ -105,6 +105,7 @@ void render() {
 
   // This renders model 0
   g_renderer->Render(0);
+  g_renderer->DrawCar();
 
   if (g_coord_axis) {
     g_renderer->RenderAxis();
@@ -340,6 +341,7 @@ int main(int argc, char **argv) {
   //Texture Shader
   // g_renderer->AddModel(g_program_id[2], std::string(argv[1]));
   g_renderer->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
+  g_renderer->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
   //Construct Axis VAO
   g_renderer->EnableAxis(g_program_id[1]);
   //Setup default overhead light

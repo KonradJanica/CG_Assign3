@@ -45,11 +45,15 @@ class Renderer {
     Renderer(const int &width, const int &height);
 
     // Add a wireframe model from .obj file to the scene
-    void AddModel(GLuint &program_id, const std::string &model_filename);
+    void AddModel(GLuint &program_id, const std::string &model_filename, const bool &is_car = false);
     // Render the scene (all member models)
     void Render();
     // Render the seletected models in the scene (selected member models)
     void Render(unsigned int);
+    // Draws only the moving car model
+    //   Should be called in the render loop
+    //   TODO later turn this into Draw(Object * object) and replace Render(index)
+    void DrawCar();
     // Render Coordinate Axis 
     //   @warn requires VAO from EnableAxis
     void RenderAxis();
@@ -79,7 +83,8 @@ class Renderer {
     // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
     // The moving car
-    // TODO
+    //   An object with the physics extension enabled
+    Object * car_;
     // The camera object
     Camera * camera_;
     // Width of the OpenGL Window

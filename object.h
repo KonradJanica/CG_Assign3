@@ -38,7 +38,7 @@ class Object {
     Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Updates the transform matrix using glLookAt
-    //  Includes physics movements if they exist
+    //  Includes physics calulations and movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateTransform();
     ////////////
