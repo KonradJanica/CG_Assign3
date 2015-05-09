@@ -345,7 +345,7 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
   float_heights_y.clear();
   // float_heights_y.resize(x_length*z_length, -0.5f);
-  float_heights_y.resize(x_length*z_length, 0.15f);
+  float_heights_y.resize(x_length*z_length, 0.00f);
   for (unsigned int y = 0; y < z_length; ++y) {
     for (unsigned int x = 0; x < x_length; ++x) {
       // Normalize x between -1 and 1
@@ -359,10 +359,10 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
   }
 
   // Even out little section right of road
-  for (unsigned int x = 0; x < z_length; ++x) {
-    float_heights_y.at(x_length/2-1 + x*x_length) = 0.168f;
-    float_heights_y.at(x_length/2 + x*x_length) = 0.14f;
-  }
+  // for (unsigned int x = 0; x < z_length; ++x) {
+  //   float_heights_y.at(x_length/2-1 + x*x_length) = 0.168f;
+  //   float_heights_y.at(x_length/2 + x*x_length) = 0.14f;
+  // }
 
   // Randomize Top Terrain
   int center_left_x = x_length/2 - x_length/4;
