@@ -78,9 +78,9 @@ int g_window_x = 640;
 int g_window_y = 480;
 
 void UpdateProjection() {
-    glm::mat4 projection;
+    glm::mat4 projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
     for (unsigned int i = 0; i < 3; i++) {
-      projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
+      glUseProgram(g_program_id[i]);
       int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
       assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
       glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
@@ -104,14 +104,16 @@ void render() {
 
   // This renders model 0
   g_renderer->Render(0);
+  // Renders the car model
   g_renderer->DrawCar();
 
-  if (g_coord_axis) {
-    g_renderer->RenderAxis();
-  }
 
   g_renderer->RenderTerrain();
 
+  // Render axis last so on top
+  if (g_coord_axis) {
+    g_renderer->RenderAxis();
+  }
 
   glUseProgram(0);
 

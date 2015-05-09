@@ -219,6 +219,7 @@ void Renderer::RenderAxis() {
   //Render Axis if VAO exists
   if (coord_vao_handle != 0) {
     glUseProgram(axis_program_id);
+    glDisable(GL_DEPTH_TEST);
 
     // Modelview Setup
     int modelviewHandle1 = glGetUniformLocation(axis_program_id, "modelview_matrix");
@@ -233,6 +234,7 @@ void Renderer::RenderAxis() {
 
     glLineWidth(4.0f);
     glDrawElements(GL_LINES, 2*3, GL_UNSIGNED_INT, 0);	// New call. 2 vertices * 3 lines
+    glEnable(GL_DEPTH_TEST);
   }
 }
 
