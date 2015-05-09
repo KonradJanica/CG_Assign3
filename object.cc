@@ -42,6 +42,13 @@ void Object::Deccelerate(const float &amount) {
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateTransform() {
   if (IsPhysics()) {
+    // Calculate Delta Time to even out for different frame rates
+    GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
+    GLfloat &delta_time = physics_extension_->delta_time;
+    GLfloat &last_frame = physics_extension_->last_frame;
+    delta_time = current_frame - last_frame;
+    last_frame = current_frame;
+    // Calculate Physics
     physics_extension_->velocity += physics_extension_->acceleration;
     position_ += physics_extension_->velocity * direction_;
   }

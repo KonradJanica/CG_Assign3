@@ -24,12 +24,23 @@
 //  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
+    // The data required to move an object with physics
+    //   Data is updated in UpdateTransform()
     struct Physics {
+      // The movement of the object in it's direction
       float velocity;
+      // The amount to add to velocity each tick
       float acceleration;
+      // The turn speed of the object
+      //  TODO should be added to direction with input left/right
       float turn_rate;
+      // Used for evening out over different frame rates
+      GLfloat delta_time;
+      // Used for evening out over different frame rates
+      GLfloat last_frame;
       Physics(const float &v, const float &a, const float &t)
-        : velocity(v), acceleration(a), turn_rate(t) {};
+        : velocity(v), acceleration(a), turn_rate(t),
+        delta_time(0), last_frame(0) {};
     };
 
     // Default constructor make identity transform with no scaling
