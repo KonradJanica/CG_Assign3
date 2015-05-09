@@ -49,7 +49,7 @@ void Object::UpdateTransform() {
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
     // Calculate Physics
-    physics_extension_->velocity += physics_extension_->acceleration;
+    physics_extension_->velocity += physics_extension_->acceleration * delta_time;
     position_ += physics_extension_->velocity * direction_;
   }
   transform_ = glm::lookAt(position_, position_+ direction_, up_);

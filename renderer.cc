@@ -25,7 +25,7 @@ Renderer::Renderer(const int &width, const int &height) : coord_vao_handle(0), i
 void Renderer::AddModel(GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename, glm::vec3(-0.8,-0.3,10), glm::vec3(0,0,-1), glm::vec3(0,1,0), glm::vec3(0.3,0.3,0.3));
-    car_->EnablePhysics(0.001,0.0001,0);
+    car_->EnablePhysics(0.0001,0.00001,0);
   } else {
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,-10));
     objects_.push_back(object);
