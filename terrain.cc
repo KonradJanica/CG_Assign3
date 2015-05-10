@@ -42,20 +42,150 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
-  skytexture_[0] = LoadTexture("textures/red_dot.jpg");
-  skytexture_[1] = LoadTexture("textures/red_dot.jpg");
-  skytexture_[2] = LoadTexture("textures/red_dot.jpg");
-  skytexture_[3] = LoadTexture("textures/red_dot.jpg");
-  skytexture_[4] = LoadTexture("textures/red_dot.jpg");
+  skytexture_[0] = LoadTexture("textures/alpine_front.jpg"); // FRONT
+  skytexture_[1] = LoadTexture("textures/alpine_right.jpg"); // RIGHT
+  skytexture_[2] = LoadTexture("textures/alpine_back.jpg"); // BACK
+  skytexture_[3] = LoadTexture("textures/alpine_left.jpg"); // LEFT (alpine left is actually right)
+  skytexture_[4] = LoadTexture("textures/rock02.jpg"); // FLOOR
+  skytexture_[5] = LoadTexture("textures/alpine_top.jpg"); // ROOF
+
   GenerateSkybox();
 
+}
+
+unsigned int Terrain::CreateVao2(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+    const std::vector<glm::vec2> &texture_coordinates_uv) {
+
+  //////////////////////////////
+  //Create axis VAO         ////
+  //////////////////////////////
+  glUseProgram(terrain_program_id_);
+
+  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
+
+  unsigned int VAO_handle;
+  glGenVertexArrays(1, &VAO_handle);
+  glBindVertexArray(VAO_handle);
+
+  int vertLoc = glGetAttribLocation(program_id, "a_vertex");
+  int normLoc = glGetAttribLocation(program_id, "a_normal");
+  int textureLoc = glGetAttribLocation(program_id, "a_texture");
+
+  // Buffers to store position, colour and index data
+  unsigned int buffer[3];
+  glGenBuffers(3, buffer);
+
+  // Set vertex position
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+  glBufferData(GL_ARRAY_BUFFER, 
+      sizeof(glm::vec3)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(vertLoc);
+  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // Normal attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(normLoc);
+  glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // Texture attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(textureLoc);
+  glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+   
+  // Un-bind
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  return VAO_handle;
 }
 
 // Puts the Skybox inside the SkyBoxVAOHandle
 void Terrain::GenerateSkybox()
 {
+  glm::vec3 SkyBoxVertices[24] = {
+                    //Vertices according to faces
+                    glm::vec3(-50.0f, -50.0f, 50.0f), //Vertex 0
+                    glm::vec3(50.0f, -50.0f, 50.0f),  //v1
+                    glm::vec3(-50.0f, 50.0f, 50.0f),  //v2
+                    glm::vec3(50.0f, 50.0f, 50.0f),   //v3
+
+                    glm::vec3(50.0f, -50.0f, 50.0f),  //...
+                    glm::vec3(50.0f, -50.0f, -50.0f),         
+                    glm::vec3(50.0f, 50.0f, 50.0f),
+                    glm::vec3(50.0f, 50.0f, -50.0f),
+
+                    glm::vec3(50.0f, -50.0f, -50.0f),
+                    glm::vec3(-50.0f, -50.0f, -50.0f),            
+                    glm::vec3(50.0f, 50.0f, -50.0f),
+                    glm::vec3(-50.0f, 50.0f, -50.0f),
+
+                    glm::vec3(-50.0f, -50.0f, -50.0f),
+                    glm::vec3(-50.0f, -50.0f, 50.0f),         
+                    glm::vec3(-50.0f, 50.0f, -50.0f),
+                    glm::vec3(-50.0f, 50.0f, 50.0f),
+
+                    glm::vec3(-50.0f, -50.0f, -50.0f),
+                    glm::vec3(50.0f, -50.0f, -50.0f),         
+                    glm::vec3(-50.0f, -50.0f, 50.0f),
+                    glm::vec3(50.0f, -50.0f, 50.0f),
+
+                    glm::vec3(-50.0f, 50.0f, 50.0f),
+                    glm::vec3(50.0f, 50.0f, 50.0f),           
+                    glm::vec3(-50.0f, 50.0f, -50.0f),
+                    glm::vec3(50.0f, 50.0f, -50.0f)
+                                        };
+
+/** The initial texture coordinates (u, v) */   
+glm::vec2 SkyBoxTexCoords[24] = {         
+                    //Mapping coordinates for the vertices
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+
+                    glm::vec2(0.0f, 1.0f),
+                    glm::vec2(1.0f, 1.0f),
+                    glm::vec2(0.0f, 0.0f),
+                    glm::vec2(1.0f, 0.0f), 
+
+
+                                        };
+
+/** The initial indices definition */   
+int SkyBoxIndices[36] = {
+                    //Faces definition
+                    0,1,3, 0,3,2,           //Face front
+                    4,5,7, 4,7,6,           //Face right
+                    8,9,11, 8,11,10,        //... 
+                    12,13,15, 12,15,14,     
+                    16,17,19, 16,19,18,     
+                    20,21,23, 20,23,22,     
+                                        };
   // Cube has 8 vertices at its corners
-  glm::vec3 SkyBoxVertices[ 8 ] = {
+  /*glm::vec3 SkyBoxVertices[ 8 ] = {
          glm::vec3(-3.0f, -3.0f, 3.0f) ,
           glm::vec3(3.0f, -3.0f, 3.0f) ,
           glm::vec3(3.0f,  3.0f, 3.0f) ,
@@ -72,7 +202,7 @@ void Terrain::GenerateSkybox()
 
   };
 
-  glm::vec3 SkyBoxNormals[6] = 
+  */glm::vec3 SkyBoxNormals[6] = 
   {
     glm::vec3(0.0f, 0.0f, -1.0f),
     glm::vec3(0.0f, 0.0f, 1.0f),
@@ -80,7 +210,7 @@ void Terrain::GenerateSkybox()
     glm::vec3(-1.0f, 0.0f, 0.0f),
     glm::vec3(0.0f, -1.0f, 0.0f),
     glm::vec3(0.0f, 1.0f, 0.0f)
-  };
+  };/*
 
     // Each square face is made up of two triangles
     unsigned int SkyBoxIndices[36] = {
@@ -90,10 +220,40 @@ void Terrain::GenerateSkybox()
         4,0,3, 3,7,4,
         3,2,6, 6,7,3,
         4,5,1, 1,0,4
-    };
+    };*/
 
-  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 8);
-  std::vector<glm::vec2> uv(SkyBoxTexCoords, SkyBoxTexCoords + 4);
+  /*glm::vec3 vSkyBoxVertices[24] = 
+  {
+    // Front face
+    glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, -1.0f, 1.0f), glm::vec3(-1.0f, 1.0f, 1.0f), glm::vec3(-1.0f, -1.0f, 1.0f),
+    // Back face
+    glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 1.0f, -1.0f), glm::vec3(1.0f, -1.0f, -1.0f),
+    // Left face
+    glm::vec3(-1.0f, 1.0f, 1.0f), glm::vec3(-1.0f, -1.0f, 1.0f), glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(-1.0f, -1.0f, -1.0f),
+    // Right face
+    glm::vec3(1.0f, 1.0f, -1.0f), glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, -1.0f, 1.0f),
+    // Top face
+    glm::vec3(-1.0f, 1.0f, -1.0f), glm::vec3(1.0f, 1.0f, -1.0f), glm::vec3(-1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+    // Bottom face
+    glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, -1.0f, 1.0f), glm::vec3(-1.0f, -1.0f, 1.0f),
+  };
+  glm::vec2 vSkyBoxTexCoords[4] =
+  {
+    glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)
+  };
+
+  glm::vec3 vSkyBoxNormals[6] = 
+  {
+    glm::vec3(0.0f, 0.0f, -1.0f),
+    glm::vec3(0.0f, 0.0f, 1.0f),
+    glm::vec3(1.0f, 0.0f, 0.0f),
+    glm::vec3(-1.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, -1.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+  };*/
+
+  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 24);
+  std::vector<glm::vec2> uv(SkyBoxTexCoords, SkyBoxTexCoords + 24);
   std::vector<glm::vec3> norms(SkyBoxNormals, SkyBoxNormals + 6);
   std::vector<int> indices(SkyBoxIndices, SkyBoxIndices + 36);
 

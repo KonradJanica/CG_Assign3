@@ -74,11 +74,12 @@ void Renderer::skyBox(GLuint &program_id)
   }
 
   const glm::mat4 &camera_matrix = camera_->camera_matrix();
+  glm::mat4 camera_matrix2 = glm::translate(camera_matrix, glm::vec3(0.0f,10.0f,0.0f));
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(camera_matrix);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) ); // Middle
+  normMatrix = glm::mat3(camera_matrix2);
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix2) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   // Pass Surface Colours to Shader
@@ -96,18 +97,22 @@ void Renderer::skyBox(GLuint &program_id)
 
   // Bind VAO and texture - Terrain
   
-  for (unsigned int x = 0; x < 6; ++x) {
+  for (unsigned int x = 0; x < 6; x++) {
     glBindVertexArray(terrain_->skyBoxVAOHandle); 
-    glBindTexture(GL_TEXTURE_2D, terrain_->skytexture_[0]);
+    glBindTexture(GL_TEXTURE_2D, terrain_->skytexture_[x]);
+
+   
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
     
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // New call
+    //glDrawElements(GL_TRIANGLES, 6 * x, GL_UNSIGNED_INT, 0); // New call
+    glDrawArrays(GL_TRIANGLE_STRIP, x*4, 4);
+   
   }
 }
 // Renders only selected model

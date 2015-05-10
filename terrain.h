@@ -30,7 +30,7 @@ class Terrain {
 
     unsigned int skyBoxVAOHandle;
     void GenerateSkybox();
-    GLuint skytexture_[5];
+    GLuint skytexture_[6];
     
     // Creates a texture pointer from file
     GLuint LoadTexture(const std::string &filename);
@@ -98,6 +98,9 @@ class Terrain {
     // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
+
+    unsigned int CreateVao2(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+        const std::vector<glm::vec2> &texture_coordinates_uv);
 
     // Verbose Debugging mode
     bool is_debugging_;
