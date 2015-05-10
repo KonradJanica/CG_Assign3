@@ -42,6 +42,61 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
+  skytexture_[0] = LoadTexture("textures/alpine_top.jpg");
+  skytexture_[1] = LoadTexture("textures/alpine_back.jpg");
+  skytexture_[2] = LoadTexture("textures/alpine_front.jpg");
+  skytexture_[3] = LoadTexture("textures/alpine_left.jpg");
+  skytexture_[4] = LoadTexture("textures/alpine_right.jpg");
+  GenerateSkybox();
+
+}
+
+// Puts the Skybox inside the SkyBoxVAOHandle
+void Terrain::GenerateSkybox()
+{
+  // Cube has 8 vertices at its corners
+  glm::vec3 SkyBoxVertices[ 8 ] = {
+         glm::vec3(-3.0f, -3.0f, 3.0f) ,
+          glm::vec3(3.0f, -3.0f, 3.0f) ,
+          glm::vec3(3.0f,  3.0f, 3.0f) ,
+         glm::vec3(-3.0f,  3.0f, 3.0f) ,
+         glm::vec3(-3.0f, -3.0f, -3.0f) ,
+         glm::vec3( 3.0f, -3.0f, -3.0f ),
+          glm::vec3(3.0f,  3.0f, -3.0f ),
+        glm::vec3( -3.0f,  3.0f, -3.0f ) 
+  };
+
+  glm::vec2 SkyBoxTexCoords[4] =
+  {
+    glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)
+  };
+
+  glm::vec3 SkyBoxNormals[6] = 
+  {
+    glm::vec3(0.0f, 0.0f, -1.0f),
+    glm::vec3(0.0f, 0.0f, 1.0f),
+    glm::vec3(1.0f, 0.0f, 0.0f),
+    glm::vec3(-1.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, -1.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f)
+  };
+
+    // Each square face is made up of two triangles
+    unsigned int SkyBoxIndices[36] = {
+        0,1,2, 2,3,0,
+        1,5,6, 6,2,1,
+        5,4,7, 7,6,5,
+        4,0,3, 3,7,4,
+        3,2,6, 6,7,3,
+        4,5,1, 1,0,4
+    };
+
+  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 24);
+  std::vector<glm::vec2> uv(SkyBoxTexCoords, SkyBoxTexCoords + 4);
+  std::vector<glm::vec3> norms(SkyBoxNormals, SkyBoxNormals + 6);
+  std::vector<int> indices(SkyBoxIndices, SkyBoxIndices + 36);
+
+  skyBoxVAOHandle = CreateVao(terrain_program_id_, vertices, norms, uv, indices);
 }
 
 //  @warn also generates a road VAO and pushes back into it

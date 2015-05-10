@@ -41,6 +41,73 @@ void Renderer::AddModel(GLuint &program_id, const std::string &model_filename, c
 void Renderer::Render() {
 }
 
+void Renderer::skyBox(GLuint &program_id)
+{
+
+  glUseProgram(program_id);
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  // glLineWidth(1.0f);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // Setup Handles
+  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
+  int texHandle = glGetUniformLocation(program_id, "texMap");
+  if (mvHandle == -1 || normHandle==-1 || texHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  // Uniform variables defining material colours
+  // These can be changed for each sphere, to compare effects
+  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(program_id, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find material uniform variables\n");
+    }
+  }
+
+  const glm::mat4 &camera_matrix = camera_->camera_matrix();
+  // We compute the normal matrix from the current modelview matrix
+  // and give it to our program
+  glm::mat3 normMatrix;
+  normMatrix = glm::mat3(camera_matrix);
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) ); // Middle
+  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  // Pass Surface Colours to Shader
+  const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
+  const glm::vec3 &vao_diffuse = glm::vec3(0.5f,0.5f,0.5f);
+  const glm::vec3 &vao_specular = glm::vec3(0.5f,0.5f,0.5f);
+  float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };  // ambient material
+  float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };  // diffuse material
+  float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };  // specular material
+  glUniform3fv(mtlambientHandle, 1, mtlambient);
+  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+  float mtlshininess = 0.8f; 
+  glUniform1fv(shininessHandle, 1, &mtlshininess);
+
+  // Bind VAO and texture - Terrain
+  
+  for (unsigned int x = 0; x < 6; ++x) {
+    glBindVertexArray(terrain_->skyBoxVAOHandle); 
+    glBindTexture(GL_TEXTURE_2D, terrain_->skytexture_[x]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
+
+    
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // New call
+  }
+}
 // Renders only selected model
 //   Should be called in the render loop
 //   @param unsigned int index, index of model in the member vector

@@ -27,6 +27,10 @@ class Terrain {
 
     // // Render the scene (all member models)
     // void Render();
+
+    unsigned int skyBoxVAOHandle;
+    void GenerateSkybox();
+    GLuint skytexture_[5];
     
     // Creates a texture pointer from file
     GLuint LoadTexture(const std::string &filename);
@@ -77,6 +81,7 @@ class Terrain {
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
     float prev_max_x_;  // Used for updating next_tile_start_.x
+
 
     // TODO
     // Straight Terrain Piece

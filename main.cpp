@@ -110,6 +110,7 @@ void render() {
   // Renders the car model
   g_renderer->DrawCar();
 
+  g_renderer->skyBox(g_program_id[2]);
 
   g_renderer->RenderTerrain();
 

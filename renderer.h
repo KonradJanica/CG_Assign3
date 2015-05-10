@@ -50,6 +50,8 @@ class Renderer {
     void Render();
     // Render the seletected models in the scene (selected member models)
     void Render(unsigned int);
+
+    void skyBox(GLuint &program_id);
     // Draws only the moving car model
     //   Should be called in the render loop
     //   TODO later turn this into Draw(Object * object) and replace Render(index)
