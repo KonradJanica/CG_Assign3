@@ -46,11 +46,13 @@
 #include "model.h"
 #include "renderer.h"
 #include "camera.h"
+#include "controller.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image/stb_image.h"
 
 Renderer *g_renderer;
+Controller *g_controller;
 
 // Our shader program
 GLuint g_program_id[3];
@@ -103,16 +105,17 @@ void render() {
   //g_renderer->Render();
 
   // This renders model 0
-  g_renderer->Render(0);
+  // g_controller->Render(0);
   // Renders the car model
-  g_renderer->DrawCar();
+  // g_controller->DrawCar();
 
+  g_controller->Draw();
 
-  g_renderer->RenderTerrain();
+  // g_controller->RenderTerrain();
 
   // Render axis last so on top
   if (g_coord_axis) {
-    g_renderer->RenderAxis();
+    // g_controller->RenderAxis();
   }
 
   glUseProgram(0);
@@ -150,7 +153,7 @@ void idle() {
     x = g_camera->cam_pos().x;
     y = g_camera->cam_pos().y;
     z = g_camera->cam_pos().z;
-    g_renderer->SetLightPosition(x,y,z,1.0f);
+    g_controller->SetLightPosition(x,y,z,1.0f);
   }
 
   glutPostRedisplay();
@@ -256,25 +259,25 @@ void keyboardDown(unsigned char key, int x, int y) {
       if (g_lighting_mode == 0) {
         std::cout << "Lighting Mode = Overhead (Directional) Static" << std::endl;
         g_lighting_mode = 1;
-        float overhead_light = (g_renderer->GetMax(0, Renderer::kY) + 1) * 2;
+        float overhead_light = (g_controller->GetMax(0, Controller::kY) + 1) * 2;
         // Ambient light disabled as per specs
-        g_renderer->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
-        g_renderer->SetLightPosition(0,overhead_light,0,0);
+        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
+        g_controller->SetLightPosition(0,overhead_light,0,0);
       } else if (g_lighting_mode == 1) {
         std::cout << "Lighting Mode = Headlight (Point) Static" << std::endl;
         g_lighting_mode = 2;
-        float front_light = (g_renderer->GetMax(0, Renderer::kZ) + 1) * 2;
+        float front_light = (g_controller->GetMax(0, Controller::kZ) + 1) * 2;
         // Ambient light disabled as per specs
-        g_renderer->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
-        g_renderer->SetLightPosition(0,0,front_light,1.0f);
+        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
+        g_controller->SetLightPosition(0,0,front_light,1.0f);
       } else if (g_lighting_mode == 2){
         std::cout << "Lighting Mode = None (Texturing Only)" << std::endl;
         g_lighting_mode = 3;
-        g_renderer->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(0,0,0), 0);
+        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(0,0,0), 0);
       } else {
         std::cout << "Lighting Mode = Headlight (Point) Dynamic (Follows Camera)" << std::endl;
         g_lighting_mode = 0;
-        g_renderer->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
+        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
         // Dynamic headlight lighting in render
         //   Triggered by g_light_mode == 0
       }
@@ -338,22 +341,25 @@ int main(int argc, char **argv) {
     return 1;
 
 
-  g_renderer = new Renderer(g_window_x,g_window_y);
-  //Texture Shader
-  // g_renderer->AddModel(g_program_id[2], std::string(argv[1]));
-  g_renderer->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
-  g_renderer->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
+  g_renderer = new Renderer();
   //Construct Axis VAO
   g_renderer->EnableAxis(g_program_id[1]);
+
+  g_controller = new Controller(g_renderer);
+
+  //Texture Shader
+  // g_renderer->AddModel(g_program_id[2], std::string(argv[1]));
+  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
+  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
   //Setup default overhead light
-  float overhead_light = (g_renderer->GetMax(0, Renderer::kY) + 1) * 2;
+  float overhead_light = (g_controller->GetMax(0, Controller::kY) + 1) * 2;
   // Last 0  =>  w = 0, meaning light doesn't have position  => directional light
-  g_renderer->SetLightPosition(0,overhead_light,0,0);
+  g_controller->SetLightPosition(0,overhead_light,0,0);
   // Setup camera global
-  g_camera = g_renderer->camera();
+  g_camera = g_controller->camera();
 
   // Setup terrain
-  g_renderer->EnableTerrain(g_program_id[2]);
+  g_controller->EnableTerrain(g_program_id[2]);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
