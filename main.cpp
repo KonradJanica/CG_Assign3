@@ -68,6 +68,9 @@ glm::vec3 g_colour = glm::vec3(0.71,0.61,0.23);
 // Lighting Globals
 int g_lighting_mode = 1;
 
+// Fog global
+int g_fog_mode = 0;
+
 // Rendering Toggle Vars
 bool g_coord_axis = true;
 
@@ -204,10 +207,18 @@ void keyboardDown(unsigned char key, int x, int y) {
   // We simply check the key argument against characters we care about, in this case A and D
   switch(key) 
   {
+    case 'f':
+    {    
+      g_fog_mode = (g_fog_mode + 1) % 5;
+      glUseProgram(g_program_id[2]);
+      int fogModeHandle = glGetUniformLocation(g_program_id[2], "fog_mode");
+      glUniform1i(fogModeHandle, g_fog_mode);
+      glutPostRedisplay(); 
+      break;
+    }    
     case 27: // escape key pressed
       exit(0);
       break;
-
     case 'd': // Toggle depth test
       if ( glIsEnabled( GL_DEPTH_TEST ) ) {
         glDisable( GL_DEPTH_TEST );
@@ -320,7 +331,8 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  // GL state
+  // GL stateglUseProgram(g_program_id[i]);
+;
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glFrontFace(GL_CCW);
