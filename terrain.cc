@@ -42,11 +42,11 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
-  skytexture_[0] = LoadTexture("textures/alpine_top.jpg");
-  skytexture_[1] = LoadTexture("textures/alpine_back.jpg");
-  skytexture_[2] = LoadTexture("textures/alpine_front.jpg");
-  skytexture_[3] = LoadTexture("textures/alpine_left.jpg");
-  skytexture_[4] = LoadTexture("textures/alpine_right.jpg");
+  skytexture_[0] = LoadTexture("textures/red_dot.jpg");
+  skytexture_[1] = LoadTexture("textures/red_dot.jpg");
+  skytexture_[2] = LoadTexture("textures/red_dot.jpg");
+  skytexture_[3] = LoadTexture("textures/red_dot.jpg");
+  skytexture_[4] = LoadTexture("textures/red_dot.jpg");
   GenerateSkybox();
 
 }
@@ -68,7 +68,8 @@ void Terrain::GenerateSkybox()
 
   glm::vec2 SkyBoxTexCoords[4] =
   {
-    glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)
+    glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f),
+
   };
 
   glm::vec3 SkyBoxNormals[6] = 
@@ -91,7 +92,7 @@ void Terrain::GenerateSkybox()
         4,5,1, 1,0,4
     };
 
-  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 24);
+  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 8);
   std::vector<glm::vec2> uv(SkyBoxTexCoords, SkyBoxTexCoords + 4);
   std::vector<glm::vec3> norms(SkyBoxNormals, SkyBoxNormals + 6);
   std::vector<int> indices(SkyBoxIndices, SkyBoxIndices + 36);

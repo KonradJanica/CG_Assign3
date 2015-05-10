@@ -98,9 +98,11 @@ void Renderer::skyBox(GLuint &program_id)
   
   for (unsigned int x = 0; x < 6; ++x) {
     glBindVertexArray(terrain_->skyBoxVAOHandle); 
-    glBindTexture(GL_TEXTURE_2D, terrain_->skytexture_[x]);
+    glBindTexture(GL_TEXTURE_2D, terrain_->skytexture_[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); 
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
