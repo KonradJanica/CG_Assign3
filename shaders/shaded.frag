@@ -57,6 +57,7 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
   }
   else if(fog_mode == 4) // N.B This is going to look pretty funky because model and view are not detached
   {
+    // Code from http://in2gpu.com/2014/07/22/create-fog-shader/
     float be = (10.0 - fogY) * 0.004;
     float bi = (10.0 - fogY) * 0.001;
     float ext = exp(-fogZ * be);
