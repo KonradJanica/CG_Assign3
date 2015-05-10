@@ -37,10 +37,6 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
     }
   }
 
-  // Update the light position
-  float lightPos[4] = { light_pos.x, light_pos.y, light_pos.z, light_pos.w };	
-  glUniform4fv(lightposHandle, 1, lightPos); 
-
   // Uniform variables defining material colours
   // These can be changed for each sphere, to compare effects
   int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
@@ -65,6 +61,16 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
   glm::mat4 position_matrix = camera_matrix * transform_matrix;
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  // Update the light position, transform from world coord to eye coord before sending
+  if (light_pos.w == 0.0) {
+    glm::vec4 lightDir = glm::vec4(normMatrix * glm::vec3(light_pos), 0.0f);
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
+  }
+  else {
+    glm::vec4 lightPos = camera_matrix * light_pos;
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
+  }
 
   const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
@@ -201,10 +207,6 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
     }
   }
 
-  // Update the light position
-  float lightPos[4] = { light_pos.x, light_pos.y, light_pos.z, light_pos.w };	
-  glUniform4fv(lightposHandle, 1, lightPos); 
-
   // Uniform variables defining material colours
   // These can be changed for each sphere, to compare effects
   int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
@@ -225,8 +227,18 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
   // and give it to our program
   glm::mat3 normMatrix;
   normMatrix = glm::mat3(camera_matrix);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) );	// Middle
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  // Update the light position, transform from world coord to eye coord before sending
+  if (light_pos.w == 0.0) {
+    glm::vec4 lightDir = glm::vec4(normMatrix * glm::vec3(light_pos), 0.0f);
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
+  }
+  else {
+    glm::vec4 lightPos = camera_matrix * light_pos;
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
+  }
 
   // Pass Surface Colours to Shader
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
