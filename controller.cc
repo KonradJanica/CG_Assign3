@@ -85,26 +85,27 @@ void Controller::EnableTerrain(const GLuint &program_id, const GLuint &water_id)
 // The controllers physics update tick
 //   Checks keypresses and calculates acceleration
 void Controller::UpdatePhysics() {
-  const float MOVESPEED = 0.01f;
-  const float TURNRATE = 1.2f;
 
   // TODO remove this and make only 1 delta time calculation
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
+  float MOVESPEED = 0.004f * delta_time_;
+  float TURNRATE = 0.2f * delta_time_;
+
   if (is_key_pressed_hash_.at('w')) {
     glm::vec3 new_translation = car_->translation();
     glm::vec3 rotation = car_->rotation();
-    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y)) * delta_time_;
-    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y)) * delta_time_;
+    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y));
+    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y));
     car_->set_translation(new_translation);
   }
   if (is_key_pressed_hash_.at('s')) {
     glm::vec3 new_translation = car_->translation();
     glm::vec3 rotation = car_->rotation();
-    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y)) * delta_time_;
-    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y)) * delta_time_;
+    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y));
+    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y));
     car_->set_translation(new_translation);
   }
   // No Acceleration
