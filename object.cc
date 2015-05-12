@@ -1,9 +1,8 @@
 #include "object.h"
 
 // Construct with position setting parameters
-Object::Object(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
-  : position_(position), rotation_(rotation), scale_(scale), physics_extension_(0) {
-    model_matrix_ = glm::mat4(1); //identity
+Object::Object(const glm::vec3 &translation, const glm::vec3 &rotation, const glm::vec3 &scale)
+  : translation_(translation), rotation_(rotation), scale_(scale), physics_extension_(0) {
     UpdateModelMatrix();
   }
 
@@ -56,13 +55,13 @@ void Object::UpdateModelMatrix() {
 
   // Rotation of object
   glm::mat4 rotate = glm::mat4(1.0f);
-  rotate = glm::rotate(rotate, rotate_.x, glm::vec3(1, 0, 0));
-  rotate = glm::rotate(rotate, rotate_.y, glm::vec3(0, 1, 0));
-  rotate = glm::rotate(rotate, rotate_.z, glm::vec3(0, 0, 1));
+  rotate = glm::rotate(rotate, rotation_.x, glm::vec3(1, 0, 0));
+  rotate = glm::rotate(rotate, rotation_.y, glm::vec3(0, 1, 0));
+  rotate = glm::rotate(rotate, rotation_.z, glm::vec3(0, 0, 1));
 
   // Translation of object
   glm::mat4 translate = glm::translate(  glm::mat4(1.0f), 
-          glm::vec3(translate_.x, translate_.y, translate_.z));
+          glm::vec3(translation_.x, translation_.y, translation_.z));
 
   model_matrix_ = translate * rotate * scale;
 }

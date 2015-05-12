@@ -44,7 +44,7 @@ class Object {
     };
 
     // Construct with position setting parameters
-    Object(const glm::vec3 &position, const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), const glm::vec3 &scale = glm::vec3(1,1,1));
+    Object(const glm::vec3 &translation, const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
@@ -134,7 +134,7 @@ class Object {
     /////////////////
     // glLookAt transformations
     // The position of the object in the world
-    glm::vec3 position_;
+    glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
 
@@ -159,7 +159,7 @@ inline glm::mat4 Object::model_matrix() const {
 }
 // Accessor for the position vector
 inline glm::vec3 Object::position() const {
-  return position_;
+  return translation_;
 }
 // Accessor for the direction vector
 inline glm::vec3 Object::rotation() const {
@@ -170,7 +170,7 @@ inline glm::vec3 Object::rotation() const {
 // Sets the position
 //   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_position(glm::vec3 new_position) {
-  position_ = new_position;
+  translation_ = new_position;
 }
 // Sets the direction
 //   @warn requires a call to UpdateModelMatrix() afterwards
