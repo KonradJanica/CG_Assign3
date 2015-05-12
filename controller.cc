@@ -1,4 +1,6 @@
 #include "controller.h"
+#define DEG2RAD(x) ((x)*M_PI/180.0) 
+#define RAD2DEG(x) ((x)*180.0/M_PI) 
 
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
 //   Allows for Verbose Debugging Mode
@@ -19,9 +21,9 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename, 
-                     glm::vec3(0.0f, 0.0f, 10.0f),
-                     glm::vec3(0.0f, 90.0f, 0.0f),
-                     glm::vec3(1.0f, 1.0f, 1.0f));
+                     glm::vec3(0.0f, 0.3f, 10.0f), // Translation
+                     glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
+                     glm::vec3(0.3f, 0.3f, 0.3f)); // Scale
     car_->EnablePhysics(0.0001,0.00001,0);
   } else {
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
@@ -81,20 +83,31 @@ void Controller::EnableTerrain(const GLuint &program_id) {
 // The controllers physics update tick
 //   Checks keypresses and calculates acceleration
 void Controller::UpdatePhysics() {
+  const float MOVESPEED = 0.05f;
+  const float TURNRATE = 1.2f;
+
   if (is_key_pressed_hash_.at('w')) {
-    // car_->Accelerate(kPhysics::kMaxAcceleration);
+    glm::vec3 new_translation = car_->translation();
+    glm::vec3 rotation = car_->rotation();
+    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y));
+    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y));
+    car_->set_translation(new_translation);
   }
   if (is_key_pressed_hash_.at('s')) {
-    // car_->Accelerate(kPhysics::kMinAcceleration);
+    glm::vec3 new_translation = car_->translation();
+    glm::vec3 rotation = car_->rotation();
+    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y));
+    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y));
+    car_->set_translation(new_translation);
   }
   // No Acceleration
   if (!is_key_pressed_hash_.at('w') && !is_key_pressed_hash_.at('s')) {
     // car_->Accelerate(0);
   }
   if (is_key_pressed_hash_.at('a')) {
-    // car_->TurnLeft();
+    car_->set_rotation(glm::vec3(car_->rotation().x, car_->rotation().y + TURNRATE, car_->rotation().z));
   }
   if (is_key_pressed_hash_.at('d')) {
-    // car_->TurnRight();
+    car_->set_rotation(glm::vec3(car_->rotation().x, car_->rotation().y - TURNRATE, car_->rotation().z));
   }
 }

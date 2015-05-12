@@ -55,14 +55,14 @@ class Object {
     // Accessor for the current model matrix
     inline glm::mat4 model_matrix() const;
     // Accessor for the position vector
-    inline glm::vec3 position() const;
+    inline glm::vec3 translation() const;
     // Accessor for the rotation vector
     inline glm::vec3 rotation() const;
     ///////////
     // MUTATORS
     // Sets the position
     //   @warn requires a call to UpdateModelMatrix() afterwards
-    inline void set_position(glm::vec3 new_position);
+    inline void set_translation(glm::vec3 new_translation);
     // Sets the direction
     //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_rotation(glm::vec3 new_rotation);
@@ -158,7 +158,7 @@ inline glm::mat4 Object::model_matrix() const {
   return model_matrix_;
 }
 // Accessor for the position vector
-inline glm::vec3 Object::position() const {
+inline glm::vec3 Object::translation() const {
   return translation_;
 }
 // Accessor for the direction vector
@@ -169,8 +169,8 @@ inline glm::vec3 Object::rotation() const {
 // MUTATORS
 // Sets the position
 //   @warn requires a call to UpdateModelMatrix() afterwards
-inline void Object::set_position(glm::vec3 new_position) {
-  translation_ = new_position;
+inline void Object::set_translation(glm::vec3 new_translation) {
+  translation_ = new_translation;
 }
 // Sets the direction
 //   @warn requires a call to UpdateModelMatrix() afterwards
