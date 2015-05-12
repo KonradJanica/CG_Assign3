@@ -52,13 +52,13 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
     }
   }
 
-  const glm::mat4 &camera_matrix = camera->camera_matrix();
+  const glm::mat4 &view_matrix = camera->view_matrix();
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  normMatrix = glm::mat3(camera_matrix);
+  normMatrix = glm::mat3(view_matrix);
   const glm::mat4 &transform_matrix = object->model_matrix();
-  glm::mat4 position_matrix = camera_matrix * transform_matrix;
+  glm::mat4 position_matrix = view_matrix * transform_matrix;
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
@@ -68,7 +68,7 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
     glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
   }
   else {
-    glm::vec4 lightPos = camera_matrix * light_pos;
+    glm::vec4 lightPos = view_matrix * light_pos;
     glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
   }
 
@@ -119,8 +119,8 @@ void Renderer::RenderAxis(const Camera * camera) const {
     if (modelviewHandle1 == -1)
       exit(1);
 
-    const glm::mat4 &camera_matrix = camera->camera_matrix();
-    glUniformMatrix4fv( modelviewHandle1, 1, false, glm::value_ptr(camera_matrix));
+    const glm::mat4 &view_matrix = camera->view_matrix();
+    glUniformMatrix4fv( modelviewHandle1, 1, false, glm::value_ptr(view_matrix));
 
     // Set VAO to the square model and draw three in different positions
     glBindVertexArray(coord_vao_handle);
@@ -222,12 +222,12 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
     }
   }
 
-  const glm::mat4 &camera_matrix = camera->camera_matrix();
+  const glm::mat4 &view_matrix = camera->view_matrix();
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(camera_matrix);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(camera_matrix) ); // Middle
+  normMatrix = glm::mat3(view_matrix);
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   // Update the light position, transform from world coord to eye coord before sending
@@ -236,7 +236,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
     glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
   }
   else {
-    glm::vec4 lightPos = camera_matrix * light_pos;
+    glm::vec4 lightPos = view_matrix * light_pos;
     glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
   }
 

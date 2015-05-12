@@ -53,7 +53,7 @@ class Camera {
     // Update the Camera Matrix
     void UpdateCamera();
     // Accessor for the camera matrix
-    inline glm::mat4 camera_matrix() const;
+    inline glm::mat4 view_matrix() const;
     // Mutates the cameras position
     inline void ResetPosition(const glm::vec3 &camera_position);
     // Accessor for the Current Zoom Aspect Ratio
@@ -76,7 +76,7 @@ class Camera {
 
   private:
     // The modelview matrix for the viewing camera
-    glm::mat4 camera_matrix_;
+    glm::mat4 view_matrix_;
     // The Position of the Camera
     glm::vec3 cam_pos_;
     // The Front (or back depends on your visualization) position of the camera
@@ -107,8 +107,8 @@ class Camera {
     bool is_right_button_;
 };
 
-inline glm::mat4 Camera::camera_matrix() const {
-  return camera_matrix_;
+inline glm::mat4 Camera::view_matrix() const {
+  return view_matrix_;
 }
 // Trues the key hash on key down event
 //   @param a key corresponding to is_key_pressed_hash_
