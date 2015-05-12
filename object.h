@@ -44,7 +44,7 @@ class Object {
     };
 
     // Construct with position setting parameters
-    Object(const glm::vec3 &position, const glm::vec3 &rotation = (0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1));
+    Object(const glm::vec3 &position, const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist

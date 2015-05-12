@@ -41,7 +41,7 @@ class Model : public Object {
 
     Model(const GLuint &program_id, const std::string &model_filename, 
         // Below are optional variables for object (parent) construction
-        const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &direction = glm::vec3(0,0,1), const glm::vec3 &up = glm::vec3(0,1,0), const glm::vec3 &scale = glm::vec3(1,1,1));
+        const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &rotation = glm::vec3(0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model

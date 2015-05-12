@@ -3,6 +3,7 @@
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
   : position_(position), rotation_(rotation), scale_(scale), physics_extension_(0) {
+    model_matrix_ = glm::mat4(1); //identity
     UpdateModelMatrix();
   }
 

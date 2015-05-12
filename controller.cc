@@ -16,10 +16,10 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 //   TODO split Car into it's own
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
-    car_ = new Model(program_id, model_filename, glm::vec3(-0.8,-0.3,10), glm::vec3(0,0,-1), glm::vec3(0,1,0), glm::vec3(0.3,0.3,0.3));
+    car_ = new Model(program_id, model_filename, glm::vec3(0.0,0.0,0.0));
     car_->EnablePhysics(0.0001,0.00001,0);
   } else {
-    Object * object = new Model(program_id, model_filename, glm::vec3(0,0,-10));
+    Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
     objects_.push_back(object);
   }
 
