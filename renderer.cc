@@ -57,9 +57,9 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   normMatrix = glm::mat3(view_matrix);
-  const glm::mat4 &transform_matrix = object->model_matrix();
-  glm::mat4 position_matrix = view_matrix * transform_matrix;
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
+  const glm::mat4 &model_matrix = object->model_matrix();
+  glm::mat4 modelview_matrix = view_matrix * model_matrix;
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   // Update the light position, transform from world coord to eye coord before sending
