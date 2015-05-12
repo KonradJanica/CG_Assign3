@@ -7,7 +7,7 @@
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely
 Controller::Controller(const Renderer * r, const bool &debug_flag) 
-  : renderer_(r), light_pos_(glm::vec4(0,0,0,0)), is_debugging_(debug_flag) {
+  : renderer_(r), light_pos_(glm::vec4(0,0,0,0)), delta_time_(0), last_frame_(0), is_debugging_(debug_flag) {
   camera_ = new Camera;
   is_key_pressed_hash_.reserve(256);
   is_key_pressed_hash_.resize(256);
@@ -85,21 +85,26 @@ void Controller::EnableTerrain(const GLuint &program_id, const GLuint &water_id)
 // The controllers physics update tick
 //   Checks keypresses and calculates acceleration
 void Controller::UpdatePhysics() {
-  const float MOVESPEED = 0.05f;
+  const float MOVESPEED = 0.01f;
   const float TURNRATE = 1.2f;
+
+  // TODO remove this and make only 1 delta time calculation
+  GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
+  delta_time_ = current_frame - last_frame_;
+  last_frame_ = current_frame;
 
   if (is_key_pressed_hash_.at('w')) {
     glm::vec3 new_translation = car_->translation();
     glm::vec3 rotation = car_->rotation();
-    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y));
-    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y));
+    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y)) * delta_time_;
+    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y)) * delta_time_;
     car_->set_translation(new_translation);
   }
   if (is_key_pressed_hash_.at('s')) {
     glm::vec3 new_translation = car_->translation();
     glm::vec3 rotation = car_->rotation();
-    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y));
-    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y));
+    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y)) * delta_time_;
+    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y)) * delta_time_;
     car_->set_translation(new_translation);
   }
   // No Acceleration

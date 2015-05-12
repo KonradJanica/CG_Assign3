@@ -92,6 +92,9 @@ class Controller {
     // The position of the Light for lighting
     glm::vec4 light_pos_;
 
+    float delta_time_;
+    float last_frame_;
+
     // Hash representing keys pressed
     std::vector<bool> is_key_pressed_hash_;
 
