@@ -83,9 +83,9 @@ int g_window_x = 640;
 int g_window_y = 480;
 
 void UpdateProjection() {
+  glm::mat4 projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
   for (unsigned int i = 0; i < 3; i++) {
     glUseProgram(g_program_id[i]);
-    glm::mat4 projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
     assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
     glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
@@ -197,6 +197,26 @@ void SpecialReleased( int key, int x, int y )
   g_camera->KeyReleased(key);
 }
 
+/**
+ * Called while a keyboard key release is detected
+ * This GLUT functions is not OpenGL specific, but allows interactivity to our programs
+ * @param key, the keyboard key that made the event
+ * @param x, not used
+ * @param y, not used
+ */
+void KeyboardUp(unsigned char key, int x, int y) {
+
+  // We simply check the key argument against characters we care about, in this case A and D
+  switch(key) 
+  {
+    case 'w':
+    case 's':
+    case 'a':
+    case 'd':
+      g_controller->KeyReleased(key);
+      break;
+  }
+}
 
 /**
  * Called while a keyboard key press is detected
@@ -210,6 +230,12 @@ void keyboardDown(unsigned char key, int x, int y) {
   // We simply check the key argument against characters we care about, in this case A and D
   switch(key) 
   {
+    case 'w':
+    case 's':
+    case 'a':
+    case 'd':
+      g_controller->KeyPressed(key);
+      break;
     case 'f':
       {    
         g_fog_mode = (g_fog_mode + 1) % 5;
@@ -375,6 +401,7 @@ int main(int argc, char **argv) {
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
+  glutKeyboardUpFunc(KeyboardUp);
   glutMotionFunc(MotionFunc);
   glutMouseFunc(MouseFunc);
   glutSpecialFunc(SpecialPressed);
