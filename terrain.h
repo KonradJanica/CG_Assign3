@@ -73,6 +73,8 @@ class Terrain {
     std::vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     std::vector<unsigned int> road_vao_handle_;
+    // The VAO Handle for the water
+    unsigned int water_vao_handle_;
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
