@@ -7,6 +7,8 @@
 Controller::Controller(const Renderer * r, const bool &debug_flag) 
   : renderer_(r), light_pos_(glm::vec4(0,0,0,0)), is_debugging_(debug_flag) {
   camera_ = new Camera;
+  is_key_pressed_hash_.reserve(256);
+  is_key_pressed_hash_.resize(256);
 }
 
 // Adds a model to the member vector
@@ -71,4 +73,25 @@ void Controller::SetupLighting(const GLuint &program_id, const glm::vec3 &light_
 //   @warn terrain_ on heap, must be deleted after
 void Controller::EnableTerrain(const GLuint &program_id) {
   terrain_ = new Terrain(program_id);
+}
+
+// The controllers physics update tick
+//   Checks keypresses and calculates acceleration
+void Controller::UpdatePhysics() {
+  if (is_key_pressed_hash_.at('w')) {
+    // car_->Accelerate(kPhysics::kMaxAcceleration);
+  }
+  if (is_key_pressed_hash_.at('s')) {
+    // car_->Accelerate(kPhysics::kMinAcceleration);
+  }
+  // No Acceleration
+  if (!is_key_pressed_hash_.at('w') && !is_key_pressed_hash_.at('s')) {
+    // car_->Accelerate(0);
+  }
+  if (is_key_pressed_hash_.at('a')) {
+    // car_->TurnLeft();
+  }
+  if (is_key_pressed_hash_.at('d')) {
+    // car_->TurnRight();
+  }
 }

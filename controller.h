@@ -63,6 +63,16 @@ class Controller {
     // Accessor for Camera Object
     inline Camera * camera();
 
+    // CONTROLS
+    // The controllers physics update tick
+    //   Checks keypresses and calculates acceleration
+    //   TODO not sure if this belongs in public, can be used for lighting too etc.
+    void UpdatePhysics();
+    // Trues the key hash on key down event
+    inline void KeyPressed(const int &key);
+    // Falses the key hash on key down event
+    inline void KeyReleased(const int &key);
+
   private:
     // The renderer reference
     const Renderer * renderer_;
@@ -81,6 +91,9 @@ class Controller {
 
     // The position of the Light for lighting
     glm::vec4 light_pos_;
+
+    // Hash representing keys pressed
+    std::vector<bool> is_key_pressed_hash_;
 
     // Verbose Debugging mode
     bool is_debugging_;
@@ -134,6 +147,16 @@ inline float Controller::GetMin(unsigned int index, int e_numb) const {
 // Accessor for Camera Object
 inline Camera * Controller::camera() {
   return camera_;
+}
+// Trues the key hash on key down event
+//   @param a key corresponding to is_key_pressed_hash_
+inline void Controller::KeyPressed(const int &key) {
+  is_key_pressed_hash_.at(key) = true;
+}
+// Falses the key hash on key down event
+//   @param a key corresponding to is_key_pressed_hash_
+inline void Controller::KeyReleased(const int &key) {
+  is_key_pressed_hash_.at(key) = false;
 }
 
 #endif

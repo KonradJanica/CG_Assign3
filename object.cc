@@ -50,6 +50,19 @@ void Object::UpdateModelMatrix() {
   }
   // model_matrix_ = glm::lookAt(position_, pdirectionosition_+ direction_, up_);
 
-  //TODO TODO
-  model_matrix_ = glm::scale(model_matrix_, scale_);
+  // Scale of object
+  glm::mat4 scale = glm::scale(  glm::mat4(1.0f), 
+          glm::vec3(scale_.x, scale_.y, scale_.z));
+
+  // Rotation of object
+  glm::mat4 rotate = glm::mat4(1.0f);
+  rotate = glm::rotate(rotate, rotate_.x, glm::vec3(1, 0, 0));
+  rotate = glm::rotate(rotate, rotate_.y, glm::vec3(0, 1, 0));
+  rotate = glm::rotate(rotate, rotate_.z, glm::vec3(0, 0, 1));
+
+  // Translation of object
+  glm::mat4 translate = glm::translate(  glm::mat4(1.0f), 
+          glm::vec3(translate_.x, translate_.y, translate_.z));
+
+  model_matrix_ = translate * rotate * scale;
 }

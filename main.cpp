@@ -150,6 +150,9 @@ void idle() {
   // Keyboard camera movement tick
   g_camera->Movement();
 
+  // Physics movement tick
+  g_controller->UpdatePhysics();
+
   // Headlight dynamic lighting
   if (g_lighting_mode == 0) {
     float x,y,z;
@@ -247,18 +250,6 @@ void keyboardDown(unsigned char key, int x, int y) {
       }    
     case 27: // escape key pressed
       exit(0);
-      break;
-    case 'd': // Toggle depth test
-      if ( glIsEnabled( GL_DEPTH_TEST ) ) {
-        glDisable( GL_DEPTH_TEST );
-      }
-      else {
-        glEnable( GL_DEPTH_TEST );
-      }
-      glutPostRedisplay();
-      break;
-    case 's':
-      glutPostRedisplay();
       break;
     case 'c':
       if (g_coord_axis) {
