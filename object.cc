@@ -1,13 +1,8 @@
 #include "object.h"
 
-// Default constructor make identity transform with no scaling
-Object::Object() : position_(glm::vec3(0,0,0)), direction_(glm::vec3(0,0,1)), up_(glm::vec3(0,1,0)), scale_(glm::vec3(1,1,1)), physics_extension_(0) {
-  model_matrix_ = glm::mat4(1); //Identity matrix
-}
-
 // Construct with position setting parameters
-Object::Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale)
-  : position_(position), direction_(direction), up_(up), scale_(scale), physics_extension_(0) {
+Object::Object(const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
+  : position_(position), rotation_(rotation), scale_(scale), physics_extension_(0) {
     UpdateModelMatrix();
   }
 
@@ -50,8 +45,10 @@ void Object::UpdateModelMatrix() {
     last_frame = current_frame;
     // Calculate Physics
     physics_extension_->velocity += physics_extension_->acceleration * delta_time;
-    position_ += physics_extension_->velocity * direction_;
+    // position_ += physics_extension_->velocity * direction_;
   }
-  model_matrix_ = glm::lookAt(position_, position_+ direction_, up_);
+  // model_matrix_ = glm::lookAt(position_, pdirectionosition_+ direction_, up_);
+
+  //TODO TODO
   model_matrix_ = glm::scale(model_matrix_, scale_);
 }

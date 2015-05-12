@@ -43,10 +43,8 @@ class Object {
         delta_time(0), last_frame(0) {};
     };
 
-    // Default constructor make identity transform with no scaling
-    Object();
     // Construct with position setting parameters
-    Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale = glm::vec3(1,1,1));
+    Object(const glm::vec3 &position, const glm::vec3 &rotation = (0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1));
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
@@ -58,10 +56,8 @@ class Object {
     inline glm::mat4 model_matrix() const;
     // Accessor for the position vector
     inline glm::vec3 position() const;
-    // Accessor for the direction vector
-    inline glm::vec3 direction() const;
-    // Accessor for the up vector
-    inline glm::vec3 up() const;
+    // Accessor for the rotation vector
+    inline glm::vec3 rotation() const;
     ///////////
     // MUTATORS
     // Sets the position
@@ -69,10 +65,7 @@ class Object {
     inline void set_position(glm::vec3 new_position);
     // Sets the direction
     //   @warn requires a call to UpdateModelMatrix() afterwards
-    inline void set_direction(glm::vec3 new_direction);
-    // Sets the up
-    //   @warn requires a call to UpdateModelMatrix() afterwards
-    inline void set_up(glm::vec3 new_up);
+    inline void set_rotation(glm::vec3 new_rotation);
     ///////////
     // PHYSICS
     // Enables the physics extension
@@ -142,10 +135,8 @@ class Object {
     // glLookAt transformations
     // The position of the object in the world
     glm::vec3 position_;
-    // The direction the object is facing
-    glm::vec3 direction_;
-    // The up vector of the object
-    glm::vec3 up_;
+    // The rotation the object is facing
+    glm::vec3 rotation_;
 
     /////////////////
     // glm::scale transformation
@@ -171,12 +162,8 @@ inline glm::vec3 Object::position() const {
   return position_;
 }
 // Accessor for the direction vector
-inline glm::vec3 Object::direction() const {
-  return direction_;
-}
-// Accessor for the up vector
-inline glm::vec3 Object::up() const {
-  return up_;
+inline glm::vec3 Object::rotation() const {
+  return rotation_;
 }
 ///////////
 // MUTATORS
@@ -187,12 +174,7 @@ inline void Object::set_position(glm::vec3 new_position) {
 }
 // Sets the direction
 //   @warn requires a call to UpdateModelMatrix() afterwards
-inline void Object::set_direction(glm::vec3 new_direction) {
-  direction_ = new_direction;
-}
-// Sets the up
-//   @warn requires a call to UpdateModelMatrix() afterwards
-inline void Object::set_up(glm::vec3 new_up) {
-  up_ = new_up;
+inline void Object::set_rotation(glm::vec3 new_rotation) {
+  rotation_ = new_rotation;
 }
 #endif
