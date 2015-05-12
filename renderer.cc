@@ -222,7 +222,7 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat4 view_matrix2;
-  view_matrix2 = glm::translate(view_matrix, glm::vec3(-20.0f, -6.0f, -10.0f));
+  view_matrix2 = glm::translate(view_matrix, glm::vec3(-20.0f, -3.0f, -10.0f));
   glm::mat3 normMatrix;
   normMatrix = glm::mat3(view_matrix2);
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix2) ); // Middle
