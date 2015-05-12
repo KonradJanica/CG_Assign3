@@ -185,6 +185,89 @@ void Renderer::EnableAxis(const GLuint &program_id) {
 
 }
 
+void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const {
+  GLuint program_id = terrain->terrain_water_id_;
+  //std::cout << program_id << std::endl;
+  glUseProgram(program_id);
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  // glLineWidth(1.0f);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // Setup Handles
+  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
+  int lightposHandle = glGetUniformLocation(program_id, "light_pos");
+  int texHandle = glGetUniformLocation(program_id, "texMap");
+  if (mvHandle == -1 || normHandle==-1 || lightposHandle == -1 || texHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  // Uniform variables defining material colours
+  // These can be changed for each sphere, to compare effects
+  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(program_id, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find material uniform variables\n");
+    }
+  }
+
+  const glm::mat4 &view_matrix = camera->view_matrix();
+  // We compute the normal matrix from the current modelview matrix
+  // and give it to our program
+  glm::mat4 view_matrix2;
+  view_matrix2 = glm::translate(view_matrix, glm::vec3(-20.0f, -6.0f, -10.0f));
+  glm::mat3 normMatrix;
+  normMatrix = glm::mat3(view_matrix2);
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix2) ); // Middle
+  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  // Update the light position, transform from world coord to eye coord before sending
+  if (light_pos.w == 0.0) {
+    glm::vec4 lightDir = glm::vec4(normMatrix * glm::vec3(light_pos), 0.0f);
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
+  }
+  else {
+    glm::vec4 lightPos = view_matrix * light_pos;
+    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
+  }
+
+  // Pass Surface Colours to Shader
+  const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
+  const glm::vec3 &vao_diffuse = glm::vec3(0.5f,0.5f,0.5f);
+  const glm::vec3 &vao_specular = glm::vec3(0.5f,0.5f,0.5f);
+  float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };  // ambient material
+  float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };  // diffuse material
+  float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };  // specular material
+  glUniform3fv(mtlambientHandle, 1, mtlambient);
+  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+  float mtlshininess = 0.8f; 
+  glUniform1fv(shininessHandle, 1, &mtlshininess);
+
+  // Bind VAO and texture - Terrain
+ 
+    glBindVertexArray(terrain->water_vao_handle_); 
+    glBindTexture(GL_TEXTURE_2D, terrain->water_texture_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
+
+    int amount = terrain->indice_count_water_;
+    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
+  
+
+  
+
+}
+
 // Draws/Renders the passed in terrain to the scene
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
 //   @param Camera * camera, to get the camera matrix and correctly position world

@@ -42,6 +42,8 @@ void Controller::Draw() {
   renderer_->Render(car_, camera_, light_pos_);
   // Terrain
   renderer_->Render(terrain_, camera_, light_pos_);
+
+  renderer_->RenderWater(terrain_, camera_, light_pos_);
   // Axis
   // TODO Toggle
   renderer_->RenderAxis(camera_);
@@ -76,8 +78,8 @@ void Controller::SetupLighting(const GLuint &program_id, const glm::vec3 &light_
 // Creates the Terrain object for RenderTerrain()
 //   Creates Terrain VAOs
 //   @warn terrain_ on heap, must be deleted after
-void Controller::EnableTerrain(const GLuint &program_id) {
-  terrain_ = new Terrain(program_id);
+void Controller::EnableTerrain(const GLuint &program_id, const GLuint &water_id) {
+  terrain_ = new Terrain(program_id, water_id);
 }
 
 // The controllers physics update tick

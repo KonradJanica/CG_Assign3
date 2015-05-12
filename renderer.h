@@ -46,6 +46,7 @@ class Renderer {
     void EnableAxis(const GLuint &program_id);
     // Render the terrain VAO from the terrain object
     //   @warn requires EnableTerrain()
+    void RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const;
     void RenderTerrain();
 
   private:
