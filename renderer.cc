@@ -260,7 +260,7 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
-    int amount = terrain->indice_count_water_;
+    int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
   }
 
