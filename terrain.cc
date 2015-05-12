@@ -1,6 +1,6 @@
 #include "terrain.h"
 
-Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) : terrain_program_id_(program_id), width_(width), height_(height) {
+Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height) : terrain_program_id_(program_id), terrain_water_id_(water_id), width_(width), height_(height) {
   // New Seed
   srand(time(NULL));
   // Setup Vars
@@ -18,7 +18,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   // 1st buffer
   texture_ = LoadTexture("textures/rock01.jpg");
   road_texture_ = LoadTexture("textures/road.jpg");
-  water_texture_ = LoadTexture("textures/rock04.jpg");
+  water_texture_ = LoadTexture("textures/water01.jpg");
 
 
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
@@ -46,138 +46,54 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
   GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
-  water_vao_handle_ = CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices);
+  water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
 
 }
 
 void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
     std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &float_heights_y) {
-  // Setup Vars
-  // float MIN_POSITION = -10.0f;
+  next_tile_start_[0] = 0;
+  next_tile_start_[1] = 0;
   // Setup Vars
   // float MIN_POSITION = -10.0f;
   float MIN_POSITION = 0.0f;
-  float POSITION_RANGE = 5.0f;
+  float POSITION_RANGE = 50.0f;
   int x_length = width_;
   int z_length = height_;
 
-  // Store the connecting row to smooth
-  std::vector<float> temp_last_row_heights;
-  for (unsigned int x = float_heights_y.size()-1; x >= float_heights_y.size()-1-x_length; --x) {
-    temp_last_row_heights.push_back(float_heights_y.at(x));
-  }
-
   float_heights_y.clear();
-  // float_heights_y.resize(x_length*z_length, 0.15f); // 2nd param is default height
-  float_heights_y.resize(x_length*z_length, 0.00f); // 2nd param is default height
-  for (unsigned int y = 0; y < z_length; ++y) {
-    for (unsigned int x = 0; x < x_length; ++x) {
-      // Normalize x between -1 and 1
-      float norm_x = (float)x / (x_length-1);
-      norm_x *= 2.0;
-      norm_x -= 1.0;
+  float_heights_y.resize(x_length*z_length, 0.0f);
 
-      // Height modelled using X^3
-      float_heights_y.at(x+y*x_length) = 20*(norm_x*norm_x*norm_x);
-    }
-  }
-
-  // Even out little section right of road
-  // TODO commented out to try and take position of road at 0.15f
-  // for (unsigned int x = 0; x < z_length; ++x) {
-  //   float_heights_y.at(x_length/2-1 + x*x_length) = 0.168f;
-  //   float_heights_y.at(x_length/2 + x*x_length) = 0.14f;
-  // }
-
-  // Randomize Top Terrain
-  int center_left_x = x_length/2 - x_length/4;
-  int center_z = z_length - z_length/2;
-  int x_position = center_left_x, z_position = center_z;
+  int x_position = 0, z_position = 0;
   for (unsigned int i = 0; i < 10000; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
-      case 1: x_position++;
-              break;
-      case 2: x_position--;
-              break;
-      case 3: z_position++;
-              break;
-      case 4: z_position--;
-              break;
+    case 1: x_position++;
+    break;
+    case 2: x_position--;
+    break;
+    case 3: z_position++;
+    break;
+    case 4: z_position--;
+    break;
     }
     if (x_position < 0) {
-      x_position = x_length/2-2;
-      // x_position = rand() % x_length/2;
-      continue;
-    } else if (x_position > x_length/2-2) {
-      // x_position = x_length/2;
-      // x_position = rand() % x_length/2;
-      x_position = 0;
-      continue;
-    }
-    if (z_position < 0) {
-      // z_position = 0;
-      // z_position = rand() % z_length;
-      z_position = z_length-1;
-      continue;
-    } else if (z_position > z_length-1) {
-      // z_position = z_length-1;
-      // z_position = rand() % z_length;
-      z_position = 0;
-      continue;
-    }
-    float_heights_y.at(x_position + z_position*x_length) -= 0.100f;
-  }
-
-  // Randomize Bottom Terrain
-  // x_position = x_length/2, z_position = z_length-1;
-  int center_right_x = x_length - x_length/2;
-  x_position = center_right_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000; ++i) {
-    int v = rand() % 4 + 1;
-    switch(v) {
-      case 1: x_position++;
-              break;
-      case 2: x_position--;
-              break;
-      case 3: z_position++;
-              break;
-      case 4: z_position--;
-              break;
-    }
-    if (x_position < x_length/2+4) {
-      // x_position = x_length/2;
-      // x_position = rand() % x_length/2 + x_length/2;
-      x_position = x_length-1;
-      continue;
+    x_position = x_length-1;
+    continue;
     } else if (x_position > x_length-1) {
-      // x_position = x_length-1;
-      // x_position = rand() % x_length/2 + x_length/2;
-      x_position = x_length/2+4;
-      continue;
+    x_position = 0;
+    continue;
     }
     if (z_position < 0) {
-      // z_position = 0;
-      // z_position = rand() % z_length;
-      z_position = z_length-1;
-      continue;
+    z_position = z_length-1;
+    continue;
     } else if (z_position > z_length-1) {
-      // z_position = z_length-1;
-      // z_position = rand() % z_length;
-      z_position = 0;
-      continue;
+    z_position = 0;
+    continue;
     }
     float_heights_y.at(x_position + z_position*x_length) += 0.100f;
-  }
+}
 
-  // TODO someone try fighting with this if you dare...
-  //   Something goes wrong with the normals at the connection
-  // Compare connection rows to eachother and smooth new one
-  for (unsigned int x = 0; x < x_length; ++x) {
-    // float_heights_y.at(x) = 0.0f;
-    float new_height = temp_last_row_heights.at(x_length-x-1) - float_heights_y.at(x);
-    float_heights_y.at(x) = new_height + float_heights_y.at(x);
-  }
 
   // Construct Heightmap
   vertices.clear();
@@ -217,13 +133,6 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
         max_x = xPosition;
     }
   }
-  // Calculate next_tile_start_.y position (next Z tile position)
-  next_tile_start_.y = max_z;
-
-  // Calculate next_tile_start_.x position (next X tile position)
-  float displacement_x = max_x - prev_max_x_;
-  prev_max_x_ = max_x - displacement_x;
-  next_tile_start_.x += displacement_x;
 
   // Create Index Data
   // 2 triangles for every quad of the terrain mesh
@@ -247,7 +156,7 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
       indices[index++] = vertexIndex + x_length + 1;        // V3
     }
   }
-  indice_count_ = indices.size();
+  indice_count_water_ = indices.size();
 
   // Create UV Coordinates
   texture_coordinates_uv.clear();
@@ -285,52 +194,6 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
   for ( unsigned int i = 0; i < normals.size(); ++i ) {
     normals[i] = glm::normalize( normals[i] );
   }
-
-  /////////////////////////////////////
-  //  ROAD - Extract middle flat section and make road VAO
-  //  BEWARD FULL OF MAGIC NUMBERS
-  ////////////////////////////////////
-  std::vector<glm::vec3> vertices_top;
-  std::vector<glm::vec3> normals_top;
-  std::vector<glm::vec2> texture_coordinates_uv_top;
-  std::vector<int> indices_top;
-
-  for (unsigned int x = 17*x_length/36; x < 22*x_length/36; ++x) {
-    for (unsigned int z = 0; z < z_length; ++z){
-      vertices_top.push_back(vertices.at(x + z*x_length));
-      // Lift road a bit above terrain to make it visible
-      vertices_top.at(vertices_top.size()-1).y += 0.01f;
-      normals_top.push_back(normals.at(x + z*x_length));
-    }
-  }
-
-  // Create UV Data
-  for (unsigned int x = 0; x < 5*x_length/36; ++x) {
-    for (unsigned int z = 0; z < z_length; ++z){
-      // The multiplications below change stretch of the texture (ie repeats)
-      texture_coordinates_uv_top.push_back(glm::vec2(texture_coordinates_uv.at(x + z*x_length).x * 3.2, texture_coordinates_uv.at(x + z*x_length).y * 1));
-    }
-  }
-
-  // Create Index Data
-  for (unsigned int j = 0; j < (4*z_length/36 - 0); ++j )
-  {
-    for (unsigned int i = 0; i < (x_length - 1); ++i )
-    {
-      int vertexIndex = ( j * x_length ) + i;
-      // Top triangle (T0)
-      indices_top.push_back(vertexIndex);                           // V0
-      indices_top.push_back(vertexIndex + x_length + 1);        // V3
-      indices_top.push_back(vertexIndex + 1);                       // V1
-      // Bottom triangle (T1)
-      indices_top.push_back(vertexIndex);                           // V0
-      indices_top.push_back(vertexIndex + x_length);            // V2
-      indices_top.push_back(vertexIndex + x_length + 1);        // V3
-    }
-  }
-  road_indice_count_ = indices_top.size();
-
-  road_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices_top, normals_top, texture_coordinates_uv_top, indices_top));
 }
 
 //  @warn also generates a road VAO and pushes back into it
@@ -909,7 +772,7 @@ unsigned int Terrain::CreateVao(const GLuint &program_id, const std::vector<glm:
   //////////////////////////////
   //Create axis VAO         ////
   //////////////////////////////
-  glUseProgram(terrain_program_id_);
+  glUseProgram(program_id);
 
   assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
 

@@ -186,7 +186,8 @@ void Renderer::EnableAxis(const GLuint &program_id) {
 }
 
 void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const {
-  GLuint program_id = terrain->terrain_program_id();
+  GLuint program_id = terrain->terrain_water_id_;
+  //std::cout << program_id << std::endl;
   glUseProgram(program_id);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // glLineWidth(1.0f);
@@ -221,7 +222,7 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat4 view_matrix2;
-  view_matrix2 = glm::translate(view_matrix, glm::vec3(0.0f, -50.0f, 0.0f));
+  view_matrix2 = glm::translate(view_matrix, glm::vec3(-20.0f, -6.0f, -10.0f));
   glm::mat3 normMatrix;
   normMatrix = glm::mat3(view_matrix2);
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix2) ); // Middle
@@ -251,34 +252,18 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
   // Bind VAO and texture - Terrain
-  const std::vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
-  for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
+ 
     glBindVertexArray(terrain->water_vao_handle_); 
-    glBindTexture(GL_TEXTURE_2D, terrain->texture());
+    glBindTexture(GL_TEXTURE_2D, terrain->water_texture_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
-    int amount = terrain->indice_count();
+    int amount = terrain->indice_count_water_;
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
-  }
+  
 
-  //////////////////////////
-  // ROADS
-  int amount = terrain->road_indice_count();
-  const std::vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
-  for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
-    // Bind VAO Road
-    glBindVertexArray(road_vao_handle.at(x)); 
-    glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
-    // We are using texture unit 0 (the default)
-    glUniform1i(texHandle, 0);
-
-    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
-  }
   
 
 }

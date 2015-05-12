@@ -71,6 +71,6 @@ void Controller::SetupLighting(const GLuint &program_id, const glm::vec3 &light_
 // Creates the Terrain object for RenderTerrain()
 //   Creates Terrain VAOs
 //   @warn terrain_ on heap, must be deleted after
-void Controller::EnableTerrain(const GLuint &program_id) {
-  terrain_ = new Terrain(program_id);
+void Controller::EnableTerrain(const GLuint &program_id, const GLuint &water_id) {
+  terrain_ = new Terrain(program_id, water_id);
 }

@@ -55,7 +55,7 @@ Renderer *g_renderer;
 Controller *g_controller;
 
 // Our shader program
-GLuint g_program_id[3];
+GLuint g_program_id[4];
 
 // Background controls
 enum Colours {
@@ -83,7 +83,7 @@ int g_window_x = 640;
 int g_window_y = 480;
 
 void UpdateProjection() {
-  for (unsigned int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 4; i++) {
     glUseProgram(g_program_id[i]);
     glm::mat4 projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
@@ -158,6 +158,15 @@ void idle() {
     z = g_camera->cam_pos().z;
     g_controller->SetLightPosition(x,y,z,1.0f);
   }
+   glUseProgram(g_program_id[3]);
+   int timeHandle = glGetUniformLocation(g_program_id[3], "elapsed");
+    if(timeHandle == -1)
+    {
+    printf("Could not get handle for time var \n");
+    }
+    printf("sending time %d\n", time);
+   
+    glUniform1f(timeHandle, time+1); 
 
   glutPostRedisplay();
 }
@@ -352,6 +361,11 @@ int main(int argc, char **argv) {
   if (g_program_id[2] == 0)
     return 1;
 
+  g_program_id[3] = LoadShaders("shaders/water.vert", "shaders/water.frag");
+  if (g_program_id[3] == 0)
+    return 1;
+  std::cout << g_program_id[3] << std::endl;
+
 
   g_renderer = new Renderer();
   //Construct Axis VAO
@@ -371,7 +385,7 @@ int main(int argc, char **argv) {
   g_camera = g_controller->camera();
 
   // Setup terrain
-  g_controller->EnableTerrain(g_program_id[2]);
+  g_controller->EnableTerrain(g_program_id[2], g_program_id[2]);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);

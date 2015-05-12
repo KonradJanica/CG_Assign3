@@ -49,7 +49,7 @@ class Controller {
     // Creates the Terrain object for RenderTerrain()
     //   Creates Terrain VAOs
     //   @warn terrain_ on heap, must be deleted after
-    void EnableTerrain(const GLuint &program_id);
+    void EnableTerrain(const GLuint &program_id, const GLuint &water_id);
     // Setup Light Components into Uniform Variables for Shader
     void SetupLighting(const GLuint &program_id, const glm::vec3 &light_ambient, const glm::vec3 &light_diffuse, const glm::vec3 &light_specular, const GLint &light_toggle_in = 1);
     // Set the position of the Light

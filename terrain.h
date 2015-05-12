@@ -23,7 +23,7 @@
 class Terrain {
   public:
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width = 32, const int &height = 32);
+    Terrain(const GLuint &program_id, const GLuint &water_id, const int &width = 32, const int &height = 32);
 
     // // Render the scene (all member models)
     // void Render();
@@ -31,8 +31,10 @@ class Terrain {
     // THe texture for water
     GLuint water_texture_;
 
+    GLuint terrain_water_id_;
+
     // The VAO Handle for the water
-    GLuint water_vao_handle_;
+    unsigned int water_vao_handle_;
 
     unsigned int indice_count_water_;
     
