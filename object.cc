@@ -2,13 +2,13 @@
 
 // Default constructor make identity transform with no scaling
 Object::Object() : position_(glm::vec3(0,0,0)), direction_(glm::vec3(0,0,1)), up_(glm::vec3(0,1,0)), scale_(glm::vec3(1,1,1)), physics_extension_(0) {
-  transform_ = glm::mat4(1); //Identity matrix
+  model_matrix_ = glm::mat4(1); //Identity matrix
 }
 
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale)
   : position_(position), direction_(direction), up_(up), scale_(scale), physics_extension_(0) {
-    UpdateTransform();
+    UpdateModelMatrix();
   }
 
 // Enables the physics extension
@@ -40,7 +40,7 @@ void Object::Deccelerate(const float &amount) {
 // Updates the transform matrix using glLookAt
 //  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
-void Object::UpdateTransform() {
+void Object::UpdateModelMatrix() {
   if (IsPhysics()) {
     // Calculate Delta Time to even out for different frame rates
     GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
@@ -52,6 +52,6 @@ void Object::UpdateTransform() {
     physics_extension_->velocity += physics_extension_->acceleration * delta_time;
     position_ += physics_extension_->velocity * direction_;
   }
-  transform_ = glm::lookAt(position_, position_+ direction_, up_);
-  transform_ = glm::scale(transform_, scale_);
+  model_matrix_ = glm::lookAt(position_, position_+ direction_, up_);
+  model_matrix_ = glm::scale(model_matrix_, scale_);
 }

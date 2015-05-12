@@ -12,7 +12,7 @@ Renderer::Renderer(const bool &debug_flag)
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
-//   @warn object not const because it is possibly changed with UpdateTransform()
+//   @warn object not const because it is possibly changed with UpdateModelMatrix()
 //   @warn this function is not responsible for NULL PTRs
 void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &light_pos) const {
   GLuint program_id = object->program_id();
@@ -57,7 +57,7 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   normMatrix = glm::mat3(camera_matrix);
-  const glm::mat4 &transform_matrix = object->transform();
+  const glm::mat4 &transform_matrix = object->model_matrix();
   glm::mat4 position_matrix = camera_matrix * transform_matrix;
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(position_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
@@ -100,7 +100,7 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
 
   // Update Physics
   if (object->IsPhysics()) {
-    object->UpdateTransform();
+    object->UpdateModelMatrix();
   }
 }
 

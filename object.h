@@ -25,7 +25,7 @@
 class Object {
   public:
     // The data required to move an object with physics
-    //   Data is updated in UpdateTransform()
+    //   Data is updated in UpdateModelMatrix()
     struct Physics {
       // The movement of the object in it's direction
       float velocity;
@@ -48,14 +48,14 @@ class Object {
     // Construct with position setting parameters
     Object(const glm::vec3 &position, const glm::vec3 &direction, const glm::vec3 &up, const glm::vec3 &scale = glm::vec3(1,1,1));
 
-    // Updates the transform matrix using glLookAt
+    // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
-    void UpdateTransform();
+    void UpdateModelMatrix();
     ////////////
     // ACCESSORS
-    // Accessor for the current transformation matrix
-    inline glm::mat4 transform() const;
+    // Accessor for the current model matrix
+    inline glm::mat4 model_matrix() const;
     // Accessor for the position vector
     inline glm::vec3 position() const;
     // Accessor for the direction vector
@@ -65,13 +65,13 @@ class Object {
     ///////////
     // MUTATORS
     // Sets the position
-    //   @warn requires a call to UpdateTransform() afterwards
+    //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_position(glm::vec3 new_position);
     // Sets the direction
-    //   @warn requires a call to UpdateTransform() afterwards
+    //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_direction(glm::vec3 new_direction);
     // Sets the up
-    //   @warn requires a call to UpdateTransform() afterwards
+    //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_up(glm::vec3 new_up);
     ///////////
     // PHYSICS
@@ -133,10 +133,10 @@ class Object {
     virtual unsigned int amount_points() const = 0;
 
   private:
-    // Transformation matrix Assosciated with object
-    //  Use UpdateTransform() to update
+    // Model matrix assosciated with object
+    //  Use UpdateModelMatrix() to update
     //  @warn Needs to be updated everytime glLookAt vectors (below) are changed
-    glm::mat4 transform_;
+    glm::mat4 model_matrix_;
 
     /////////////////
     // glLookAt transformations
@@ -162,9 +162,9 @@ class Object {
 
 ////////////
 // ACCESSORS
-// Accessor for the current transformation matrix
-inline glm::mat4 Object::transform() const {
-  return transform_;
+// Accessor for the current model matrix
+inline glm::mat4 Object::model_matrix() const {
+  return model_matrix_;
 }
 // Accessor for the position vector
 inline glm::vec3 Object::position() const {
@@ -181,17 +181,17 @@ inline glm::vec3 Object::up() const {
 ///////////
 // MUTATORS
 // Sets the position
-//   @warn requires a call to UpdateTransform() afterwards
+//   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_position(glm::vec3 new_position) {
   position_ = new_position;
 }
 // Sets the direction
-//   @warn requires a call to UpdateTransform() afterwards
+//   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_direction(glm::vec3 new_direction) {
   direction_ = new_direction;
 }
 // Sets the up
-//   @warn requires a call to UpdateTransform() afterwards
+//   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_up(glm::vec3 new_up) {
   up_ = new_up;
 }
