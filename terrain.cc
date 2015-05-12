@@ -18,6 +18,9 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   // 1st buffer
   texture_ = LoadTexture("textures/rock01.jpg");
   road_texture_ = LoadTexture("textures/road.jpg");
+  water_texture_ = LoadTexture("textures/rock04.jpg");
+
+
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
   // 3rd buffer
@@ -42,6 +45,160 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height) 
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
+  GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
+  water_vao_handle_ = CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices);
+
+}
+
+void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
+    std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &float_heights_y) {
+  // Setup Vars
+  // float MIN_POSITION = -10.0f;
+  float MIN_POSITION = 0.0f;
+  float POSITION_RANGE = 20.0f;
+  int x_length = width_;
+  int z_length = height_;
+
+  float_heights_y.clear();
+  float_heights_y.resize(x_length*z_length, 0.0f);
+
+  int x_position = 0, z_position = 0;
+  for (unsigned int i = 0; i < 10000; ++i) {
+    int v = rand() % 4 + 1;
+    switch(v) {
+    case 1: x_position++;
+    break;
+    case 2: x_position--;
+    break;
+    case 3: z_position++;
+    break;
+    case 4: z_position--;
+    break;
+    }
+    if (x_position < 0) {
+    x_position = x_length-1;
+    continue;
+    } else if (x_position > x_length-1) {
+    x_position = 0;
+    continue;
+    }
+    if (z_position < 0) {
+    z_position = z_length-1;
+    continue;
+    } else if (z_position > z_length-1) {
+    z_position = 0;
+    continue;
+    }
+    float_heights_y.at(x_position + z_position*x_length) -= 0.100f;
+}
+
+
+  // Construct Heightmap
+  vertices.clear();
+  vertices.resize(x_length * z_length);
+
+  int offset;
+
+  float max_z = -FLT_MAX; // Used to calculate next_tile_start_
+  // TODO min_x, max_x for turning
+  float max_x = -FLT_MAX;
+  // First, build the data for the vertex buffer
+  for (int y = 0; y < z_length; y++) {
+    for (int x = 0; x < x_length; x++) {
+      offset = (y*x_length)+x;
+      float xRatio = x / (float) (x_length - 1);
+
+      // Build our heightmap from the top down, so that our triangles are 
+      // counter-clockwise.
+      // float yRatio = 1.0f - (y / (float) (z_length - 1));
+      float yRatio = (y / (float) (z_length - 1));
+
+      float xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
+      float yPosition = float_heights_y.at(offset);
+      float zPosition = MIN_POSITION + (yRatio * POSITION_RANGE);
+
+        vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+            zPosition + next_tile_start_.y);
+
+      // Calculate next_tile_start_ position
+      //   Z always moves backwards
+      if (zPosition + next_tile_start_.y > max_z)
+        max_z = zPosition + next_tile_start_.y;
+      // Calulate next_tile_start_x position
+      //   X moves left and right
+      if (xPosition > max_x)
+        // max_x = xPosition + next_tile_start_.x;
+        max_x = xPosition;
+    }
+  }
+  // Calculate next_tile_start_.y position (next Z tile position)
+  next_tile_start_.y = max_z;
+
+  // Calculate next_tile_start_.x position (next X tile position)
+  float displacement_x = max_x - prev_max_x_;
+  prev_max_x_ = max_x - displacement_x;
+  next_tile_start_.x += displacement_x;
+
+  // Create Index Data
+  // 2 triangles for every quad of the terrain mesh
+  const unsigned int numTriangles = ( x_length - 1 ) * ( z_length - 1 ) * 2;
+  // 3 indices for each triangle in the terrain mesh
+  indices.clear();
+  indices.resize( numTriangles * 3 );
+  unsigned int index = 0; // Index in the index buffer
+  for (unsigned int j = 0; j < (z_length - 1); ++j )
+  {
+    for (unsigned int i = 0; i < (x_length - 1); ++i )
+    {
+      int vertexIndex = ( j * x_length ) + i;
+      // Top triangle (T0)
+      indices[index++] = vertexIndex;                           // V0
+      indices[index++] = vertexIndex + x_length + 1;        // V3
+      indices[index++] = vertexIndex + 1;                       // V1
+      // Bottom triangle (T1)
+      indices[index++] = vertexIndex;                           // V0
+      indices[index++] = vertexIndex + x_length;            // V2
+      indices[index++] = vertexIndex + x_length + 1;        // V3
+    }
+  }
+  indice_count_water_ = indices.size();
+
+  // Create UV Coordinates
+  texture_coordinates_uv.clear();
+  texture_coordinates_uv.resize(x_length*z_length);
+  // First, build the data for the vertex buffer
+  for (int y = 0; y < z_length; y++) {
+    for (int x = 0; x < x_length; x++) {
+      offset = (y*x_length)+x;
+      float xRatio = x / (float) (x_length - 1);
+
+      // Build our heightmap from the top down, so that our triangles are 
+      // counter-clockwise.
+      // float yRatio = 1.0f - (y / (float) (z_length - 1));
+      float yRatio = (y / (float) (z_length - 1));
+
+        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
+    }
+  }
+
+  //Create Normals
+  normals.clear();
+  normals.resize(x_length*z_length);
+  for ( unsigned int i = 0; i < indices.size(); i += 3 )  {
+    glm::vec3 v0 = vertices[ indices[i + 0] ];
+    glm::vec3 v1 = vertices[ indices[i + 1] ];
+    glm::vec3 v2 = vertices[ indices[i + 2] ];
+
+    glm::vec3 normal = glm::normalize( glm::cross( v1 - v0, v2 - v0 ) );
+
+    normals[ indices[i + 0] ] += normal;
+    normals[ indices[i + 1] ] += normal;
+    normals[ indices[i + 2] ] += normal;
+  }
+
+  for ( unsigned int i = 0; i < normals.size(); ++i ) {
+    normals[i] = glm::normalize( normals[i] );
+  }
 }
 
 //  @warn also generates a road VAO and pushes back into it

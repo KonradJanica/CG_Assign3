@@ -27,6 +27,14 @@ class Terrain {
 
     // // Render the scene (all member models)
     // void Render();
+
+    // THe texture for water
+    GLuint water_texture_;
+
+    // The VAO Handle for the water
+    GLuint water_vao_handle_;
+
+    unsigned int indice_count_water_;
     
     // Creates a texture pointer from file
     GLuint LoadTexture(const std::string &filename);
@@ -69,12 +77,12 @@ class Terrain {
     GLuint texture_;
     // The texture to be used for the road
     GLuint road_texture_;
+    
     // The VAO handle for the terrain
     std::vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     std::vector<unsigned int> road_vao_handle_;
-    // The VAO Handle for the water
-    unsigned int water_vao_handle_;
+
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
@@ -85,6 +93,12 @@ class Terrain {
     //   Mutates all the input parameters for CreateVAO
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
+        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
+    // TODO
+    // Water height map
+    //   Mutates all the input parameters for CreateVAO
+    //   @warn creates and pushes back a water VAO
+    void GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
         std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
     // TODO
     // Turning Terrain Piece

@@ -35,6 +35,8 @@ void Controller::Draw() {
   renderer_->Render(car_, camera_, light_pos_);
   // Terrain
   renderer_->Render(terrain_, camera_, light_pos_);
+
+  renderer_->RenderWater(terrain_, camera_, light_pos_);
   // Axis
   // TODO Toggle
   renderer_->RenderAxis(camera_);

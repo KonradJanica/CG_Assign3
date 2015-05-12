@@ -48,6 +48,8 @@ class Renderer {
     //   @warn requires EnableTerrain()
     void RenderTerrain();
 
+    void RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const;
+
   private:
     // The VAO Handle for the Axis Coordinates
     unsigned int coord_vao_handle;
