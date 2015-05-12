@@ -385,7 +385,7 @@ int main(int argc, char **argv) {
   g_camera = g_controller->camera();
 
   // Setup terrain
-  g_controller->EnableTerrain(g_program_id[2], g_program_id[2]);
+  g_controller->EnableTerrain(g_program_id[2], g_program_id[3]);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
