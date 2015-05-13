@@ -130,7 +130,10 @@ void Controller::UpdatePhysics() {
   road_tile1 = col.front();
   std::unordered_map<float,std::pair<float,float>>::const_iterator got = road_tile1.find(car_z);
   if (got == road_tile1.end()) {
-    printf("possible collision on Z, check next tile");
+    // printf("possible collision on Z, check next tile");
+    printf("assuming end of tile reached, pop!");
+    // TODO fix check end of tile...
+    terrain_->col_pop();
   } else {
     // Check if x is in range
     float min_x = got->second.first;

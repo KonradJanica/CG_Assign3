@@ -69,6 +69,11 @@ class Terrain {
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
     inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
+    // Pops the first collision map 
+    //   To be used after car has passed road tile
+    //   TODO remove and replace in circular buffer instead
+    //   @warn this is a test function (shouldn't be inline either)
+    inline void col_pop();
 
   private:
     // Width of the heightmap
@@ -175,6 +180,13 @@ inline int Terrain::road_indice_count() const {
 //     pair.first = min_x, pair.second = max_x
 inline std::queue<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
+}
+// Pops the first collision map 
+//   To be used after car has passed road tile
+//   TODO remove and replace in circular buffer instead
+//   @warn this is a test function (shouldn't be inline either)
+inline void Terrain::col_pop() {
+  collision_queue_hash_.pop();
 }
 
 #endif
