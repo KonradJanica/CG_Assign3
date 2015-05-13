@@ -66,6 +66,9 @@ class Terrain {
     // Accessor for the amount of indices
     //   Used in render to efficiently draw triangles
     inline int road_indice_count() const;
+    // Accessor for the collision checking data structure
+    //   See the collision_queue_hash_ member var (or this func implementation) for details
+    inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
 
   private:
     // Width of the heightmap
@@ -163,6 +166,15 @@ inline int Terrain::indice_count() const {
 //   Used in render to efficiently draw triangles
 inline int Terrain::road_indice_count() const {
   return road_indice_count_;
+}
+// Accessor for the collision checking data structure
+// A queue representing each road tile for collision checking
+//   Each key in the map represents a Z scanline
+//   Each pair of values of the key represents it's min X and max X
+//     i.e. it's bounding box of the road
+//     pair.first = min_x, pair.second = max_x
+inline std::queue<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
+  return collision_queue_hash_;
 }
 
 #endif
