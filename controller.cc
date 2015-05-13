@@ -1,6 +1,7 @@
 #include "controller.h"
-#define DEG2RAD(x) ((x)*M_PI/180.0) 
-#define RAD2DEG(x) ((x)*180.0/M_PI) 
+#define M_PI 3.14159265358979323846
+#define DEG2RAD(x) ((x)*M_PI/180.0)
+#define RAD2DEG(x) ((x)*180.0/M_PI)
 
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
 //   Allows for Verbose Debugging Mode

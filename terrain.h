@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <queue>
+#include <unordered_map>
+
 #include "model_data.h"
 #include "model.h"
 #include "camera.h"
@@ -84,6 +87,12 @@ class Terrain {
     std::vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     std::vector<unsigned int> road_vao_handle_;
+    // A queue representing each road tile for collision checking
+    //   Each key in the map represents a Z scanline
+    //   Each pair of values of the key represents it's min X and max X
+    //     i.e. it's bounding box of the road
+    //     pair.first = min_x, pair.second = max_x
+    std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
 
     // The current X,Z displacement from zero
     //   Used for joining tiles
