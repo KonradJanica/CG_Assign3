@@ -117,11 +117,11 @@ vec4 phongLight(in BaseLight light, in vec3 lightDirection, in vec3 normal)
     diffuseColour = vec4(diffuseFactor * light.DiffuseIntensity * mtl_diffuse, 1.0);
 
     vec3 reflectionVector = normalize(reflect(lightDirection, normal));
-    vec3 specularFactor = dot(reflectionVector, normal);
+    float specularFactor = dot(reflectionVector, normal);
 
     if (specularFactor > 0)
     {
-      specularColour = vec4(pow(reflectionFactor, shininess) * light.SpecularIntensity, 1.0); 
+      specularColour = vec4(pow(specularFactor, shininess) * light.SpecularIntensity, 1.0); 
     }
   }
 
@@ -139,12 +139,12 @@ vec4 calcPointLight(in PointLight light, in vec4 position, in vec3 normal)
   float distance = length(lightDirection);
   lightDirection = normalize(lightDirection);
 
-    vec4 colour = phongLight(light.Base, lightDirection, normal);
-    float attenuation = light.Atten.Constant +
-                        light.Linear * distance +
-                        light.Exp * distance * distance;
+  vec4 colour = phongLight(light.Base, lightDirection, normal);
+  float attenuation = light.Atten.Constant +
+                      light.Atten.Linear * distance +
+                      light.Atten.Exp * distance * distance;
 
-    return colour / attenuation;
+  return colour / attenuation;
 }
 
 vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
@@ -168,16 +168,16 @@ void main(void) {
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
 
-  vec4 litColour = calcDirectionalLight(normal);
+  vec4 litColour = calcDirectionalLight(normal_mv);
 
-  for (unsigned int i = 0; i < gNumPointLights; i++)
+  for (int i = 0; i < gNumPointLights; i++)
   {
     litColour += calcPointLight(gPointLights[i], vertex_mv, normal_mv);
   }
 
-  for (unsigned int i = 0; i < gNumSpotLights; i++)
+  for (int i = 0; i < gNumSpotLights; i++)
   {
-    litColour += calcSpotLight(gPointLights[i], vertex_mv, normal_mv);
+    litColour += calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
   }
 
 	//fragColour = litColour * texture(texMap, a_tex_coord);

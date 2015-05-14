@@ -30,14 +30,12 @@ class Renderer {
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
-    //   @param vec4 light_pos, The position of the Light for lighting
     //   @warn object not const because it is possibly changed with UpdateTransform()
-    void Render(Object * object, const Camera * camera, const glm::vec4 &light_pos) const;
+    void Render(Object * object, const Camera * camera) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
-    //   @param vec4 light_pos, The position of the Light for lighting
-    void Render(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const;
+    void Render(const Terrain * terrain, const Camera * camera) const;
     // Render Coordinate Axis 
     //   @param Camera * camera, to get the camera matrix and correctly position world
     //   @warn requires VAO from EnableAxis

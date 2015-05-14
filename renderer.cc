@@ -14,7 +14,7 @@ Renderer::Renderer(const bool &debug_flag)
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn object not const because it is possibly changed with UpdateModelMatrix()
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &light_pos) const {
+void Renderer::Render(Object * object, const Camera * camera) const {
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -30,8 +30,7 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
   }
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");
-  int lightposHandle = glGetUniformLocation(program_id, "light_pos");
-  if (mvHandle == -1 || normHandle==-1 || lightposHandle == -1) {
+  if (mvHandle == -1 || normHandle==-1) {
     if (is_debugging_) {
       assert(0 && "Error: can't find matrix uniforms\n");
     }
@@ -61,16 +60,6 @@ void Renderer::Render(Object * object, const Camera * camera, const glm::vec4 &l
   glm::mat4 modelview_matrix = view_matrix * model_matrix;
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-
-  // Update the light position, transform from world coord to eye coord before sending
-  if (light_pos.w == 0.0) {
-    glm::vec4 lightDir = glm::vec4(normMatrix * glm::vec3(light_pos), 0.0f);
-    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
-  }
-  else {
-    glm::vec4 lightPos = view_matrix * light_pos;
-    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
-  }
 
   const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
@@ -273,7 +262,7 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const {
+void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -282,9 +271,8 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
   // Setup Handles
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");
-  int lightposHandle = glGetUniformLocation(program_id, "light_pos");
   int texHandle = glGetUniformLocation(program_id, "texMap");
-  if (mvHandle == -1 || normHandle==-1 || lightposHandle == -1 || texHandle == -1) {
+  if (mvHandle == -1 || normHandle==-1 || texHandle == -1) {
     if (is_debugging_) {
       assert(0 && "Error: can't find matrix uniforms\n");
     }
@@ -312,16 +300,6 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
   normMatrix = glm::mat3(view_matrix);
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-
-  // Update the light position, transform from world coord to eye coord before sending
-  if (light_pos.w == 0.0) {
-    glm::vec4 lightDir = glm::vec4(normMatrix * glm::vec3(light_pos), 0.0f);
-    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightDir));
-  }
-  else {
-    glm::vec4 lightPos = view_matrix * light_pos;
-    glUniform4fv(lightposHandle, 1, glm::value_ptr(lightPos));
-  }
 
   // Pass Surface Colours to Shader
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);

@@ -1,6 +1,9 @@
 #ifndef ASSIGN3_LIGHT_CONTROLLER_H_
 #define ASSIGN3_LIGHT_CONTROLLER_H_
 
+#include <cassert>
+#include <iostream>
+#include <stdio.h>
 #include <vector>
 #include <GL/glew.h>
 #include "glm/glm.hpp"

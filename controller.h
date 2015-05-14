@@ -1,8 +1,8 @@
 #ifndef ASSIGN3_CONTROLLER_H_
 #define ASSIGN3_CONTROLLER_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 #include <cassert>
 #include "model_data.h"
 #include "model.h"
@@ -90,6 +90,14 @@ class Controller {
 
     // The light controller
     LightController * light_controller_;
+
+    // Lights
+    DirectionalLight directional_light_;
+    std::vector<PointLight> point_lights_; 
+    std::vector<SpotLight> spot_lights_;
+
+    // Updates light properties with view matrix from camera
+    void PositionLights();
 
     // The shader to use to render Axis Coordinates
     GLuint axis_program_id;

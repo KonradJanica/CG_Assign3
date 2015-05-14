@@ -35,12 +35,15 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
+  // Lights need to be transformed with view/normal matrix
+  PositionLights();
+
   // Spider-man
-  renderer_->Render(objects_.at(0), camera_, light_pos_);
+  renderer_->Render(objects_.at(0), camera_);
   // Car with physics
-  renderer_->Render(car_, camera_, light_pos_);
+  renderer_->Render(car_, camera_);
   // Terrain
-  renderer_->Render(terrain_, camera_, light_pos_);
+  renderer_->Render(terrain_, camera_);
 
   renderer_->RenderWater(terrain_, camera_, light_pos_);
   // Axis
@@ -48,18 +51,33 @@ void Controller::Draw() {
   renderer_->RenderAxis(camera_);
 }
 
+// Assumes SetupLighting() has been called, only updates essential light properties
+void Controller::PositionLights() {
+  glm::mat4 view_matrix = camera_->view_matrix();
+  glm::mat3 norm_matrix = glm::mat3(view_matrix);
+
+  DirectionalLight dirLight = directional_light_;
+  dirLight.Direction = norm_matrix * dirLight.Direction;
+
+  light_controller_->SetDirectionalLight(dirLight);
+}
+
 // Setup Light Components into Uniform Variables for Shader
 void Controller::SetupLighting(const GLuint &program_id) {
   light_controller_ = new LightController();
-  light_controller_->Init(program_id);
+  if (!light_controller_->Init(program_id)) {
+    fprintf(stderr, "Error initialising light controller\n");
+    exit(0);
+  }
 
   // Send directional light
-  DirectionalLight dirLight;
-  dirLight.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  dirLight.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
-  dirLight.SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-  dirLight.Direction = glm::vec3(0.0f, -1.0f, 0.0f);
-  light_controller_->SetDirectionalLight(dirLight);
+  directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
+  directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  directional_light_.Direction = glm::vec3(0.3f, -1.0f, -0.3f);
+  
+
+  // light_controller_->SetDirectionalLight(dirLight);
 
 /*
 
@@ -157,5 +175,5 @@ void Controller::UpdatePhysics() {
       printf("collision on x!");
     }
   }
-  printf("%f\n", current_frame);
+  // printf("%f\n", current_frame);
 }
