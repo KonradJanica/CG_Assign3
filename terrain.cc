@@ -23,25 +23,28 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
 
   GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
+  // next
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // next
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // next
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
+  // next
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // next
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // next
+  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+  // next
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // 3rd buffer
+  // next
   GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
   terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
 
@@ -477,6 +480,44 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
 
   road_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices_top, normals_top, texture_coordinates_uv_top, indices_top));
 
+  // Collision map for current road tile
+  std::unordered_map<float,std::pair<float,float>> tile_map;
+  tile_map.reserve(z_length);
+  std::pair<float,float> min_max_x_pair;
+  std::pair<float,std::pair<float,float>> next_scanline;
+  unsigned int x_new_row_size = 22*x_length/36 - 17*x_length/36;
+  // for (unsigned int z = 0; z < z_length; ++z){
+  // for (unsigned int x = 0; x < x_new_row_size; ++x) {
+  //   // Represents a Z scanline
+  //   float z_key = vertices_top.at(0 + z_length * x).z; // z coordinate of first vertice in row
+  //   min_max_x_pair.first = vertices_top.at(0 + z_length * x).x; // min x
+  //   min_max_x_pair.second = vertices_top.at(z_length-1 + z_length * x).x; // max x
+  //
+  //   printf("test = %f, z = %f\n", vertices_top.at(x).x, z_key);
+  //   printf("min x =%f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
+  // }
+  for (unsigned int z = 0; z < z_length; ++z){
+    float z_key = vertices_top.at(0 + z).z; // z coordinate of first vertice in row
+    z_key = round(z_key); // round value so key can be found
+    min_max_x_pair.first = vertices_top.at(0 + z).x; // min x
+    min_max_x_pair.second = vertices_top.at(z + z_length * (x_new_row_size - 1)).x; // max x
+
+    next_scanline.first = z_key;
+    next_scanline.second = min_max_x_pair;
+    tile_map.insert(next_scanline); // doesnt insert when duplicate
+    // tile_map[z_key] = min_max_x_pair; // overrides duplicates
+
+
+    // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
+    printf("z = %f\n", z_key);
+    printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
+  }
+
+  collision_queue_hash_.push(tile_map);
+  // for (auto& x: collision_queue_hash_.front()) {
+  //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
+  // }
+
 }
 
 //  @warn also generates a road VAO and pushes back into it
@@ -638,8 +679,8 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
       // xPosition = zPosition + xPosition;
 
-        vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
-            zPosition + next_tile_start_.y);
+      vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+          zPosition + next_tile_start_.y);
 
       // Calculate next_tile_start_ position
       //   Z always moves backwards
@@ -696,7 +737,7 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
       // float yRatio = 1.0f - (y / (float) (z_length - 1));
       float yRatio = (y / (float) (z_length - 1));
 
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
+      texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
     }
   }
 
@@ -764,6 +805,45 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
   road_indice_count_ = indices_top.size();
 
   road_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices_top, normals_top, texture_coordinates_uv_top, indices_top));
+
+  // Collision map for current road tile
+  std::unordered_map<float,std::pair<float,float>> tile_map;
+  tile_map.reserve(z_length);
+  std::pair<float,float> min_max_x_pair;
+  std::pair<float,std::pair<float,float>> next_scanline;
+  unsigned int x_new_row_size = 22*x_length/36 - 17*x_length/36;
+  // for (unsigned int z = 0; z < z_length; ++z){
+  // for (unsigned int x = 0; x < x_new_row_size; ++x) {
+  //   // Represents a Z scanline
+  //   float z_key = vertices_top.at(0 + z_length * x).z; // z coordinate of first vertice in row
+  //   min_max_x_pair.first = vertices_top.at(0 + z_length * x).x; // min x
+  //   min_max_x_pair.second = vertices_top.at(z_length-1 + z_length * x).x; // max x
+  //
+  //   printf("test = %f, z = %f\n", vertices_top.at(x).x, z_key);
+  //   printf("min x =%f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
+  // }
+  for (unsigned int z = 0; z < z_length; ++z){
+    float z_key = vertices_top.at(0 + z).z; // z coordinate of first vertice in row
+    z_key = round(z_key); // round value so key can be found
+    min_max_x_pair.first = vertices_top.at(0 + z).x; // min x
+    min_max_x_pair.second = vertices_top.at(z + z_length * (x_new_row_size - 1)).x; // max x
+
+    next_scanline.first = z_key;
+    next_scanline.second = min_max_x_pair;
+    tile_map.insert(next_scanline); // doesnt insert when duplicate
+    // tile_map[z_key] = min_max_x_pair; // overrides duplicates
+
+
+    // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
+    printf("z = %f\n", z_key);
+    printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
+  }
+
+  collision_queue_hash_.push(tile_map);
+  // for (auto& x: collision_queue_hash_.front()) {
+  //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
+  // }
+
 }
 
 unsigned int Terrain::CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,

@@ -1,6 +1,7 @@
 #include "controller.h"
-#define DEG2RAD(x) ((x)*M_PI/180.0) 
-#define RAD2DEG(x) ((x)*180.0/M_PI) 
+#define M_PI 3.14159265358979323846
+#define DEG2RAD(x) ((x)*M_PI/180.0)
+#define RAD2DEG(x) ((x)*180.0/M_PI)
 
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
 //   Allows for Verbose Debugging Mode
@@ -118,4 +119,31 @@ void Controller::UpdatePhysics() {
   if (is_key_pressed_hash_.at('d')) {
     car_->set_rotation(glm::vec3(car_->rotation().x, car_->rotation().y - TURNRATE, car_->rotation().z));
   }
+
+  ///////////////// COLLISION TESTING TODO TODO
+  const std::queue<std::unordered_map<float,std::pair<float,float>>> &col = terrain_->collision_queue_hash();
+  glm::vec3 new_translation = car_->translation();
+  float car_z = new_translation.z;
+  car_z = round(car_z);
+    // printf("car_z = %f\n", car_z);
+  std::unordered_map<float,std::pair<float,float>> road_tile1;
+  road_tile1 = col.front();
+  std::unordered_map<float,std::pair<float,float>>::const_iterator got = road_tile1.find(car_z);
+  if (got == road_tile1.end()) {
+    // printf("possible collision on Z, check next tile");
+    printf("assuming end of tile reached, pop!");
+    // TODO fix check end of tile...
+    terrain_->col_pop();
+  } else {
+    // Check if x is in range
+    float min_x = got->second.first;
+    float max_x = got->second.second;
+    float car_x = new_translation.x;
+    if (car_x >= min_x && car_x <= max_x) {
+      //inside bounds
+    } else {
+      printf("collision on x!");
+    }
+  }
+  printf("%f\n", current_frame);
 }
