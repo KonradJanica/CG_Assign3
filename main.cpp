@@ -292,34 +292,6 @@ void keyboardDown(unsigned char key, int x, int y) {
       }
       glutPostRedisplay();
       break;
-    case 'l':
-      if (g_lighting_mode == 0) {
-        std::cout << "Lighting Mode = Overhead (Directional) Static" << std::endl;
-        g_lighting_mode = 1;
-        float overhead_light = (g_controller->GetMax(0, Controller::kY) + 1) * 2;
-        // Ambient light disabled as per specs
-        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
-        g_controller->SetLightPosition(0,overhead_light,0,0);
-      } else if (g_lighting_mode == 1) {
-        std::cout << "Lighting Mode = Headlight (Point) Static" << std::endl;
-        g_lighting_mode = 2;
-        float front_light = (g_controller->GetMax(0, Controller::kZ) + 1) * 2;
-        // Ambient light disabled as per specs
-        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
-        g_controller->SetLightPosition(0,0,front_light,1.0f);
-      } else if (g_lighting_mode == 2){
-        std::cout << "Lighting Mode = None (Texturing Only)" << std::endl;
-        g_lighting_mode = 3;
-        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(0,0,0), 0);
-      } else {
-        std::cout << "Lighting Mode = Headlight (Point) Dynamic (Follows Camera)" << std::endl;
-        g_lighting_mode = 0;
-        g_controller->SetupLighting(g_program_id[2], glm::vec3(0,0,0), glm::vec3(1,1,1), glm::vec3(1,1,1));
-        // Dynamic headlight lighting in render
-        //   Triggered by g_light_mode == 0
-      }
-      glutPostRedisplay();
-      break;
   }
 }
 
@@ -393,10 +365,7 @@ int main(int argc, char **argv) {
   // g_renderer->AddModel(g_program_id[2], std::string(argv[1]));
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
   g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
-  //Setup default overhead light
-  float overhead_light = (g_controller->GetMax(0, Controller::kY) + 1) * 2;
-  // Last 0  =>  w = 0, meaning light doesn't have position  => directional light
-  g_controller->SetLightPosition(0,overhead_light,0,0);
+
   // Setup camera global
   g_camera = g_controller->camera();
 

@@ -22,7 +22,7 @@ ifneq (, $(findstring Darwin, $(PLATFORM)))
 endif
 
 CC = g++
-LINK = model_data.o model.o object.o terrain.o camera.o renderer.o controller.o main.o
+LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
 
 .PHONY:  clean
@@ -35,8 +35,11 @@ assign3$(EXT) : $(LINK) $(LIB)
 main.o : model_data.h model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
 
-controller.o : controller.cc controller.h renderer.h camera.h terrain.h object.h model.h
+controller.o : controller.cc controller.h light_controller.h renderer.h camera.h terrain.h object.h model.h
 	$(CC) $(CPPFLAGS) -c controller.cc
+
+light_controller.o: light_controller.cc light_controller.h
+	$(CC) $(CPPFLAGS) -c light_controller.cc
 
 renderer.o : renderer.cc renderer.h camera.h terrain.h object.h model.h
 	$(CC) $(CPPFLAGS) -c renderer.cc
