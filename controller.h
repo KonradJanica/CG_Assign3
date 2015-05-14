@@ -10,6 +10,7 @@
 #include "terrain.h"
 #include "object.h"
 #include "renderer.h"
+#include "light_controller.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -51,7 +52,7 @@ class Controller {
     //   @warn terrain_ on heap, must be deleted after
     void EnableTerrain(const GLuint &program_id, const GLuint &water_id);
     // Setup Light Components into Uniform Variables for Shader
-    void SetupLighting(const GLuint &program_id, const glm::vec3 &light_ambient, const glm::vec3 &light_diffuse, const glm::vec3 &light_specular, const GLint &light_toggle_in = 1);
+    void SetupLighting(const GLuint &program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
     // Accessor for largest vertex in indexed model
@@ -86,6 +87,10 @@ class Controller {
     Camera * camera_;
     // The terrain object
     Terrain * terrain_;
+
+    // The light controller
+    LightController * light_controller_;
+
     // The shader to use to render Axis Coordinates
     GLuint axis_program_id;
 

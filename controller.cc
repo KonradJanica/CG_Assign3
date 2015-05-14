@@ -30,8 +30,6 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
     objects_.push_back(object);
   }
-
-  SetupLighting(program_id, glm::vec3(0,0,0), glm::vec3(0.7,0.7,1), glm::vec3(1,1,1));
 }
 
 // Renders all models in the vector member
@@ -51,7 +49,20 @@ void Controller::Draw() {
 }
 
 // Setup Light Components into Uniform Variables for Shader
-void Controller::SetupLighting(const GLuint &program_id, const glm::vec3 &light_ambient, const glm::vec3 &light_diffuse, const glm::vec3 &light_specular, const GLint &light_toggle_in) {
+void Controller::SetupLighting(const GLuint &program_id) {
+  light_controller_ = new LightController();
+  light_controller_->Init(program_id);
+
+  // Send directional light
+  DirectionalLight dirLight;
+  dirLight.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  dirLight.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
+  dirLight.SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+  dirLight.Direction = glm::vec3(0.0f, -1.0f, 0.0f);
+  light_controller_->SetDirectionalLight(dirLight);
+
+/*
+
   glUseProgram(program_id);
   // Uniform lighting variables
   int lightambientHandle = glGetUniformLocation(program_id, "light_ambient");
@@ -73,7 +84,8 @@ void Controller::SetupLighting(const GLuint &program_id, const glm::vec3 &light_
   glUniform3fv(lightambientHandle, 1, lightambient);
   glUniform3fv(lightdiffuseHandle, 1, lightdiffuse);
   glUniform3fv(lightspecularHandle, 1, lightspecular);    
-  glUniform1i(lightToggleHandle, light_toggle);    
+  glUniform1i(lightToggleHandle, light_toggle);   
+  */ 
 }
 
 // Creates the Terrain object for RenderTerrain()

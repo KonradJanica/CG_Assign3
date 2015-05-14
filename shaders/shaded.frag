@@ -1,16 +1,51 @@
 #version 130
 
-// Toggles lighting - 0 = off, 1 = on 
-uniform int light_toggle;
-
 // 0 = No fog, 1 = Linear, 2 = Exponential, 3 = Exponentional (diff)
 uniform int fog_mode;
 
+struct BaseLight
+{
+  vec3 AmbientIntensity;
+  vec3 DiffuseIntensity;
+  vec3 SpecularIntensity;
+};
+
+struct Attenuation
+{
+  float Constant;
+  float Linear;
+  float Exp;
+};
+
+struct DirectionalLight
+{
+  BaseLight Base;
+  vec3 Direction;
+};
+
+struct PointLight
+{
+  BaseLight Base;
+  vec3 Position;
+  Attenuation Atten;
+};
+
+struct SpotLight
+{
+  PointLight Base;
+  vec3 Direction;
+  float CosineCutoff;
+};
+
+const int MAX_POINT_LIGHTS = 10;
+const int MAX_SPOT_LIGHTS = 10;
+
 // Light properties
-uniform vec4 light_pos;
-uniform vec3 light_ambient;
-uniform vec3 light_diffuse;
-uniform vec3 light_specular;
+uniform int gNumPointLights;
+uniform int gNumSpotLights;
+uniform DirectionalLight gDirectionalLight;
+uniform PointLight gPointLights[MAX_POINT_LIGHTS];
+uniform SpotLight gSpotLights[MAX_SPOT_LIGHTS];
 
 // Material properties
 uniform vec3 mtl_ambient;
@@ -68,36 +103,63 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
   return fogFac;
 }
 
-vec3 phongLight(in vec4 position, in vec3 norm)
+// lightDirection is the vector from the light source to the target point
+vec4 phongLight(in BaseLight light, in vec3 lightDirection, in vec3 normal)
+{ 
+  vec4 ambientColour = vec4(light.AmbientIntensity * mtl_ambient, 1.0);
+  vec4 diffuseColour = vec4(0.0, 0.0, 0.0, 0.0);
+  vec4 specularColour = vec4(0.0, 0.0, 0.0, 0.0);
+
+  float diffuseFactor = dot(-lightDirection, normal);
+
+  if (diffuseFactor > 0) 
+  {
+    diffuseColour = vec4(diffuseFactor * light.DiffuseIntensity * mtl_diffuse, 1.0);
+
+    vec3 reflectionVector = normalize(reflect(lightDirection, normal));
+    vec3 specularFactor = dot(reflectionVector, normal);
+
+    if (specularFactor > 0)
+    {
+      specularColour = vec4(pow(reflectionFactor, shininess) * light.SpecularIntensity, 1.0); 
+    }
+  }
+
+  return ambientColour + diffuseColour + specularColour;
+}
+
+vec4 calcDirectionalLight(in vec3 normal)
 {
-  // Direction from the light to the vertex
-  vec3 s;
-  if (light_pos.w == 0.0) {
-    s = normalize(light_pos.xyz); // light_pos is a direction
+  return phongLight(gDirectionalLight.Base, gDirectionalLight.Direction, normal);
+}
+
+vec4 calcPointLight(in PointLight light, in vec4 position, in vec3 normal)
+{
+  vec3 lightDirection = position.xyz - light.Position;
+  float distance = length(lightDirection);
+  lightDirection = normalize(lightDirection);
+
+    vec4 colour = phongLight(light.Base, lightDirection, normal);
+    float attenuation = light.Atten.Constant +
+                        light.Linear * distance +
+                        light.Exp * distance * distance;
+
+    return colour / attenuation;
+}
+
+vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
+{
+  vec3 lightToPositionDirection = normalize(position.xyz - light.Base.Position);
+  float spotFactor = dot(lightToPositionDirection, light.Direction);
+
+  if (spotFactor > light.CosineCutoff)
+  {
+    return calcPointLight(light.Base, position, normal);
   }
-  else {
-    s = normalize(vec3(light_pos - position)); // light_pos is a point
+  else 
+  {
+    return vec4(0.0, 0.0, 0.0, 0.0);
   }
-
-  // Direction from the eye to the vertex
-  vec3 v = normalize(-position.xyz);
-
-  // Direction of light reflected from the vertex
-  vec3 r = reflect( -s, norm );
-
-  vec3 ambient = light_ambient * mtl_ambient;
-
-  // The diffuse component
-  float sDotN = max( dot(s,norm), 0.0 );
-  vec3 diffuse = light_diffuse * mtl_diffuse * sDotN;
-
-  // Specular component
-  vec3 spec = vec3(0.0);
-  if ( sDotN > 0.0 )
-    spec = light_specular * mtl_specular *
-      pow( max( dot(r,v), 0.0 ), shininess );
-
-  return ambient + diffuse + spec;
 }
 
 void main(void) {
@@ -106,17 +168,19 @@ void main(void) {
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
 
-  vec4 litColour;
+  vec4 litColour = calcDirectionalLight(normal);
 
-
-
-  if (light_toggle == 1) {
-    litColour = vec4(phongLight(vertex_mv, normal_mv), 1.0);
+  for (unsigned int i = 0; i < gNumPointLights; i++)
+  {
+    litColour += calcPointLight(gPointLights[i], vertex_mv, normal_mv);
   }
-  else {
-    litColour = vec4(1.0, 1.0, 1.0, 1.0);
+
+  for (unsigned int i = 0; i < gNumSpotLights; i++)
+  {
+    litColour += calcSpotLight(gPointLights[i], vertex_mv, normal_mv);
   }
 
 	//fragColour = litColour * texture(texMap, a_tex_coord);
+
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
 }

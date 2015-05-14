@@ -309,7 +309,7 @@ int main(int argc, char **argv) {
   std::cout << "Controls: 'b' key to change Background Colour\n";
   std::cout << "Controls: 'd' key to toggle Depth Testing\n";
   std::cout << "Controls: 'c' key to toggle Axis Coordinates\n";
-  std::cout << "Controls: 'l' key to Cycle Lighting\n\n";
+  // std::cout << "Controls: 'l' key to Cycle Lighting\n\n";
   // std::cout << "Controls: 's' key to toggle Wireframe\n\n";
   std::cout << "Controls: 'Esc' key to Quit\n\n";
 
@@ -356,13 +356,12 @@ int main(int argc, char **argv) {
 
 
   g_renderer = new Renderer();
-  //Construct Axis VAO
+  // Construct Axis VAO
   g_renderer->EnableAxis(g_program_id[1]);
 
   g_controller = new Controller(g_renderer);
 
-  //Texture Shader
-  // g_renderer->AddModel(g_program_id[2], std::string(argv[1]));
+  // Texture Shader
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
   g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
 
@@ -371,6 +370,9 @@ int main(int argc, char **argv) {
 
   // Setup terrain
   g_controller->EnableTerrain(g_program_id[2], g_program_id[3]);
+
+  // Setup lighting
+  g_controller->SetupLighting(g_program_id[2]);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
