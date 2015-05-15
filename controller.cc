@@ -54,12 +54,29 @@ void Controller::Draw() {
 // Assumes SetupLighting() has been called, only updates essential light properties
 void Controller::PositionLights() {
   glm::mat4 view_matrix = camera_->view_matrix();
+  glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
   DirectionalLight dirLight = directional_light_;
   dirLight.Direction = norm_matrix * dirLight.Direction;
 
+  // TODO: Refactor creation of light. Split creation from re-positioning
+  SpotLight spotLight[1];
+  spotLight[0].AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  spotLight[0].DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+  spotLight[0].SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+
+  glm::mat4 spotLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.2f, 2.0f));
+  glm::mat3 spotLightNormMatx0 = glm::mat3(car_mv_matrix);
+
+  spotLight[0].Position = glm::vec3(car_mv_matrix * spotLightTranslation0 * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+  spotLight[0].Direction = spotLightNormMatx0 * glm::vec3(0.0f, -1.0f, 0.3f);
+  spotLight[0].Attenuation.Constant = 1.2f;
+  spotLight[0].Attenuation.Linear = 0.1f;
+  spotLight[0].Attenuation.Exp = 0.0f;
+
   light_controller_->SetDirectionalLight(dirLight);
+  light_controller_->SetSpotLights(1, spotLight);
 }
 
 // Setup Light Components into Uniform Variables for Shader
@@ -72,38 +89,16 @@ void Controller::SetupLighting(const GLuint &program_id) {
 
   // Send directional light
   directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
-  directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  directional_light_.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  // directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
+  directional_light_.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  // directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
   directional_light_.Direction = glm::vec3(0.3f, -1.0f, -0.3f);
+
+
   
 
   // light_controller_->SetDirectionalLight(dirLight);
-
-/*
-
-  glUseProgram(program_id);
-  // Uniform lighting variables
-  int lightambientHandle = glGetUniformLocation(program_id, "light_ambient");
-  int lightdiffuseHandle = glGetUniformLocation(program_id, "light_diffuse");
-  int lightspecularHandle = glGetUniformLocation(program_id, "light_specular");
-  int lightToggleHandle = glGetUniformLocation(program_id, "light_toggle");
-  if ( lightambientHandle == -1 ||
-      lightdiffuseHandle == -1 ||
-      lightspecularHandle == -1 ||
-      lightToggleHandle == -1) {
-    printf("Error: can't find light uniform variables, Model.cc approx line 90\n");
-  }
-
-  float lightambient[3] = { light_ambient.x, light_ambient.y, light_ambient.z };	// ambient light components
-  float lightdiffuse[3] = { light_diffuse.x, light_diffuse.y, light_diffuse.z };	// diffuse light components
-  float lightspecular[3] = { light_specular.x, light_specular.y, light_specular.z };	// specular light components
-  GLint light_toggle = light_toggle_in;
-
-  glUniform3fv(lightambientHandle, 1, lightambient);
-  glUniform3fv(lightdiffuseHandle, 1, lightdiffuse);
-  glUniform3fv(lightspecularHandle, 1, lightspecular);    
-  glUniform1i(lightToggleHandle, light_toggle);   
-  */ 
 }
 
 // Creates the Terrain object for RenderTerrain()

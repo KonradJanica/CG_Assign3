@@ -95,6 +95,7 @@ private:
 	GLint num_point_lights_location_;
 	GLint num_spot_lights_location_;
 
+	// Uniform locations for directional light
 	struct DirectionalLightLocation 
 	{
 		GLint AmbientIntensity;
@@ -117,6 +118,7 @@ private:
 		} Attenuation;
 	};
 
+	// Uniform locations for pointlights
 	std::vector<PointLightLocation> point_light_locations_;
 
 	struct SpotLightLocation
@@ -134,6 +136,7 @@ private:
 		} Attenuation;
 	};
 
+	// Uniform locations for spotlights
 	std::vector<SpotLightLocation> spot_light_locations_;
 };
 
