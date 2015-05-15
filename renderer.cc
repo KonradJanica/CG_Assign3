@@ -241,20 +241,15 @@ void Renderer::RenderWater(const Terrain * terrain, const Camera * camera, const
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
   // Bind VAO and texture - Terrain
- 
-    glBindVertexArray(terrain->water_vao_handle_); 
-    glBindTexture(GL_TEXTURE_2D, terrain->water_texture_);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
-    // We are using texture unit 0 (the default)
-    glUniform1i(texHandle, 0);
+  glBindVertexArray(terrain->water_vao_handle_);
+  glBindTexture(GL_TEXTURE_2D, terrain->water_texture_);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  // We are using texture unit 0 (the default)
+  glUniform1i(texHandle, 0);
 
-    int amount = terrain->indice_count_water_;
-    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
-  
-
-  
-
+  int amount = terrain->indice_count_water_;
+  glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0); // New call
 }
 
 // Draws/Renders the passed in terrain to the scene

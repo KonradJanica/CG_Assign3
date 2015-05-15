@@ -509,9 +509,9 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
 
 
     // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
-    /*printf("z = %f\n", z_key);
+    printf("z = %f\n", z_key);
     printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
-  */}
+  }
 
   collision_queue_hash_.push(tile_map);
   // for (auto& x: collision_queue_hash_.front()) {
@@ -835,9 +835,9 @@ void Terrain::GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<
 
 
     // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
-    /*printf("z = %f\n", z_key);
+    printf("z = %f\n", z_key);
     printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
-  */}
+  }
 
   collision_queue_hash_.push(tile_map);
   // for (auto& x: collision_queue_hash_.front()) {

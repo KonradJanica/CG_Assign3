@@ -175,5 +175,5 @@ void Controller::UpdatePhysics() {
       printf("collision on x!");
     }
   }
-  // printf("%f\n", current_frame);
+  printf("%f\n", current_frame);
 }
