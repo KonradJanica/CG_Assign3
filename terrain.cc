@@ -5,10 +5,9 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     // New Seed
     srand(time(NULL));
     // Setup Vars
-    // TODO fix the heights.resize magic number - reappears in heights_
     heights_.resize(x_length_ * z_length_, 0.0f); // Magic number needs to be the same as inside the functions
     next_tile_start_ = glm::vec2(-10,-10);
-    prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from MIN_POSITION
+    prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from min_position
 
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");
@@ -60,9 +59,9 @@ void Terrain::RandomizeGeneration() {
 // TODO if this becomes another dynamic tile then dont regenerate height vector (its expensive)
 void Terrain::GenerateWater() {
   // Setup Vars
-  // float MIN_POSITION = -10.0f;
-  float MIN_POSITION = 0.0f;
-  float POSITION_RANGE = 50.0f;
+  // float min_position = -10.0f;
+  float min_position = 0.0f;
+  float position_range = 50.0f;
 
   // (COMMENTED OUT) I don't think this entire block actually does anything?
   //
@@ -102,7 +101,7 @@ void Terrain::GenerateWater() {
 
   water_heights_.assign(x_length_*z_length_, 0.0f);
 
-  HelperMakeVertices(MIN_POSITION, POSITION_RANGE, 1, 1);
+  HelperMakeVertices(kStraight, kWater, min_position, position_range);
   HelperMakeNormals();
   unsigned int water_vao = CreateVao(terrain_water_id_);
   water_vao_handle_ = water_vao;
@@ -112,18 +111,13 @@ void Terrain::GenerateWater() {
 // TODO comment
 //  @warn also generates a road VAO and pushes back into it
 void Terrain::GenerateTerrain() {
-  // Setup Vars
-  // float MIN_POSITION = -10.0f;
-  float MIN_POSITION = 0.0f;
-  float POSITION_RANGE = 20.0f;
-
   // Optimize to not recreate Indices and UV as 
   // they never change after the first tile
   if (indice_count() == 0)
     HelperMakeIndicesAndUV();
 
   HelperMakeHeights();
-  HelperMakeVertices(MIN_POSITION, POSITION_RANGE, 0);
+  HelperMakeVertices(kStraight);
   HelperMakeNormals();
   unsigned int terrain_vao = CreateVao(terrain_program_id_);
   terrain_vao_handle_.push_back(terrain_vao);
@@ -147,18 +141,13 @@ void Terrain::GenerateTerrain() {
 // TODO comment
 //  @warn also generates a road VAO and pushes back into it
 void Terrain::GenerateTerrainTurn() {
-  // Setup Vars
-  // float MIN_POSITION = -10.0f;
-  float MIN_POSITION = 0.0f;
-  float POSITION_RANGE = 20.0f;
-
   // Optimize to not recreate Indices and UV as 
   // they never change after the first tile
   if (indice_count() == 0)
     HelperMakeIndicesAndUV();
 
   HelperMakeHeights();
-  HelperMakeVertices(MIN_POSITION, POSITION_RANGE, 1);
+  HelperMakeVertices(kTurnLeft);
   HelperMakeNormals();
   unsigned int terrain_vao = CreateVao(terrain_program_id_);
   terrain_vao_handle_.push_back(terrain_vao);
@@ -294,7 +283,8 @@ void Terrain::HelperMakeHeights() {
 
 // TODO comment
 // CONSTRUCT HEIGHT MAP VERTICES
-void Terrain::HelperMakeVertices(float MIN_POSITION, float POSITION_RANGE, char road_type, char tile_type) {
+void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
+    float min_position, float position_range) {
   vertices.assign(x_length_ * z_length_, glm::vec3());
 
   int offset;
@@ -312,9 +302,9 @@ void Terrain::HelperMakeVertices(float MIN_POSITION, float POSITION_RANGE, char 
       // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
-      float xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
+      float xPosition = min_position + (xRatio * position_range);
       float yPosition;
-      float zPosition = MIN_POSITION + (yRatio * POSITION_RANGE);
+      float zPosition = min_position + (yRatio * position_range);
 
       // Water or Terrain
       switch(tile_type) {
@@ -332,7 +322,7 @@ void Terrain::HelperMakeVertices(float MIN_POSITION, float POSITION_RANGE, char 
         // case 1: x^2 turnning road
         case 1:
           float zSquare = zPosition * zPosition; //x^2
-          xPosition = zSquare/(POSITION_RANGE*2.5) + xPosition;
+          xPosition = zSquare/(position_range*2.5) + xPosition;
           break;
       }
 

@@ -78,6 +78,16 @@ class Terrain {
     void ProceedTiles();
 
   private:
+    // CONSTANTS
+    enum TileType {
+      kTerrain = 0,
+      kWater = 1,
+    };
+    enum RoadType {
+      kStraight = 0,
+      kTurnLeft = 1,
+    };
+
     // Width of the heightmap
     unsigned int x_length_;
     // Height of the heightmap
@@ -149,10 +159,8 @@ class Terrain {
 
     // TERRAIN GENERATION HELPERS
     void HelperMakeHeights();
-    // Tile_type cases:
-        // case 0: straight road => do nothing
-        // case 1: x^2 turnning road
-    void HelperMakeVertices(float min_position = 0.0f, float position_range = 20.0f, char road_type = 0, char tile_type = 0);
+    void HelperMakeVertices(RoadType road_type = kStraight, TileType tile_type = kTerrain,
+        float min_position = 0.0f, float position_range = 20.0f);
     void HelperMakeIndicesAndUV();
     void HelperMakeNormals();
     // ROAD GENERATION HELPERS
