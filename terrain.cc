@@ -29,8 +29,8 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
       RandomizeGeneration();
     }
 
-    // GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
-    // water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
+    GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
+    water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
 
 }
 
@@ -244,13 +244,6 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
     }
   }
 
-  // Even out little section right of road
-  // TODO commented out to try and take position of road at 0.15f
-  // for (unsigned int x = 0; x < z_length; ++x) {
-  //   float_heights_y.at(x_length/2-1 + x*x_length) = 0.168f;
-  //   float_heights_y.at(x_length/2 + x*x_length) = 0.14f;
-  // }
-
   // Randomize Top Terrain
   int center_left_x = x_length/2 - x_length/4;
   int center_z = z_length - z_length/2;
@@ -379,13 +372,6 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
         max_x = xPosition;
     }
   }
-  // Calculate next_tile_start_.y position (next Z tile position)
-  next_tile_start_.y = max_z;
-
-  // Calculate next_tile_start_.x position (next X tile position)
-  float displacement_x = max_x - prev_max_x_;
-  prev_max_x_ = max_x - displacement_x;
-  next_tile_start_.x += displacement_x;
 
   // Create Index Data
   // 2 triangles for every quad of the terrain mesh
