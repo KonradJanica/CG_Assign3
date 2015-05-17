@@ -79,9 +79,9 @@ class Terrain {
 
   private:
     // Width of the heightmap
-    int width_;
+    unsigned int x_length_;
     // Height of the heightmap
-    int height_;
+    unsigned int z_length_;
     // The amount of indices, used to render efficiently
     int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
@@ -111,11 +111,21 @@ class Terrain {
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texture_coordinates_uv;
     std::vector<int> indices;
-    std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
+    // This vector is used to build heights and smooths previous tile connections
+    std::vector<float> heights_; 
+    // This vector is used only for water heightmap generation
+    std::vector<float> water_heights_;
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
-    float prev_max_x_;  // Used for updating next_tile_start_.x
+    // The previous maximum x vertice
+    //   Used for updating next_tile_start_.x
+    float prev_max_x_;
+    // GENERATE ROAD VARS
+    std::vector<glm::vec3> vertices_road_;
+    std::vector<glm::vec3> normals_road_;
+    std::vector<glm::vec2> texture_coordinates_uv_road_;
+    std::vector<int> indices_road_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();
@@ -123,20 +133,37 @@ class Terrain {
     // Straight Terrain Piece
     //   Mutates all the input parameters for CreateVAO
     //   @warn creates and pushes back a road VAO based on the terrain middle section
-    void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
+    void GenerateTerrain();
     // TODO
     // Water height map
     //   Mutates all the input parameters for CreateVAO
     //   @warn creates and pushes back a water VAO
-    void GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
+    //   @warn uses the indices and UV coordinates from terrain generation
+    //         hence must be called after GenerateTerrain()
+    void GenerateWater();
     // TODO
     // Turning Terrain Piece
     //   Mutates all the input parameters for CreateVAO
     //   @warn creates and pushes back a road VAO based on the terrain middle section
-    void GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
+    void GenerateTerrainTurn();
+
+    // TERRAIN GENERATION HELPERS
+    void HelperMakeHeights();
+    // Tile_type cases:
+        // case 0: straight road => do nothing
+        // case 1: x^2 turnning road
+    void HelperMakeVertices(float min_position = 0.0f, float position_range = 20.0f, char road_type = 0, char tile_type = 0);
+    void HelperMakeIndicesAndUV();
+    void HelperMakeNormals();
+    // ROAD GENERATION HELPERS
+    void HelperMakeRoadVerticesAndNormals();
+    void HelperMakeRoadVertices();
+    void HelperMakeRoadNormals();
+    void HelperMakeRoadIndicesAndUV();
+    void HelperMakeRoadCollisionMap();
+
+    // TODO
+    unsigned int CreateVao(const GLuint &program_id);
     // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
@@ -171,11 +198,11 @@ inline GLuint Terrain::texture() const {
 }
 // Accessor for the width (Amount of Grid boxes width-wise)
 inline int Terrain::width() const {
-  return width_;
+  return x_length_;
 }
 // Accessor for the height (Amount of Grid boxes height-wise)
 inline int Terrain::height() const {
-  return height_;
+  return z_length_;
 }
 // Accessor for the amount of indices
 //   Used in render to efficiently draw triangles
