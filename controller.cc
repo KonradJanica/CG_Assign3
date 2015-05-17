@@ -169,9 +169,11 @@ void Controller::UpdatePhysics() {
   std::unordered_map<float,std::pair<float,float>>::const_iterator got = road_tile1.find(car_z);
   if (got == road_tile1.end()) {
     // printf("possible collision on Z, check next tile");
-    printf("assuming end of tile reached, pop!");
+    printf("assuming end of tile reached, pop!\n");
     // TODO fix check end of tile...
     terrain_->col_pop();
+    // TODO obviously this needs to be done further back from view space
+    terrain_->ProceedTiles();
   } else {
     // Check if x is in range
     float min_x = got->second.first;
@@ -180,8 +182,8 @@ void Controller::UpdatePhysics() {
     if (car_x >= min_x && car_x <= max_x) {
       //inside bounds
     } else {
-      printf("collision on x!");
+      printf("collision on x! %f\n", current_frame);
     }
   }
-  printf("%f\n", current_frame);
+  // printf("%f\n", current_frame);
 }

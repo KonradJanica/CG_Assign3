@@ -16,6 +16,7 @@
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "lib/circular_vector/circular_vector.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -41,17 +42,14 @@ class Terrain {
 
     unsigned int indice_count_water_;
     
-    // Creates a texture pointer from file
-    GLuint LoadTexture(const std::string &filename);
-    // Create Road over terrain
-    void BuildRoad();
     // Accessor for the VAO
-    inline std::vector<unsigned int> terrain_vao_handle() const;
+    // TODO comment
+    inline circular_vector<unsigned int> terrain_vao_handle() const;
     // Accessor for the program id (shader)
     inline GLuint terrain_program_id() const;
-    // TODO
-    inline std::vector<unsigned int> road_vao_handle() const;
-    // TODO
+    // TODO comment
+    inline circular_vector<unsigned int> road_vao_handle() const;
+    // TODO comment
     inline GLuint road_texture() const;
     // Accessor for the loaded texture
     //   @warn requires a texture to be loaded with LoadTexture()
@@ -69,32 +67,48 @@ class Terrain {
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
     inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
-    // Pops the first collision map 
+    // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
     //   @warn this is a test function (shouldn't be inline either)
     inline void col_pop();
+    // Generates next tile and removes first one
+    //   Uses the circular_vector data structure to do this in O(1)
+    //   TODO merge col_pop or something
+    void ProceedTiles();
 
   private:
+    // CONSTANTS
+    enum TileType {
+      kTerrain = 0,
+      kWater = 1,
+      kRoad = 2,
+    };
+    enum RoadType {
+      kStraight = 0,
+      kTurnLeft = 1,
+    };
     // Width of the heightmap
-    int width_;
+    int x_length_;
     // Height of the heightmap
-    int height_;
-    // The amount of indices, used to render efficiently
+    int z_length_;
+
+    // RENDER DATA
+    // The amount of indices, used to render terrain efficiently
     int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
     int road_indice_count_;
     // The shader to use to render heightmap
+    //   Road uses the same shader
     GLuint terrain_program_id_;
     // The texture to be used to Wrap Terrain
     GLuint texture_;
     // The texture to be used for the road
     GLuint road_texture_;
-    
     // The VAO handle for the terrain
-    std::vector<unsigned int> terrain_vao_handle_;
+    circular_vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
-    std::vector<unsigned int> road_vao_handle_;
+    circular_vector<unsigned int> road_vao_handle_;
     // A queue representing each road tile for collision checking
     //   Each key in the map represents a Z scanline
     //   Each pair of values of the key represents it's min X and max X
@@ -102,50 +116,143 @@ class Terrain {
     //     pair.first = min_x, pair.second = max_x
     std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
 
+    // GENERATE TERRAIN VARS
+    // Vertices to be generated for next terrain (or water) tile
+    std::vector<glm::vec3> vertices;
+    // Normals to be generated for the next terrain (or water) tile
+    std::vector<glm::vec3> normals;
+    // The texture coordinates generated for all the terrain and water tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.
+    std::vector<glm::vec2> texture_coordinates_uv;
+    // The indices generated for all the terrain and water tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.
+    std::vector<int> indices;
+    // This vector is used to build heights and smooths previous tile connections
+    std::vector<float> heights_; 
+    // This vector is used only for water heightmap generation
+    std::vector<float> water_heights_;
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
-    float prev_max_x_;  // Used for updating next_tile_start_.x
+    // The previous maximum x vertice
+    //   Used for updating next_tile_start_.x
+    float prev_max_x_;
 
-    // TODO
+    // GENERATE ROAD VARS
+    // Vertices to be generated for the next road tile
+    std::vector<glm::vec3> vertices_road_;
+    // Normals to be generated for all the road tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.and the normals always point upwards (road is flat)
+    std::vector<glm::vec3> normals_road_;
+    // The texture coordinates generated for all the road tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.
+    std::vector<glm::vec2> texture_coordinates_uv_road_;
+    // The indices generated for all the road tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.
+    std::vector<int> indices_road_;
+
+    // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
+    void RandomizeGeneration();
     // Straight Terrain Piece
-    //   Mutates all the input parameters for CreateVAO
+    //   Mutates the input members, (e.g. vertices, indicies etc.) and then
+    //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
     //   @warn creates and pushes back a road VAO based on the terrain middle section
-    void GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
-    // TODO
+    //   @warn pushes next road collision map into member queue
+    void GenerateTerrain();
+    // Turning Terrain Piece
+    //   Mutates the input members, (e.g. vertices, indicies etc.) and then
+    //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   @warn creates and pushes back a road VAO based on the terrain middle section
+    //   @warn pushes next road collision map into member queue
+    void GenerateTerrainTurn();
     // Water height map
     //   Mutates all the input parameters for CreateVAO
     //   @warn creates and pushes back a water VAO
-    void GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
-    // TODO
-    // Turning Terrain Piece
-    //   Mutates all the input parameters for CreateVAO
-    //   @warn creates and pushes back a road VAO based on the terrain middle section
-    void GenerateTerrainTurn(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
-        std::vector<glm::vec2> &texture_coordinates_uv, std::vector<int> &indices, std::vector<float> &heights);
-    // TODO
+    //   @warn uses the indices and UV coordinates from terrain generation
+    //         hence must be called after GenerateTerrain()
+    void GenerateWater();
+
+    // TERRAIN GENERATION HELPERS
+    // Model the heights using an X^3 mathematical functions, then randomize heights
+    // for all vertices in heightmap
+    //   @warn pretty expensive operation 10000*2 loops
+    void HelperMakeHeights();
+    // Overloaded function to generate a square height map on the X/Z plane. Different
+    // road_type parameters can be added to curve the Z coordinates and hence make turning
+    // pieces.
+    // @param  road_type       An enum representing the mathematical model to be applied to Z
+    // @param  tile_type       An enum representing whether the tile is water or terrain
+    // @param  min_position    The relative start position of the heightmap over X/Z
+    // @param  position_range  The spread of the heightmap over X/Z 
+    // @warn  No changes can be made to vertices_ member until the Road Helpers complete
+    void HelperMakeVertices(RoadType road_type = kStraight, TileType tile_type = kTerrain,
+        float min_position = 0.0f, float position_range = 20.0f);
+    // Generates the indices and UV texture coordinates to be used by the tile
+    // @note  These don't change for the same x_length_ * z_length_ height maps
+    // @warn  No changes can be made to indices or UV member until the Road Helpers complete
+    void HelperMakeIndicesAndUV();
+    // Generates the normals by doing a cross product of neighbouring vertices
+    // @warn  No changes can be made to normals_ member until the Road Helpers complete
+    void HelperMakeNormals();
+
+    // ROAD GENERATION HELPERS
+    // Rip the road parts of the terrain vertice vector using calulcated magic numbers and store
+    // these in the vertices_road_ vector
+    // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
+    void HelperMakeRoadVertices();
+    // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
+    // these in the normals_road_ vector
+    // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
+    // @warn  for optimzation this should only be called once because road normals don't change
+    void HelperMakeRoadNormals();
+    // Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
+    // store these in the indice and UV vectors respectfully
+    // @warn  requires a preceeding call to HelperMakeIndicesAndUV otherwise undefined behaviour
+    // @warn  for optimzation this should only be called once because road indices and UV don't change
+    void HelperMakeRoadIndicesAndUV();
+    // Generates a collision coordinate mapping
+    //   Using the vertices_road_ vector, maps all rounded Z coordinates to their corresponding min X
+    //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
+    // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
+    void HelperMakeRoadCollisionMap();
+
+    // OPENGL RENDERING FUNCTIONS
+    // Creates a new vertex array object and loads in data into a vertex attribute buffer
+    //   The parameters are self explanatory.
+    //   @return vao_handle, the vao handle
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
+    // Creates a new vertex array object and loads in data into a vertex attribute buffer
+    //   @param  tile_type  An enum representing the proper members to use
+    //   @return vao_handle, the vao handle
+    unsigned int CreateVao(TileType tile_type);
+    // Creates a texture pointer from file
+    //   @return  GLuint  The int pointing to the opengl texture data
+    GLuint LoadTexture(const std::string &filename);
 
     // Verbose Debugging mode
     bool is_debugging_;
 };
 
 // Accessor for the VAO
-inline std::vector<unsigned int> Terrain::terrain_vao_handle() const {
+// TODO comment
+inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
   return terrain_vao_handle_;
 }
 // Accessor for the program id (shader)
 inline GLuint Terrain::terrain_program_id() const {
   return terrain_program_id_;
 }
-// TODO
-inline std::vector<unsigned int> Terrain::road_vao_handle() const {
+// TODO comment
+inline circular_vector<unsigned int> Terrain::road_vao_handle() const {
   return road_vao_handle_;
 }
-// TODO
+// TODO comment
 inline GLuint Terrain::road_texture() const {
   return road_texture_;
 }
@@ -156,11 +263,11 @@ inline GLuint Terrain::texture() const {
 }
 // Accessor for the width (Amount of Grid boxes width-wise)
 inline int Terrain::width() const {
-  return width_;
+  return x_length_;
 }
 // Accessor for the height (Amount of Grid boxes height-wise)
 inline int Terrain::height() const {
-  return height_;
+  return z_length_;
 }
 // Accessor for the amount of indices
 //   Used in render to efficiently draw triangles
