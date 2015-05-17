@@ -130,7 +130,7 @@ vec4 phongLight(in BaseLight light, in vec3 lightDirection, in vec3 normal)
 
 vec4 calcDirectionalLight(in vec3 normal)
 {
-  return phongLight(gDirectionalLight.Base, gDirectionalLight.Direction, normal);
+  return phongLight(gDirectionalLight.Base, normalize(gDirectionalLight.Direction), normal);
 }
 
 vec4 calcPointLight(in PointLight light, in vec4 position, in vec3 normal)

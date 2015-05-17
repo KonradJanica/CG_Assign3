@@ -66,18 +66,30 @@ void Controller::PositionLights() {
   spotLight[0].DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
   spotLight[0].SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
 
-  glm::mat4 spotLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.4f, 2.0f));
+  glm::mat4 spotLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.45f));
   glm::mat3 spotLightNormMatx0 = glm::mat3(car_mv_matrix);
 
   spotLight[0].Position = glm::vec3(car_mv_matrix * spotLightTranslation0 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  spotLight[0].Direction = spotLightNormMatx0 * glm::vec3(0.0f, -1.0f, 1.0f);
-  spotLight[0].CosineCutoff = cos(DEG2RAD(45.0f));
-  spotLight[0].Attenuation.Constant = 1.0f;
-  spotLight[0].Attenuation.Linear = 0.01f;
-  spotLight[0].Attenuation.Exp = 0.0001f;
+  spotLight[0].Direction = spotLightNormMatx0 * glm::vec3(0.0f, -0.3f, 1.0f);
+  spotLight[0].CosineCutoff = cos(DEG2RAD(20.0f));
+  spotLight[0].Attenuation.Constant = 0.5f;
+  spotLight[0].Attenuation.Linear = 0.1f;
+  spotLight[0].Attenuation.Exp = 0.01f;
+
+  PointLight pointLights[2];
+  for (unsigned int i = 0; i < 2; i++) {
+    pointLights[i].DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
+
+    glm::mat4 pointLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.5f, -3.0f));
+    pointLights[i].Position = glm::vec3(car_mv_matrix * pointLightTranslation0 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    pointLights[i].Attenuation.Constant = 0.01f;
+    pointLights[i].Attenuation.Linear = 3.0f;
+    pointLights[i].Attenuation.Exp = 5.0f;
+  }
 
   light_controller_->SetDirectionalLight(dirLight);
   light_controller_->SetSpotLights(1, spotLight);
+  light_controller_->SetPointLights(2, pointLights);
 }
 
 // Setup Light Components into Uniform Variables for Shader
@@ -90,7 +102,7 @@ void Controller::SetupLighting(const GLuint &program_id) {
 
   // Send directional light
   directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  directional_light_.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+  directional_light_.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
   // directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
   directional_light_.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
   // directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
