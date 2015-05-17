@@ -150,11 +150,12 @@ vec4 calcPointLight(in PointLight light, in vec4 position, in vec3 normal)
 vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
 {
   vec3 lightToPositionDirection = normalize(position.xyz - light.Base.Position);
-  float spotFactor = dot(lightToPositionDirection, light.Direction);
+  float spotFactor = dot(lightToPositionDirection, normalize(light.Direction));
 
   if (spotFactor > light.CosineCutoff)
   {
-    return calcPointLight(light.Base, position, normal);
+    return calcPointLight(light.Base, position, normal) * 
+           (1.0 - (1.0 - spotFactor) * 1.0 / (1.0 - light.CosineCutoff));
   }
   else 
   {

@@ -128,7 +128,7 @@ void LightController::SetSpotLights(unsigned int numLights, const SpotLight* lig
 		spot_light_locations_[i].Direction = glGetUniformLocation(program_id_, uniformName);
 
 		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].CosineCutoff", i);
-		spot_light_locations_[i].Attenuation.Exp = glGetUniformLocation(program_id_, uniformName);
+		spot_light_locations_[i].CosineCutoff = glGetUniformLocation(program_id_, uniformName);
 
 		glUniform3fv(spot_light_locations_[i].AmbientIntensity, 1, glm::value_ptr(lights[i].AmbientIntensity));
 		glUniform3fv(spot_light_locations_[i].DiffuseIntensity, 1, glm::value_ptr(lights[i].DiffuseIntensity));
