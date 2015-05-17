@@ -2,7 +2,7 @@
 
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &translation, const glm::vec3 &rotation, const glm::vec3 &scale)
-  : translation_(translation), rotation_(rotation), scale_(scale), physics_extension_(0) {
+  : translation_(translation), rotation_(rotation), displacement_(0), scale_(scale), physics_extension_(0) {
     UpdateModelMatrix();
   }
 

@@ -1,7 +1,4 @@
 #include "controller.h"
-#define M_PI 3.14159265358979323846
-#define DEG2RAD(x) ((x)*M_PI/180.0)
-#define RAD2DEG(x) ((x)*180.0/M_PI)
 
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
 //   Allows for Verbose Debugging Mode
@@ -133,22 +130,32 @@ void Controller::UpdatePhysics() {
   float MOVESPEED = 0.004f * delta_time_;
   float TURNRATE = 0.2f * delta_time_;
 
-  // Used to calculate new camera position
-  glm::vec3 old_translation = car_->translation();
   // Used to calculate car movement
   glm::vec3 new_translation = car_->translation();
   glm::vec3 rotation = car_->rotation();
+  // Used to update camera
+  glm::vec3 displacement = glm::vec3(0,0,0);
 
   if (is_key_pressed_hash_.at('w')) {
-    new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y));
-    new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y));
+    float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
+    float z_movement = MOVESPEED * cos(DEG2RAD(rotation.y));
+    new_translation.x += x_movement;
+    new_translation.z += z_movement;
     car_->set_translation(new_translation);
+    displacement.x += x_movement;
+    displacement.z += z_movement;
   }
   if (is_key_pressed_hash_.at('s')) {
-    new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y));
-    new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y));
+    float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
+    float z_movement = MOVESPEED * cos(DEG2RAD(rotation.y));
+    new_translation.x -= x_movement;
+    new_translation.z -= z_movement;
     car_->set_translation(new_translation);
+    displacement.x -= x_movement;
+    displacement.z -= z_movement;
   }
+  car_->set_displacement(displacement);
+
   // No Acceleration
   if (!is_key_pressed_hash_.at('w') && !is_key_pressed_hash_.at('s')) {
     // car_->Accelerate(0);
@@ -190,7 +197,5 @@ void Controller::UpdatePhysics() {
 
   ///////////////// CAMERA CONTROLS
   // point at car
-  camera_->ChangeDirection(new_translation);
-  glm::vec3 displacement = new_translation - old_translation;
-  camera_->Movement(displacement);
+  camera_->UpdateCarTick(car_);
 }

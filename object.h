@@ -50,24 +50,28 @@ class Object {
     //  Includes physics calulations and movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateModelMatrix();
-    ////////////
-    // ACCESSORS
+
+    // ACCESSORS:
     // Accessor for the current model matrix
     inline glm::mat4 model_matrix() const;
     // Accessor for the position vector
     inline glm::vec3 translation() const;
     // Accessor for the rotation vector
     inline glm::vec3 rotation() const;
-    ///////////
-    // MUTATORS
+    // Accessor for the displacement vector
+    inline glm::vec3 displacement() const;
+
+    // MUTATORS:
     // Sets the position
     //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_translation(glm::vec3 new_translation);
     // Sets the direction
     //   @warn requires a call to UpdateModelMatrix() afterwards
     inline void set_rotation(glm::vec3 new_rotation);
-    ///////////
-    // PHYSICS
+    // Sets the displacement
+    inline void set_displacement(glm::vec3 new_displacement);
+    
+    // PHYSICS:
     // Enables the physics extension
     //  @warn Is created on heap, needs to be deleted afterwards
     void EnablePhysics(const float &velocity, const float &acceleration, const float &turn_rate);
@@ -79,8 +83,8 @@ class Object {
     // Decreases the acceleration of the object by given amount
     //   TODO a minimum acceleration?
     void Deccelerate(const float &amount);
-    ///////////////
-    // VIRTUAL CHILD (Model) METHODS
+
+    // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
     virtual GLuint program_id() const = 0;
@@ -127,32 +131,31 @@ class Object {
 
   private:
     // Model matrix assosciated with object
-    //  Use UpdateModelMatrix() to update
-    //  @warn Needs to be updated everytime glLookAt vectors (below) are changed
+    //   Use UpdateModelMatrix() to update
+    //   @warn Needs to be updated everytime glLookAt vectors (below) are changed
     glm::mat4 model_matrix_;
 
-    /////////////////
-    // glLookAt transformations
+    // World transformations
     // The position of the object in the world
     glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
+    // The amount moved from last tick
+    glm::vec3 displacement_;
 
-    /////////////////
     // glm::scale transformation
-    // The scale of the object
+    //   The scale of the object
     glm::vec3 scale_;
 
     // The physics extension for moving objects
-    //  Will be 0 (null_ptr) if doesn't exist
+    //   Will be 0 (null_ptr) if doesn't exist
     Physics * physics_extension_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);
 };
 
-////////////
-// ACCESSORS
+// ACCESSORS:
 // Accessor for the current model matrix
 inline glm::mat4 Object::model_matrix() const {
   return model_matrix_;
@@ -165,8 +168,12 @@ inline glm::vec3 Object::translation() const {
 inline glm::vec3 Object::rotation() const {
   return rotation_;
 }
-///////////
-// MUTATORS
+// Accessor for the displacement vector
+inline glm::vec3 Object::displacement() const {
+  return displacement_;
+}
+
+// MUTATORS:
 // Sets the position
 //   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_translation(glm::vec3 new_translation) {
@@ -176,5 +183,9 @@ inline void Object::set_translation(glm::vec3 new_translation) {
 //   @warn requires a call to UpdateModelMatrix() afterwards
 inline void Object::set_rotation(glm::vec3 new_rotation) {
   rotation_ = new_rotation;
+}
+// Sets the displacement
+inline void Object::set_displacement(glm::vec3 new_displacement) {
+  displacement_ = new_displacement;
 }
 #endif

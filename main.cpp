@@ -51,6 +51,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image/stb_image.h"
 
+#define M_PI 3.14159265358979323846
+#define DEG2RAD(x) ((x)*M_PI/180.0)
+#define RAD2DEG(x) ((x)*180.0/M_PI)
+
 Renderer *g_renderer;
 Controller *g_controller;
 
@@ -261,12 +265,7 @@ void keyboardDown(unsigned char key, int x, int y) {
       exit(0);
       break;
     case 'c':
-      if (g_coord_axis) {
-        g_coord_axis = false;
-      } else {
-        g_coord_axis = true;
-      }
-      glutPostRedisplay();
+      g_camera->CycleState();
       break;
     case 'b':
       g_background++;
@@ -289,6 +288,15 @@ void keyboardDown(unsigned char key, int x, int y) {
         g_colour.x = 0.71;
         g_colour.y = 0.61;
         g_colour.z = 0.23;
+      }
+      glutPostRedisplay();
+      break;
+    case 'p':
+      // TODO fix this
+      if (g_coord_axis) {
+        g_coord_axis = false;
+      } else {
+        g_coord_axis = true;
       }
       glutPostRedisplay();
       break;
