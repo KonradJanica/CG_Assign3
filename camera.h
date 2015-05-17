@@ -33,6 +33,9 @@ class Camera {
     void Movement(const int &key);
     // Better method using is_key_pressed_hash for multiple inputs
     void Movement();
+    // Moves camera position by the x,y,z translation specified
+    //   @param translation, the x,y,z amounts to move camera position by
+    void Movement(const glm::vec3 &translation);
     // Trues the key hash on key down event
     inline void KeyPressed(const int &key);
     // Falses the key hash on key down event
@@ -44,11 +47,15 @@ class Camera {
     //   @param int y, new mouse y position
     //   @warn relies on UpdatePreviousMouse(x,y) to work
     void ChangeDirection(const int &x, const int &y);
+    // Changes the direction of the camera to face the given target
+    //   @param point, the position vertex to point at
+    //   @warn TODO very unoptimized (UpdateCamera should change)
+    void ChangeDirection(const glm::vec3 &point);
     // Changes Aspect ratio to Zoom the camera
-    //  Calculates the difference of previous mouse y positions
-    //  and current to work out the new aspect
-    //  @param int y, new mouse y position
-    //  @warn relies on UpdatePreviousMouse(x,y) to work
+    //   Calculates the difference of previous mouse y positions
+    //   and current to work out the new aspect
+    //   @param int y, new mouse y position
+    //   @warn relies on UpdatePreviousMouse(x,y) to work
     void ChangeZoom(const int &y);
     // Update the Camera Matrix
     void UpdateCamera();

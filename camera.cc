@@ -54,6 +54,12 @@ void Camera::Movement() {
   }
 }
 
+// Moves camera position by the x,y,z translation specified
+//   @param translation, the x,y,z amounts to move camera position by
+void Camera::Movement(const glm::vec3 &translation) {
+  cam_pos_ += translation;
+}
+
 // Changes Direction by X and Y mouse inputs
 //   Calculates the difference of previous mouse positions
 //   and current to work out the new direction
@@ -84,6 +90,13 @@ void Camera::ChangeDirection(const int &x, const int &y) {
   front.y = sin(pitch_);
   front.z = sin(yaw_) * cos(pitch_);
   cam_front_ = glm::normalize(front);
+}
+
+// Changes the direction of the camera to face the given target
+//  @param point, the position vertex to point at
+//  @warn TODO very unoptimized (UpdateCamera should change)
+void Camera::ChangeDirection(const glm::vec3 &point) {
+  cam_front_ = glm::normalize(point-cam_pos_);
 }
 
 // Changes Aspect ratio to Zoom the camera

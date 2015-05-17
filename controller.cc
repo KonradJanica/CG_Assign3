@@ -133,16 +133,18 @@ void Controller::UpdatePhysics() {
   float MOVESPEED = 0.004f * delta_time_;
   float TURNRATE = 0.2f * delta_time_;
 
+  // Used to calculate new camera position
+  glm::vec3 old_translation = car_->translation();
+  // Used to calculate car movement
+  glm::vec3 new_translation = car_->translation();
+  glm::vec3 rotation = car_->rotation();
+
   if (is_key_pressed_hash_.at('w')) {
-    glm::vec3 new_translation = car_->translation();
-    glm::vec3 rotation = car_->rotation();
     new_translation.x += MOVESPEED * sin(DEG2RAD(rotation.y));
     new_translation.z += MOVESPEED * cos(DEG2RAD(rotation.y));
     car_->set_translation(new_translation);
   }
   if (is_key_pressed_hash_.at('s')) {
-    glm::vec3 new_translation = car_->translation();
-    glm::vec3 rotation = car_->rotation();
     new_translation.x -= MOVESPEED * sin(DEG2RAD(rotation.y));
     new_translation.z -= MOVESPEED * cos(DEG2RAD(rotation.y));
     car_->set_translation(new_translation);
@@ -160,10 +162,9 @@ void Controller::UpdatePhysics() {
 
   ///////////////// COLLISION TESTING TODO TODO
   const std::queue<std::unordered_map<float,std::pair<float,float>>> &col = terrain_->collision_queue_hash();
-  glm::vec3 new_translation = car_->translation();
   float car_z = new_translation.z;
   car_z = round(car_z);
-    // printf("car_z = %f\n", car_z);
+  // printf("car_z = %f\n", car_z);
   std::unordered_map<float,std::pair<float,float>> road_tile1;
   road_tile1 = col.front();
   std::unordered_map<float,std::pair<float,float>>::const_iterator got = road_tile1.find(car_z);
@@ -186,4 +187,10 @@ void Controller::UpdatePhysics() {
     }
   }
   // printf("%f\n", current_frame);
+
+  ///////////////// CAMERA CONTROLS
+  // point at car
+  camera_->ChangeDirection(new_translation);
+  glm::vec3 displacement = new_translation - old_translation;
+  camera_->Movement(displacement);
 }
