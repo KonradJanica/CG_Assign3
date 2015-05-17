@@ -1,56 +1,70 @@
 #include "terrain.h"
 
-Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height) : terrain_program_id_(program_id), terrain_water_id_(water_id), width_(width), height_(height) {
-  // New Seed
-  srand(time(NULL));
+Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height) 
+  : terrain_program_id_(program_id), terrain_water_id_(water_id), width_(width), height_(height) {
+    // New Seed
+    srand(time(NULL));
+    // Setup Vars
+    // std::vector<glm::vec3> vertices;
+    // std::vector<glm::vec3> normals;
+    // std::vector<glm::vec2> texture_coordinates_uv;
+    // std::vector<int> indices;
+    // std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
+    // TODO fix the heights.resize magic number - reappears in float_heights_y
+    heights.resize(width_ * height_, 0.0f); // Magic number needs to be the same as inside the functions
+    next_tile_start_ = glm::vec2(-10,-10);
+    prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from MIN_POSITION
+
+    // Textures
+    texture_ = LoadTexture("textures/rock01.jpg");
+    road_texture_ = LoadTexture("textures/road.jpg");
+    water_texture_ = LoadTexture("textures/water01.jpg");
+
+    // Generate Starting Terrain
+    // This is the amount of tiles that will be in the circular_vector at all times
+    // TODO obviously 3 for test/demo purposes
+    for (int x = 0; x < 3; ++x) {
+      // Generates a random terrain piece and pushes it back
+      // into circular_vector VAO buffer
+      RandomizeGeneration();
+    }
+
+    // GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
+    // water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
+
+}
+
+// Generates next tile and removes first one
+//   Uses the circular_vector data structure to do this in O(1)
+//   TODO merge col_pop or something
+void Terrain::ProceedTiles() {
+  // TODO free/delete GL VAOs
+  terrain_vao_handle_.pop_front();
+  road_vao_handle_.pop_front();
+
+  // TODO optimize these endless contructor calls
   // Setup Vars
-  std::vector<glm::vec3> vertices;
-  std::vector<glm::vec3> normals;
-  std::vector<glm::vec2> texture_coordinates_uv;
-  std::vector<int> indices;
-  std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
-  // TODO fix the heights.resize magic number - reappears in float_heights_y
-  heights.resize(width_ * height_, 0.0f); // Magic number needs to be the same as inside the functions
-  next_tile_start_ = glm::vec2(-10,-10);
-  prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from MIN_POSITION
 
-  // Terrain
-  // 1st buffer
-  texture_ = LoadTexture("textures/rock01.jpg");
-  road_texture_ = LoadTexture("textures/road.jpg");
-  water_texture_ = LoadTexture("textures/water01.jpg");
+  // Generates a random terrain piece and pushes it back
+  // into circular_vector VAO buffer
+  RandomizeGeneration();
+}
 
-
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-  // next
-  GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
-  terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
-
-  GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
-  water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
-
+// Generates a random terrain piece and pushes it back into circular_vector VAO buffer
+void Terrain::RandomizeGeneration() {
+  int v = rand() % 2;
+  switch(v) {
+    case 0:
+      GenerateTerrain(vertices, normals, texture_coordinates_uv, indices, heights);
+      terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+      break;
+    case 1:
+      GenerateTerrainTurn(vertices, normals, texture_coordinates_uv, indices, heights);
+      terrain_vao_handle_.push_back(CreateVao(terrain_program_id_, vertices, normals, texture_coordinates_uv, indices));
+      break;
+    default:
+      assert(0 && "something went wrong with rand()");
+  }
 }
 
 void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals,
@@ -71,31 +85,31 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
   for (unsigned int i = 0; i < 10000; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
-    case 1: x_position++;
-    break;
-    case 2: x_position--;
-    break;
-    case 3: z_position++;
-    break;
-    case 4: z_position--;
-    break;
+      case 1: x_position++;
+              break;
+      case 2: x_position--;
+              break;
+      case 3: z_position++;
+              break;
+      case 4: z_position--;
+              break;
     }
     if (x_position < 0) {
-    x_position = x_length-1;
-    continue;
+      x_position = x_length-1;
+      continue;
     } else if (x_position > x_length-1) {
-    x_position = 0;
-    continue;
+      x_position = 0;
+      continue;
     }
     if (z_position < 0) {
-    z_position = z_length-1;
-    continue;
+      z_position = z_length-1;
+      continue;
     } else if (z_position > z_length-1) {
-    z_position = 0;
-    continue;
+      z_position = 0;
+      continue;
     }
     float_heights_y.at(x_position + z_position*x_length) += 0.100f;
-}
+  }
 
 
   // Construct Heightmap
@@ -122,8 +136,8 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
       float yPosition = float_heights_y.at(offset);
       float zPosition = MIN_POSITION + (yRatio * POSITION_RANGE);
 
-        vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
-            zPosition + next_tile_start_.y);
+      vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+          zPosition + next_tile_start_.y);
 
       // Calculate next_tile_start_ position
       //   Z always moves backwards
@@ -175,7 +189,7 @@ void Terrain::GenerateWater(std::vector<glm::vec3> &vertices, std::vector<glm::v
       // float yRatio = 1.0f - (y / (float) (z_length - 1));
       float yRatio = (y / (float) (z_length - 1));
 
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
+      texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
     }
   }
 
@@ -351,8 +365,8 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
       float yPosition = float_heights_y.at(offset);
       float zPosition = MIN_POSITION + (yRatio * POSITION_RANGE);
 
-        vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
-            zPosition + next_tile_start_.y);
+      vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+          zPosition + next_tile_start_.y);
 
       // Calculate next_tile_start_ position
       //   Z always moves backwards
@@ -411,7 +425,7 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
       // float yRatio = 1.0f - (y / (float) (z_length - 1));
       float yRatio = (y / (float) (z_length - 1));
 
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
+      texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length)*0.1f, yRatio*float(z_length)*0.1f);
     }
   }
 

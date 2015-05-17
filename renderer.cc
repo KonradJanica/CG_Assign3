@@ -337,7 +337,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
   // Bind VAO and texture - Terrain
-  const std::vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
+  const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
     glBindVertexArray(terrain_vao_handle.at(x)); 
     glBindTexture(GL_TEXTURE_2D, terrain->texture());
@@ -353,7 +353,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const glm:
   //////////////////////////
   // ROADS
   int amount = terrain->road_indice_count();
-  const std::vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
+  const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
     // Bind VAO Road
     glBindVertexArray(road_vao_handle.at(x)); 

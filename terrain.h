@@ -16,6 +16,7 @@
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "lib/circular_vector/circular_vector.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -41,17 +42,14 @@ class Terrain {
 
     unsigned int indice_count_water_;
     
-    // Creates a texture pointer from file
-    GLuint LoadTexture(const std::string &filename);
-    // Create Road over terrain
-    void BuildRoad();
     // Accessor for the VAO
-    inline std::vector<unsigned int> terrain_vao_handle() const;
+    // TODO comment
+    inline circular_vector<unsigned int> terrain_vao_handle() const;
     // Accessor for the program id (shader)
     inline GLuint terrain_program_id() const;
-    // TODO
-    inline std::vector<unsigned int> road_vao_handle() const;
-    // TODO
+    // TODO comment
+    inline circular_vector<unsigned int> road_vao_handle() const;
+    // TODO comment
     inline GLuint road_texture() const;
     // Accessor for the loaded texture
     //   @warn requires a texture to be loaded with LoadTexture()
@@ -69,11 +67,15 @@ class Terrain {
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
     inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
-    // Pops the first collision map 
+    // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
     //   @warn this is a test function (shouldn't be inline either)
     inline void col_pop();
+    // Generates next tile and removes first one
+    //   Uses the circular_vector data structure to do this in O(1)
+    //   TODO merge col_pop or something
+    void ProceedTiles();
 
   private:
     // Width of the heightmap
@@ -92,9 +94,11 @@ class Terrain {
     GLuint road_texture_;
     
     // The VAO handle for the terrain
-    std::vector<unsigned int> terrain_vao_handle_;
+    // std::vector<unsigned int> terrain_vao_handle_;
+    circular_vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
-    std::vector<unsigned int> road_vao_handle_;
+    // std::vector<unsigned int> road_vao_handle_;
+    circular_vector<unsigned int> road_vao_handle_;
     // A queue representing each road tile for collision checking
     //   Each key in the map represents a Z scanline
     //   Each pair of values of the key represents it's min X and max X
@@ -102,11 +106,19 @@ class Terrain {
     //     pair.first = min_x, pair.second = max_x
     std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
 
+    // GENERATE TERRAIN VARS
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texture_coordinates_uv;
+    std::vector<int> indices;
+    std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
     float prev_max_x_;  // Used for updating next_tile_start_.x
 
+    // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
+    void RandomizeGeneration();
     // TODO
     // Straight Terrain Piece
     //   Mutates all the input parameters for CreateVAO
@@ -128,24 +140,27 @@ class Terrain {
     // TODO
     unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
+    // Creates a texture pointer from file
+    GLuint LoadTexture(const std::string &filename);
 
     // Verbose Debugging mode
     bool is_debugging_;
 };
 
 // Accessor for the VAO
-inline std::vector<unsigned int> Terrain::terrain_vao_handle() const {
+// TODO comment
+inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
   return terrain_vao_handle_;
 }
 // Accessor for the program id (shader)
 inline GLuint Terrain::terrain_program_id() const {
   return terrain_program_id_;
 }
-// TODO
-inline std::vector<unsigned int> Terrain::road_vao_handle() const {
+// TODO comment
+inline circular_vector<unsigned int> Terrain::road_vao_handle() const {
   return road_vao_handle_;
 }
-// TODO
+// TODO comment
 inline GLuint Terrain::road_texture() const {
   return road_texture_;
 }
