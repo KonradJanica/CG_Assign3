@@ -372,6 +372,12 @@ void Terrain::GenerateTerrain(std::vector<glm::vec3> &vertices, std::vector<glm:
         max_x = xPosition;
     }
   }
+  next_tile_start_.y = max_z;
+
+  // Calculate next_tile_start_.x position (next X tile position)
+  float displacement_x = max_x - prev_max_x_;
+  prev_max_x_ = max_x - displacement_x;
+  next_tile_start_.x += displacement_x;
 
   // Create Index Data
   // 2 triangles for every quad of the terrain mesh
