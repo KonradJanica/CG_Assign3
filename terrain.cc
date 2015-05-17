@@ -5,11 +5,6 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     // New Seed
     srand(time(NULL));
     // Setup Vars
-    // std::vector<glm::vec3> vertices;
-    // std::vector<glm::vec3> normals;
-    // std::vector<glm::vec2> texture_coordinates_uv;
-    // std::vector<int> indices;
-    // std::vector<float> heights; // Uses this vector to build heights, smooths connections with this too
     // TODO fix the heights.resize magic number - reappears in heights_
     heights_.resize(x_length_ * z_length_, 0.0f); // Magic number needs to be the same as inside the functions
     next_tile_start_ = glm::vec2(-10,-10);
@@ -30,10 +25,6 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
       // into circular_vector VAO buffer
       RandomizeGeneration();
     }
-
-    // GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights_);
-    // water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
-
 }
 
 // Generates next tile and removes first one
@@ -109,8 +100,7 @@ void Terrain::GenerateWater() {
   //   water_heights_.at(x_position + z_position*x_length_) += 0.100f;
   // }
 
-  water_heights_.clear();
-  water_heights_.resize(x_length_*z_length_, 0.0f);
+  water_heights_.assign(x_length_*z_length_, 0.0f);
 
   HelperMakeVertices(MIN_POSITION, POSITION_RANGE, 1, 1);
   HelperMakeNormals();
@@ -197,9 +187,7 @@ void Terrain::HelperMakeHeights() {
     temp_last_row_heights_.push_back(heights_.at(x));
   }
 
-  heights_.clear();
-  // heights_.resize(x_length_*z_length_, 0.15f); // 2nd param is default height
-  heights_.resize(x_length_*z_length_, 0.00f); // 2nd param is default height
+  heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
   for (unsigned int y = 0; y < z_length_; ++y) {
     for (unsigned int x = 0; x < x_length_; ++x) {
       // Normalize x between -1 and 1
@@ -307,8 +295,7 @@ void Terrain::HelperMakeHeights() {
 // TODO comment
 // CONSTRUCT HEIGHT MAP VERTICES
 void Terrain::HelperMakeVertices(float MIN_POSITION, float POSITION_RANGE, char road_type, char tile_type) {
-  vertices.clear();
-  vertices.resize(x_length_ * z_length_);
+  vertices.assign(x_length_ * z_length_, glm::vec3());
 
   int offset;
   float max_z = -FLT_MAX; // Used to calculate next_tile_start_
@@ -383,8 +370,7 @@ void Terrain::HelperMakeIndicesAndUV() {
   // 2 triangles for every quad of the terrain mesh
   const unsigned int numTriangles = ( x_length_ - 1 ) * ( z_length_ - 1 ) * 2;
   // 3 indices for each triangle in the terrain mesh
-  indices.clear();
-  indices.resize( numTriangles * 3 );
+  indices.assign( numTriangles * 3 , int() );
   unsigned int index = 0; // Index in the index buffer
   for (unsigned int j = 0; j < (z_length_ - 1); ++j )
   {
@@ -404,8 +390,7 @@ void Terrain::HelperMakeIndicesAndUV() {
   indice_count_ = indices.size();
 
   // CONSTRUCT UV COORDINATES
-  texture_coordinates_uv.clear();
-  texture_coordinates_uv.resize(x_length_*z_length_);
+  texture_coordinates_uv.assign(x_length_*z_length_, glm::vec2());
   int offset;
   // First, build the data for the vertex buffer
   for (int y = 0; y < z_length_; y++) {
@@ -426,8 +411,7 @@ void Terrain::HelperMakeIndicesAndUV() {
 // TODO comment
 //Create Normals
 void Terrain::HelperMakeNormals() {
-  normals.clear();
-  normals.resize(x_length_*z_length_);
+  normals.assign(x_length_*z_length_, glm::vec3());
   for ( unsigned int i = 0; i < indices.size(); i += 3 )  {
     glm::vec3 v0 = vertices[ indices[i + 0] ];
     glm::vec3 v1 = vertices[ indices[i + 1] ];
