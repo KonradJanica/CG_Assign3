@@ -17,7 +17,10 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     // Generate Starting Terrain
     // This is the amount of tiles that will be in the circular_vector at all times
     // TODO obviously 3 for test/demo purposes
-    RandomizeGeneration();
+    // Always start with straight piece so car is on road
+    GenerateTerrain();
+    // Water needs indices and UV coordinates from Terrain generation.
+    //   i.e. needs to be called succeeding an initial Terrain.
     GenerateWater();
     for (int x = 0; x < 2; ++x) {
       // Generates a random terrain piece and pushes it back
@@ -33,9 +36,6 @@ void Terrain::ProceedTiles() {
   // TODO free/delete GL VAOs
   terrain_vao_handle_.pop_front();
   road_vao_handle_.pop_front();
-
-  // TODO optimize these endless contructor calls
-  // Setup Vars
 
   // Generates a random terrain piece and pushes it back
   // into circular_vector VAO buffer
@@ -55,7 +55,77 @@ void Terrain::RandomizeGeneration() {
   }
 }
 
-// TODO comment
+// Straight Terrain Piece
+//   Mutates the input members, (e.g. vertices, indicies etc.) and then
+//   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+//   @warn creates and pushes back a road VAO based on the terrain middle section
+//   @warn pushes next road collision map into member queue
+void Terrain::GenerateTerrain() {
+  // Optimize to not recreate Indices and UV as 
+  // they never change after the first tile
+  if (indice_count() == 0)
+    HelperMakeIndicesAndUV();
+
+  HelperMakeHeights();
+  HelperMakeVertices(kStraight);
+  HelperMakeNormals();
+  unsigned int terrain_vao = CreateVao(kTerrain);
+  terrain_vao_handle_.push_back(terrain_vao);
+
+  //  ROAD - Extract middle flat section and make road VAO
+  //  BEWARD FULL OF MAGIC NUMBERS
+  // Optimize to not recreate Indices and UV as 
+  // they never change after the first tile
+  HelperMakeRoadVertices();
+  if (road_indice_count() == 0) {
+    HelperMakeRoadNormals();
+    HelperMakeRoadIndicesAndUV();
+  }
+  unsigned int road_vao = CreateVao(kRoad);
+  road_vao_handle_.push_back(road_vao);
+
+  // Collision map for current road tile
+  HelperMakeRoadCollisionMap();
+}
+
+// Turning Terrain Piece
+//   Mutates the input members, (e.g. vertices, indicies etc.) and then
+//   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+//   @warn creates and pushes back a road VAO based on the terrain middle section
+//   @warn pushes next road collision map into member queue
+void Terrain::GenerateTerrainTurn() {
+  // Optimize to not recreate Indices and UV as 
+  // they never change after the first tile
+  if (indice_count() == 0)
+    HelperMakeIndicesAndUV();
+
+  HelperMakeHeights();
+  HelperMakeVertices(kTurnLeft);
+  HelperMakeNormals();
+  unsigned int terrain_vao = CreateVao(kTerrain);
+  terrain_vao_handle_.push_back(terrain_vao);
+
+  //  ROAD - Extract middle flat section and make road VAO
+  //  BEWARD FULL OF MAGIC NUMBERS
+  // Optimize to not recreate Indices and UV as 
+  // they never change after the first tile
+  HelperMakeRoadVertices();
+  if (road_indice_count() == 0) {
+    HelperMakeRoadNormals();
+    HelperMakeRoadIndicesAndUV();
+  }
+  unsigned int road_vao = CreateVao(kRoad);
+  road_vao_handle_.push_back(road_vao);
+
+  // Collision map for current road tile
+  HelperMakeRoadCollisionMap();
+}
+
+// Water height map
+//   Mutates all the input parameters for CreateVAO
+//   @warn creates and pushes back a water VAO
+//   @warn uses the indices and UV coordinates from terrain generation
+//         hence must be called after GenerateTerrain()
 // TODO if this becomes another dynamic tile then dont regenerate height vector (its expensive)
 void Terrain::GenerateWater() {
   // Setup Vars
@@ -102,73 +172,15 @@ void Terrain::GenerateWater() {
   water_heights_.assign(x_length_*z_length_, 0.0f);
 
   HelperMakeVertices(kStraight, kWater, min_position, position_range);
-  HelperMakeNormals();
-  unsigned int water_vao = CreateVao(terrain_water_id_);
+  // HelperMakeNormals();
+  unsigned int water_vao = CreateVao(kWater);
   water_vao_handle_ = water_vao;
   indice_count_water_ = indices.size();
 }
 
-// TODO comment
-//  @warn also generates a road VAO and pushes back into it
-void Terrain::GenerateTerrain() {
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  if (indice_count() == 0)
-    HelperMakeIndicesAndUV();
-
-  HelperMakeHeights();
-  HelperMakeVertices(kStraight);
-  HelperMakeNormals();
-  unsigned int terrain_vao = CreateVao(terrain_program_id_);
-  terrain_vao_handle_.push_back(terrain_vao);
-
-  //  ROAD - Extract middle flat section and make road VAO
-  //  BEWARD FULL OF MAGIC NUMBERS
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  HelperMakeRoadVertices();
-  if (road_indice_count() == 0) {
-    HelperMakeRoadNormals();
-    HelperMakeRoadIndicesAndUV();
-  }
-  unsigned int road_vao = CreateVao(terrain_program_id_, vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
-  road_vao_handle_.push_back(road_vao);
-
-  // Collision map for current road tile
-  HelperMakeRoadCollisionMap();
-}
-
-// TODO comment
-//  @warn also generates a road VAO and pushes back into it
-void Terrain::GenerateTerrainTurn() {
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  if (indice_count() == 0)
-    HelperMakeIndicesAndUV();
-
-  HelperMakeHeights();
-  HelperMakeVertices(kTurnLeft);
-  HelperMakeNormals();
-  unsigned int terrain_vao = CreateVao(terrain_program_id_);
-  terrain_vao_handle_.push_back(terrain_vao);
-
-  //  ROAD - Extract middle flat section and make road VAO
-  //  BEWARD FULL OF MAGIC NUMBERS
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  HelperMakeRoadVertices();
-  if (road_indice_count() == 0) {
-    HelperMakeRoadNormals();
-    HelperMakeRoadIndicesAndUV();
-  }
-  unsigned int road_vao = CreateVao(terrain_program_id_, vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
-  road_vao_handle_.push_back(road_vao);
-
-  // Collision map for current road tile
-  HelperMakeRoadCollisionMap();
-}
-
-// TODO comment
+// Model the heights using an X^3 mathematical functions, then randomize heights
+// for all vertices in heightmap
+//   @warn pretty expensive operation 10000*2 loops
 void Terrain::HelperMakeHeights() {
   // Store the connecting row to smooth
   std::vector<float> temp_last_row_heights_;
@@ -177,8 +189,8 @@ void Terrain::HelperMakeHeights() {
   }
 
   heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
-  for (unsigned int y = 0; y < z_length_; ++y) {
-    for (unsigned int x = 0; x < x_length_; ++x) {
+  for (int y = 0; y < z_length_; ++y) {
+    for (int x = 0; x < x_length_; ++x) {
       // Normalize x between -1 and 1
       float norm_x = (float)x / (x_length_-1);
       norm_x *= 2.0;
@@ -274,15 +286,21 @@ void Terrain::HelperMakeHeights() {
   // TODO someone try fighting with this if you dare...
   //   Something goes wrong with the normals at the connection
   // Compare connection rows to eachother and smooth new one
-  for (unsigned int x = 0; x < x_length_; ++x) {
+  for (int x = 0; x < x_length_; ++x) {
     // heights_.at(x) = 0.0f;
     float new_height = temp_last_row_heights_.at(x_length_-x-1) - heights_.at(x);
     heights_.at(x) = new_height + heights_.at(x);
   }
 }
 
-// TODO comment
-// CONSTRUCT HEIGHT MAP VERTICES
+// Overloaded function to generate a square height map on the X/Z plane. Different
+// road_type parameters can be added to curve the Z coordinates and hence make turning
+// pieces.
+// @param  road_type       An enum representing the mathematical model to be applied to Z
+// @param  tile_type       An enum representing whether the tile is water or terrain
+// @param  min_position    The relative start position of the heightmap over X/Z
+// @param  position_range  The spread of the heightmap over X/Z 
+// @warn  No changes can be made to vertices_ member until the Road Helpers complete
 void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     float min_position, float position_range) {
   vertices.assign(x_length_ * z_length_, glm::vec3());
@@ -308,11 +326,14 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
 
       // Water or Terrain
       switch(tile_type) {
-        case 0:
+        case kTerrain:
           yPosition = heights_.at(offset);
           break;
-        case 1:
+        case kWater:
           yPosition = water_heights_.at(offset);
+          break;
+        case kRoad:
+          assert(0 && "improper use of function");
           break;
       }
 
@@ -320,7 +341,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       switch(road_type) {
         // case 0: straight road => do nothing
         // case 1: x^2 turnning road
-        case 1:
+        case kTurnLeft:
           float zSquare = zPosition * zPosition; //x^2
           xPosition = zSquare/(position_range*2.5) + xPosition;
           break;
@@ -354,7 +375,9 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
 }
 
-// TODO comment
+// Generates the indices and UV texture coordinates to be used by the tile
+// @note  These don't change for the same x_length_ * z_length_ height maps
+// @warn  No changes can be made to indices or UV member until the Road Helpers complete
 void Terrain::HelperMakeIndicesAndUV() {
   // CONSTRUCT HEIGHT MAP INDICES
   // 2 triangles for every quad of the terrain mesh
@@ -368,11 +391,11 @@ void Terrain::HelperMakeIndicesAndUV() {
     {
       int vertexIndex = ( j * x_length_ ) + i;
       // Top triangle (T0)
-      indices[index++] = vertexIndex;                       // V0
+      indices[index++] = vertexIndex;                        // V0
       indices[index++] = vertexIndex + x_length_ + 1;        // V3
-      indices[index++] = vertexIndex + 1;                   // V1
+      indices[index++] = vertexIndex + 1;                    // V1
       // Bottom triangle (T1)
-      indices[index++] = vertexIndex;                       // V0
+      indices[index++] = vertexIndex;                        // V0
       indices[index++] = vertexIndex + x_length_;            // V2
       indices[index++] = vertexIndex + x_length_ + 1;        // V3
     }
@@ -398,8 +421,8 @@ void Terrain::HelperMakeIndicesAndUV() {
   }
 }
 
-// TODO comment
-//Create Normals
+// Generates the normals by doing a cross product of neighbouring vertices
+// @warn  No changes can be made to normals_ member until the Road Helpers complete
 void Terrain::HelperMakeNormals() {
   normals.assign(x_length_*z_length_, glm::vec3());
   for ( unsigned int i = 0; i < indices.size(); i += 3 )  {
@@ -419,21 +442,9 @@ void Terrain::HelperMakeNormals() {
   }
 }
 
-// TODO
-void Terrain::HelperMakeRoadVerticesAndNormals() {
-  vertices_road_.clear();
-  normals_road_.clear();
-  for (unsigned int x = 17*x_length_/36; x < 22*x_length_/36; ++x) {
-    for (unsigned int z = 0; z < z_length_; ++z){
-      vertices_road_.push_back(vertices.at(x + z*x_length_));
-      // Lift road a bit above terrain to make it visible
-      vertices_road_.back().y += 0.01f;
-      normals_road_.push_back(normals.at(x + z*x_length_));
-    }
-  }
-}
-
-// TODO
+// Rip the road parts of the terrain heightmap using calulcated magic numbers and store
+// these in the vertices_road_ vector
+// @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadVertices() {
   vertices_road_.clear();
   for (unsigned int x = 17*x_length_/36; x < 22*x_length_/36; ++x) {
@@ -445,7 +456,10 @@ void Terrain::HelperMakeRoadVertices() {
   }
 }
 
-// TODO
+// Rip the road parts of the terrain normals vector using calulcated magic numbers and store
+// these in the normals_road_ vector
+// @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
+// @warn  for optimzation this should only be called once because road normals don't change
 void Terrain::HelperMakeRoadNormals() {
   normals_road_.clear();
   for (unsigned int x = 17*x_length_/36; x < 22*x_length_/36; ++x) {
@@ -455,7 +469,10 @@ void Terrain::HelperMakeRoadNormals() {
   }
 }
 
-// TODO
+// Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
+// store these in the indice and UV vectors respectfully
+// @warn  requires a preceeding call to HelperMakeIndicesAndUV otherwise undefined behaviour
+// @warn  for optimzation this should only be called once because road indices and UV don't change
 void Terrain::HelperMakeRoadIndicesAndUV() {
   // Create Index Data
   indices_road_.clear();
@@ -486,24 +503,17 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
   }
 }
 
-// TODO
-// Collision map for current road tile
+// Generates a collision coordinate mapping
+//   Using the vertices_road_ vector, maps all rounded Z coordinates to their corresponding min X
+//   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
+// @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadCollisionMap() {
   std::unordered_map<float,std::pair<float,float>> tile_map;
   tile_map.reserve(z_length_);
   std::pair<float,float> min_max_x_pair;
   std::pair<float,std::pair<float,float>> next_scanline;
   unsigned int x_new_row_size = 22*x_length_/36 - 17*x_length_/36;
-  // for (unsigned int z = 0; z < z_length_; ++z){
-  // for (unsigned int x = 0; x < x_new_row_size; ++x) {
-  //   // Represents a Z scanline
-  //   float z_key = vertices_top.at(0 + z_length_ * x).z; // z coordinate of first vertice in row
-  //   min_max_x_pair.first = vertices_top.at(0 + z_length_ * x).x; // min x
-  //   min_max_x_pair.second = vertices_top.at(z_length_-1 + z_length_ * x).x; // max x
-  //
-  //   printf("test = %f, z = %f\n", vertices_top.at(x).x, z_key);
-  //   printf("min x =%f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
-  // }
+
   for (unsigned int z = 0; z < z_length_; ++z){
     float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
     z_key = round(z_key); // round value so key can be found
@@ -528,16 +538,12 @@ void Terrain::HelperMakeRoadCollisionMap() {
   // }
 }
 
-unsigned int Terrain::CreateVao(const GLuint &program_id) {
-  return CreateVao(program_id, vertices, normals, texture_coordinates_uv, indices);
-}
-
+// Creates a new vertex array object and loads in data into a vertex attribute buffer
+//   The parameters are self explanatory.
+//   @return vao_handle, the vao handle
 unsigned int Terrain::CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
     const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices) {
 
-  //////////////////////////////
-  //Create axis VAO         ////
-  //////////////////////////////
   glUseProgram(program_id);
 
   assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
@@ -581,6 +587,26 @@ unsigned int Terrain::CreateVao(const GLuint &program_id, const std::vector<glm:
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   return VAO_handle;
+}
+
+// Creates a new vertex array object and loads in data into a vertex attribute buffer
+//   @param  tile_type  An enum representing the proper members to use
+//   @return vao_handle, the vao handle
+unsigned int Terrain::CreateVao(TileType tile_type) {
+  unsigned int vao;
+  switch(tile_type) {
+    case kTerrain: //and kRoad
+      vao = CreateVao(terrain_program_id(), vertices, normals, texture_coordinates_uv, indices);
+      break;
+    case kWater:
+      // TODO fix this nonconst direct member access
+      vao = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
+      break;
+    case kRoad:
+      vao = CreateVao(terrain_program_id(), vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
+      break;
+  }
+  return vao;
 }
 
 // Creates a texture pointer from file
