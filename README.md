@@ -1,7 +1,7 @@
 ## Computer Graphics Assignment 3 (Semester 1 2015)
 
 17th May - Current Build</br>
-Added Water, Circular Tiling, Car movement, collision prototpes</br>
+Added Water, Circular Tiling, Car movement, collision prototypes</br>
 Cleaned up Terrain.cc</br>
 ![Current Build Screenshot](https://github.com/KonradJanica/CG_Assign3/blob/master/screenshots/preview_17th_may.jpg?raw=true)
 
