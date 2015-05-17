@@ -29,8 +29,8 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
       RandomizeGeneration();
     }
 
-    GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
-    water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
+    // GenerateWater(vertices, normals, texture_coordinates_uv, indices, heights);
+    // water_vao_handle_ = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
 
 }
 
