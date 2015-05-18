@@ -1,7 +1,9 @@
 #include "terrain.h"
 
-Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height) 
-  : terrain_program_id_(program_id), terrain_water_id_(water_id), x_length_(width), z_length_(height) {
+Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height)
+  : x_length_(width), z_length_(height),
+  indice_count_(0), road_indice_count_(0),
+  terrain_program_id_(program_id), terrain_water_id_(water_id) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
