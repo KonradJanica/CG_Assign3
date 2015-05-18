@@ -43,6 +43,20 @@ class Model : public Object {
         // Below are optional variables for object (parent) construction
         const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &rotation = glm::vec3(0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1));
 
+    // Constructor for skybox
+    Model(const GLuint &program_id, const std::string &model_filename, const bool &skybox, 
+        // Below are optional variables for object (parent) construction
+        const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &rotation = glm::vec3(0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1));
+
+    // EVERYTHING MITCH ADDED FOR SKYBOX
+    GLuint skytexture_[6];
+    unsigned int skyBoxVao_;
+    // Creates a texture pointer from file
+    GLuint LoadTexture(const std::string &filename);
+
+    inline GLuint skytexture(int x) const;
+    inline unsigned int skyboxvao() const;
+
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
     inline GLuint program_id() const;
@@ -132,7 +146,19 @@ class Model : public Object {
     void ConstructShadedModel();
     unsigned int CreateVao(const RawModelData::Shape *shape);
     GLuint CreateTextures(const RawModelData::Material *material);
+    unsigned int CreateSkyVao(); 
 };
+
+//TODO MITCH
+inline GLuint Model::skytexture(int x) const
+{
+  return skytexture_[x];
+}
+
+inline unsigned int Model::skyboxvao() const
+{
+  return skyBoxVao_;
+}
 
 // Returns the program_id_ (i.e. the shader) that the model uses
 //   @return program_id_, the shader member variable

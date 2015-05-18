@@ -29,6 +29,180 @@ Model::Model(const GLuint &program_id, const std::string &model_filename,
   delete model_data_;
 }
 
+Model::Model(const GLuint &program_id, const std::string &model_filename, const bool &skybox, 
+    // Next line of parameters are optional variables for object (parent) construction
+    const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
+: Object(position, rotation, scale), program_id_(program_id), amount_points_(0) {
+
+  printf("Called the skybox constructor in model \n");
+  skytexture_[0] = LoadTexture("textures/alpine_front.jpg"); // FRONT
+  skytexture_[1] = LoadTexture("textures/alpine_right.jpg"); // RIGHT
+  skytexture_[2] = LoadTexture("textures/alpine_back.jpg"); // BACK
+  skytexture_[3] = LoadTexture("textures/alpine_left.jpg"); // LEFT (alpine left is actually right)
+  skytexture_[4] = LoadTexture("textures/rock02.jpg"); // FLOOR
+  skytexture_[5] = LoadTexture("textures/alpine_top.jpg"); // ROOF
+  skyBoxVao_ = CreateSkyVao();
+
+}
+
+GLuint Model::LoadTexture(const std::string &filename) {
+  // A shader program has many texture units, slots in which a texture can be bound, available to
+  // it and this function defines which unit we are working with currently
+  // We will only use unit 0 until later in the course. This is the default.
+  glActiveTexture(GL_TEXTURE0);
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  GLuint new_texture;
+  glGenTextures( 1, &new_texture );
+  // load an image from file as texture 1
+  int x, y, n;
+  unsigned char *data;
+  data = stbi_load(
+      filename.c_str(), /*char* filepath */
+      // "crate.jpg",
+      &x, /*The address to store the width of the image*/
+      &y, /*The address to store the height of the image*/
+      &n /*Number of channels in the image*/,
+      0 /*Force number of channels if > 0*/
+  );
+  glBindTexture( GL_TEXTURE_2D, new_texture );
+  if (n == 3) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  }
+  else {
+    fprintf(stderr, "Image pixels are not RGB. You will need to change the glTexImage2D command.");
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  }
+  stbi_image_free(data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  return new_texture;
+}
+
+unsigned int Model::CreateSkyVao() {
+  glUseProgram( program_id_ );
+  
+
+  unsigned int vao_handle;
+  glGenVertexArrays(1, &vao_handle);
+  glBindVertexArray(vao_handle);
+
+  int vertLoc = glGetAttribLocation(program_id_, "a_vertex");
+  int textureLoc = glGetAttribLocation(program_id_, "a_texture");
+  int normLoc = glGetAttribLocation(program_id_, "a_normal");
+
+  glm::vec3 SkyBoxVertices[24] = {
+        //Vertices according to faces
+        glm::vec3(-50.0f, -50.0f, 50.0f), //Vertex 0
+        glm::vec3(50.0f, -50.0f, 50.0f), //v1
+        glm::vec3(-50.0f, 50.0f, 50.0f), //v2
+        glm::vec3(50.0f, 50.0f, 50.0f), //v3
+        glm::vec3(50.0f, -50.0f, 50.0f), //...
+        glm::vec3(50.0f, -50.0f, -50.0f),
+        glm::vec3(50.0f, 50.0f, 50.0f),
+        glm::vec3(50.0f, 50.0f, -50.0f),
+        glm::vec3(50.0f, -50.0f, -50.0f),
+        glm::vec3(-50.0f, -50.0f, -50.0f),
+        glm::vec3(50.0f, 50.0f, -50.0f),
+        glm::vec3(-50.0f, 50.0f, -50.0f),
+        glm::vec3(-50.0f, -50.0f, -50.0f),
+        glm::vec3(-50.0f, -50.0f, 50.0f),
+        glm::vec3(-50.0f, 50.0f, -50.0f),
+        glm::vec3(-50.0f, 50.0f, 50.0f),
+        glm::vec3(-50.0f, -50.0f, -50.0f),
+        glm::vec3(50.0f, -50.0f, -50.0f),
+        glm::vec3(-50.0f, -50.0f, 50.0f),
+        glm::vec3(50.0f, -50.0f, 50.0f),
+        glm::vec3(-50.0f, 50.0f, 50.0f),
+        glm::vec3(50.0f, 50.0f, 50.0f),
+        glm::vec3(-50.0f, 50.0f, -50.0f),
+        glm::vec3(50.0f, 50.0f, -50.0f)
+      };
+      /** The initial texture coordinates (u, v) */
+      glm::vec2 SkyBoxTexCoords[24] = {
+        //Mapping coordinates for the vertices
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+        glm::vec2(0.0f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.0f, 0.0f),
+      };
+      /** The initial indices definition */
+      int SkyBoxIndices[36] = {
+        //Faces definition
+        0,1,3, 0,3,2, //Face front
+        4,5,7, 4,7,6, //Face right
+        8,9,11, 8,11,10, //...
+        12,13,15, 12,15,14,
+        16,17,19, 16,19,18,
+        20,21,23, 20,23,22,
+      };
+
+      glm::vec3 SkyBoxNormals[6] =
+      {
+        glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(-1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, -1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+      };
+
+
+  std::vector<glm::vec3> vertices(SkyBoxVertices, SkyBoxVertices + 24);
+  std::vector<glm::vec2> uv(SkyBoxTexCoords, SkyBoxTexCoords + 24);
+  std::vector<glm::vec3> norms(SkyBoxNormals, SkyBoxNormals + 6);
+  std::vector<int> indices(SkyBoxIndices, SkyBoxIndices + 36);
+
+  // Buffers to store position, colour and index data
+  unsigned int buffer[4];
+  glGenBuffers(4, buffer);
+
+  // Set vertex position
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size() , &vertices[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(vertLoc);
+  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // Normal attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * norms.size(), &norms[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(normLoc);
+  glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  // Texture attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uv.size(), &uv[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(textureLoc);
+  glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
+  // We don't attach this to a shader label, instead it controls how rendering is performed
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[3]);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+      sizeof(unsigned int) * indices.size(), &indices[0], GL_STATIC_DRAW);   
+  // Un-bind
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  return vao_handle;
+}
+
 void Model::ConstructShadedModel() {
   // Parse Materials to material_container
   std::vector<RawModelData::Material*> material_container;

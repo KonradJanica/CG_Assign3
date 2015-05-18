@@ -373,6 +373,9 @@ int main(int argc, char **argv) {
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
   g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
 
+  // Add the skybox using the water shader for now
+  g_controller->AddModel(g_program_id[3], "SKYBOX"); 
+
   // Setup camera global
   g_camera = g_controller->camera();
 

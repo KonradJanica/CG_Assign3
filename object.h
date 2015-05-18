@@ -129,6 +129,10 @@ class Object {
     //   @return amount_points_, the total amount of points => used for rendering
     virtual unsigned int amount_points() const = 0;
 
+    virtual GLuint skytexture(int x) const = 0;
+    virtual unsigned int skyboxvao() const = 0;
+
+
   private:
     // Model matrix assosciated with object
     //   Use UpdateModelMatrix() to update

@@ -17,6 +17,17 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 //   @warn the model is created on the heap and memory must be freed afterwards
 //   TODO split Car into it's own
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
+  
+  if(model_filename == "SKYBOX")
+  {
+    printf("WE ARE ADDING A SKYBOX \n");
+    skybox_ = new Model(program_id, model_filename, 1,
+                     glm::vec3(0.0f, 5.0f, 10.0f), // Translation
+                     glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
+                     glm::vec3(1.0f, 1.0f, 1.0f)); // Scale
+    return;
+  }
+
   if (is_car) {
     car_ = new Model(program_id, model_filename, 
                      glm::vec3(0.0f, 0.3f, 10.0f), // Translation
@@ -27,6 +38,8 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
     objects_.push_back(object);
   }
+
+
 }
 
 // Renders all models in the vector member
@@ -46,6 +59,8 @@ void Controller::Draw() {
   // Axis
   // TODO Toggle
   renderer_->RenderAxis(camera_);
+
+  renderer_->RenderSky(skybox_, camera_);
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties
@@ -144,6 +159,11 @@ void Controller::UpdatePhysics() {
     car_->set_translation(new_translation);
     displacement.x += x_movement;
     displacement.z += z_movement;
+    //TODO @ MICTH FLAGS FOR CNTRL F
+    glm::vec3 sky_translation = skybox_->translation();
+    sky_translation.z += MOVESPEED;
+    skybox_->set_translation(sky_translation);
+    skybox_->UpdateModelMatrix();
   }
   if (is_key_pressed_hash_.at('s')) {
     float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
@@ -153,6 +173,11 @@ void Controller::UpdatePhysics() {
     car_->set_translation(new_translation);
     displacement.x -= x_movement;
     displacement.z -= z_movement;
+
+    glm::vec3 sky_translation = skybox_->translation();
+    sky_translation.z -= MOVESPEED;
+    skybox_->set_translation(sky_translation);
+    skybox_->UpdateModelMatrix();
   }
   car_->set_displacement(displacement);
 

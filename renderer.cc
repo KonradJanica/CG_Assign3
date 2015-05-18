@@ -8,6 +8,85 @@ Renderer::Renderer(const bool &debug_flag)
   : coord_vao_handle(0), is_debugging_(debug_flag) {
 }
 
+void Renderer::RenderSky(Object * object, const Camera * camera) const
+{
+  GLuint program_id = object->program_id();
+  glUseProgram(program_id);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glLineWidth(1.0f);
+
+  // Other Handles Setup
+  int texHandle = glGetUniformLocation(program_id, "texMap");
+  if (texHandle == -1) {
+    if (is_debugging_) {
+      fprintf(stderr, "Could not find uniform variables\n");
+      exit(1);
+    }
+  }
+  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
+  if (mvHandle == -1 || normHandle==-1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  // Uniform variables defining material colours
+  // These can be changed for each sphere, to compare effects
+  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(program_id, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find material uniform variables\n");
+    }
+  }
+
+  const glm::mat4 &view_matrix = camera->view_matrix();
+  glm::mat3 normMatrix;
+  // We compute the normal matrix from the current modelview matrix
+  // and give it to our program
+  normMatrix = glm::mat3(view_matrix);
+  const glm::mat4 &model_matrix = object->model_matrix();
+  glm::mat4 modelview_matrix = view_matrix * model_matrix;
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );  // Middle
+  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  
+  for (unsigned int x = 0; x < 6; x++) {
+    // Pass Surface Colours to Shader
+    const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f); // TODO FIX THIS
+    const glm::vec3 &vao_diffuse = glm::vec3(0.5f,0.5f,0.5f);
+    const glm::vec3 &vao_specular = glm::vec3(0.5f,0.5f,0.5f);
+    float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };  // ambient material
+    float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };  // diffuse material
+    float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };  // specular material
+    glUniform3fv(mtlambientHandle, 1, mtlambient);
+    glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+    glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+    float mtlshininess = 0.8f; //TODO FIX THIS
+    glUniform1fv(shininessHandle, 1, &mtlshininess);
+
+    // Bind VAO
+    glBindTexture( GL_TEXTURE_2D, object->skytexture(x));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);  
+    glBindVertexArray(object->skyboxvao()); 
+    // We are using texture unit 0 (the default)
+    glUniform1i(texHandle, 0);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, x*4, 4);
+  }
+
+  // Update Physics
+  if (object->IsPhysics()) {
+    object->UpdateModelMatrix();
+  }
+}
 // Draws/Renders the passed in objects (with their models) to the scene
 //   Should be called in the render loop
 //   @param Object * object, an object to render

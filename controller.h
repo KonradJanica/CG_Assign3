@@ -68,6 +68,8 @@ class Controller {
     // Accessor for Camera Object
     inline Camera * camera();
 
+    inline Object * skybox();
+
     // CONTROLS
     // The controllers physics update tick
     //   Checks keypresses and calculates acceleration
@@ -91,6 +93,8 @@ class Controller {
     Camera * camera_;
     // The terrain object
     Terrain * terrain_;
+
+    Object * skybox_;
 
     // The light controller
     LightController * light_controller_;
@@ -167,6 +171,10 @@ inline float Controller::GetMin(unsigned int index, int e_numb) const {
 // Accessor for Camera Object
 inline Camera * Controller::camera() {
   return camera_;
+}
+
+inline Object * Controller::skybox() {
+  return skybox_;
 }
 // Trues the key hash on key down event
 //   @param a key corresponding to is_key_pressed_hash_

@@ -27,6 +27,9 @@ class Renderer {
     // Construct with verbose debugging mode
     Renderer(const bool &debug_flag = false);
 
+    //MITCH TODO COMMENT
+    void RenderSky(Object * object, const Camera * camera) const;
+
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
     //   @param Camera * camera, to get the camera matrix and correctly position world

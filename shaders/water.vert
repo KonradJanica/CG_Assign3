@@ -23,7 +23,7 @@ void main()
 	float newy = (sin(waveWidth * a_vertex.x + newElapsed) * cos(waveWidth * a_vertex.y + newElapsed) * 0.3);
 
   // Pass pipeline the vertex position and normal in eye coordinates for light computation
-  a_vertex_mv = modelview_matrix * vec4(a_vertex.x, newy, a_vertex.z, 1.0);
+  a_vertex_mv = modelview_matrix * vec4(a_vertex.x, a_vertex.y, a_vertex.z, 1.0);
   a_normal_mv = normalize(normal_matrix * a_normal);
 
   
