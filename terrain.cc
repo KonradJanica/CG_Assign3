@@ -16,6 +16,14 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     road_texture_ = LoadTexture("textures/road.jpg");
     water_texture_ = LoadTexture("textures/water01.jpg");
 
+    // Setup Indices and UV Coordinates
+    //   These never change unless the x_length_ and/or z_length_ of the heightmap change
+    HelperMakeIndicesAndUV();
+    indice_count_ = indices.size();
+    indice_count_water_ = indices.size();
+    HelperMakeRoadIndicesAndUV(); // BEWARD FULL OF MAGIC NUMBERS
+    road_indice_count_ = indices_road_.size();
+
     // Generate Starting Terrain
     // This is the amount of tiles that will be in the circular_vector at all times
     // TODO obviously 3 for test/demo purposes
@@ -29,7 +37,7 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
       // into circular_vector VAO buffer
       RandomizeGeneration();
     }
-}
+  }
 
 // Generates next tile and removes first one
 //   Uses the circular_vector data structure to do this in O(1)
@@ -63,11 +71,6 @@ void Terrain::RandomizeGeneration() {
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
 void Terrain::GenerateTerrain() {
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  if (indice_count() == 0)
-    HelperMakeIndicesAndUV();
-
   HelperMakeHeights();
   HelperMakeVertices(kStraight);
   HelperMakeNormals();
@@ -76,13 +79,11 @@ void Terrain::GenerateTerrain() {
 
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
   HelperMakeRoadVertices();
-  if (road_indice_count() == 0) {
+  //  Road Normals only have to be generated once
+  if (normals_road_.size() == 0)
     HelperMakeRoadNormals();
-    HelperMakeRoadIndicesAndUV();
-  }
+
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
@@ -96,11 +97,6 @@ void Terrain::GenerateTerrain() {
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
 void Terrain::GenerateTerrainTurn() {
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
-  if (indice_count() == 0)
-    HelperMakeIndicesAndUV();
-
   HelperMakeHeights();
   HelperMakeVertices(kTurnLeft);
   HelperMakeNormals();
@@ -109,13 +105,12 @@ void Terrain::GenerateTerrainTurn() {
 
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
-  // Optimize to not recreate Indices and UV as 
-  // they never change after the first tile
   HelperMakeRoadVertices();
-  if (road_indice_count() == 0) {
-    HelperMakeRoadNormals();
-    HelperMakeRoadIndicesAndUV();
-  }
+  //  Road Normals only have to be generated once
+  //  Already done in straight road piece (i.e. starting piece)
+  // if (normals_road_.size() == 0)
+  //   HelperMakeRoadNormals();
+
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
@@ -174,10 +169,11 @@ void Terrain::GenerateWater() {
   water_heights_.assign(x_length_*z_length_, 0.0f);
 
   HelperMakeVertices(kStraight, kWater, min_position, position_range);
-  // HelperMakeNormals();
+  // TODO normal recalculation?
+  //   This Helper will only create them for a flat surface
+  HelperMakeNormals();
   unsigned int water_vao = CreateVao(kWater);
   water_vao_handle_ = water_vao;
-  indice_count_water_ = indices.size();
 }
 
 // Model the heights using an X^3 mathematical functions, then randomize heights
@@ -402,7 +398,6 @@ void Terrain::HelperMakeIndicesAndUV() {
       indices[index++] = vertexIndex + x_length_ + 1;        // V3
     }
   }
-  indice_count_ = indices.size();
 
   // CONSTRUCT UV COORDINATES
   texture_coordinates_uv.assign(x_length_*z_length_, glm::vec2());
@@ -484,23 +479,24 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
     {
       int vertexIndex = ( j * x_length_ ) + i;
       // Top triangle (T0)
-      indices_road_.push_back(vertexIndex);                           // V0
+      indices_road_.push_back(vertexIndex);                        // V0
       indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
-      indices_road_.push_back(vertexIndex + 1);                       // V1
+      indices_road_.push_back(vertexIndex + 1);                    // V1
       // Bottom triangle (T1)
-      indices_road_.push_back(vertexIndex);                           // V0
+      indices_road_.push_back(vertexIndex);                        // V0
       indices_road_.push_back(vertexIndex + x_length_);            // V2
       indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
     }
   }
-  road_indice_count_ = indices_road_.size();
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
   for (unsigned int x = 0; x < 5*x_length_/36; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
-      texture_coordinates_uv_road_.push_back(glm::vec2(texture_coordinates_uv.at(x + z*x_length_).x * 3.2, texture_coordinates_uv.at(x + z*x_length_).y * 1));
+      texture_coordinates_uv_road_.push_back(glm::vec2(
+            texture_coordinates_uv.at(x + z*x_length_).x * 3.2,
+            texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
 }
