@@ -81,6 +81,7 @@ void Terrain::GenerateTerrain() {
   //  BEWARD FULL OF MAGIC NUMBERS
   HelperMakeRoadVertices();
   //  Road Normals only have to be generated once
+  //    because the surface is relatively flat
   if (normals_road_.size() == 0)
     HelperMakeRoadNormals();
 
@@ -107,6 +108,7 @@ void Terrain::GenerateTerrainTurn() {
   //  BEWARD FULL OF MAGIC NUMBERS
   HelperMakeRoadVertices();
   //  Road Normals only have to be generated once
+  //    because the surface is relatively flat.
   //  Already done in straight road piece (i.e. starting piece)
   // if (normals_road_.size() == 0)
   //   HelperMakeRoadNormals();
