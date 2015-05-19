@@ -163,7 +163,7 @@ void Controller::UpdatePhysics() {
     glm::vec3 sky_translation = skybox_->translation();
     sky_translation.z += MOVESPEED;
     skybox_->set_translation(sky_translation);
-    skybox_->UpdateModelMatrix();
+    //skybox_->UpdateModelMatrix();
   }
   if (is_key_pressed_hash_.at('s')) {
     float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
