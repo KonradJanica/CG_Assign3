@@ -88,7 +88,7 @@ void Renderer::Render(Object * object, const Camera * camera) const {
   }
 
   // Update Physics
-  if (object->velocity()) {
+  if (object->speed()) {
     object->UpdateModelMatrix();
   }
 }

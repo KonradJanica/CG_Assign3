@@ -4,63 +4,103 @@
 Object::Object(const glm::vec3 &translation,
                const glm::vec3 &rotation,
                const glm::vec3 &scale,
-               float default_velocity)
+               float default_speed)
   : translation_(translation), rotation_(rotation), scale_(scale),
-    displacement_(0), velocity_(default_velocity) {
+    displacement_(0), speed_(default_speed) {
     UpdateModelMatrix();
   }
 
 // Updates the all the movement data for the object
 // @warn should be called in controller tick
 void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
-  float MOVESPEED = 0.004f * delta_time;
-  float TURNRATE = 0.2f * delta_time;
+  // Convert delta_time to ticks per second
+  //   Currently ticks per milisecond
+  delta_time /= 1000;
+  // TODO put into separate constants class
+  float TURNRATE = 100 * delta_time;
+  float MASS = 1500; //kg
+  float ENGINEFORCE = 9000; //newtons
+  float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
+  float AIRRESSISTANCE = 0.4257;  //proportional constant
+  float FRICTION = AIRRESSISTANCE * 30;
+  float SPEEDSCALE = 5; //the conversions from real speed to game movement
 
+  // SETUP VARS
   // Used to update camera
   displacement_ = glm::vec3(0,0,0);
+  // The current force added to velocity
+  float force_x = 0;
+  float force_z = 0;
+  // The current velocity vector
+  float direction_x = sin(DEG2RAD(rotation().y));
+  float direction_z = cos(DEG2RAD(rotation().y));
+  float velocity_x = speed_ * direction_x;
+  float velocity_z = speed_ * direction_z;
 
-  if (is_key_pressed_hash.at('w')) {
-    velocity_ += 0.00001f * delta_time;
-  }
-  if (is_key_pressed_hash.at('s')) {
-    velocity_ += -0.00005f * delta_time;
-  }
-
-  if (velocity() > 0) {
+  if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
-      float rot = TURNRATE * 0.005f/velocity_;
+      float rot = TURNRATE * 20/speed_;
       if (rot > TURNRATE)
         rot = TURNRATE;
       set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
     }
     if (is_key_pressed_hash.at('d')) {
-      float rot = TURNRATE * 0.005f/velocity_;
+      float rot = TURNRATE * 20/speed_;
       if (rot > TURNRATE)
         rot = TURNRATE;
       set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
     }
   }
-}
 
-// Sets the acceleration of the object to given amount
-// TODO proper comment
-void Object::CalcPosition() {
-  float x_movement = velocity_ * sin(DEG2RAD(rotation().y));
-  float z_movement = velocity_ * cos(DEG2RAD(rotation().y));
-  translation_.x += x_movement;
-  translation_.z += z_movement;
-  displacement_.x += x_movement;
-  displacement_.z += z_movement;
-  velocity_ -= 0.000001f;
-  if (velocity_ < 0)
-    velocity_ = 0;
+
+  if (is_key_pressed_hash.at('w')) {
+    force_x += ENGINEFORCE * direction_x;
+    force_z += ENGINEFORCE * direction_z;
+    // TODO switch gear shift different accelerations
+  }
+  if (is_key_pressed_hash.at('s') && speed() > 0) {
+    force_x -= BRAKINGFORCE * direction_x;
+    force_z -= BRAKINGFORCE * direction_z;
+  }
+
+  // Rolling resistance (friction of tires)
+  force_x -= FRICTION * velocity_x * speed_;
+  force_z -= FRICTION * velocity_z * speed_;
+  // Air resistance x
+  force_x -= AIRRESSISTANCE * speed_;
+  force_z -= AIRRESSISTANCE * speed_;
+
+  // CALCULATE ACCELERATION => a = F/M
+  float acceleration_x = force_x / MASS;
+  float acceleration_z = force_z / MASS;
+
+  // CALCULATE VELOCITY => v = v+dt*a 
+  velocity_x += delta_time * acceleration_x;
+  velocity_z += delta_time * acceleration_z;
+
+  // CALCULATE SPEED
+  if (velocity_x < 0 && velocity_z < 0) {
+    speed_ = 0;
+  } else {
+    speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
+  }
+  printf("speed = %f\n", speed_);
+  // convert speed to game world speed
+  // TODO put into separate constants class
+  velocity_x /= SPEEDSCALE;
+  velocity_z /= SPEEDSCALE;
+
+  // CALCULATE NEW POSITION => p = p+dt*v
+  translation_.x += delta_time * velocity_x;
+  translation_.z += delta_time * velocity_z;
+  displacement_.x += delta_time * velocity_x;
+  displacement_.z += delta_time * velocity_z;
 }
 
 // Updates the transform matrix using glLookAt
 //  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateModelMatrix() {
-  CalcPosition();
 
   // Scale of object
   glm::mat4 scale = glm::scale(  glm::mat4(1.0f), 

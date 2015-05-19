@@ -17,6 +17,7 @@
 #include <GL/glut.h>
 #endif
 
+// TODO put into separate constants class
 #define M_PI 3.14159265358979323846
 #define DEG2RAD(x) ((x)*M_PI/180.0)
 #define RAD2DEG(x) ((x)*180.0/M_PI)
@@ -32,7 +33,7 @@ class Object {
     Object(const glm::vec3 &translation, 
            const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), 
            const glm::vec3 &scale = glm::vec3(1,1,1),
-           float default_velocity = 0);
+           float default_speed = 0);
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
@@ -66,9 +67,9 @@ class Object {
     // Sets the acceleration of the object to given amount
     // TODO comment
     void CalcPosition();
-    // Accessor for the current velocity of the object
-    //   @return velocity_, the current velocity of the object
-    inline float velocity() const;
+    // Accessor for the current speed of the object
+    //   @return speed_, the current speed of the object
+    inline float speed() const;
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -133,8 +134,8 @@ class Object {
     //   The scale of the object
     glm::vec3 scale_;
 
-    // The velocity of the object in the direction it is facing
-    float velocity_;
+    // The speed of the object in the direction it is facing
+    float speed_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);
@@ -157,10 +158,10 @@ inline glm::vec3 Object::rotation() const {
 inline glm::vec3 Object::displacement() const {
   return displacement_;
 }
-// Accessor for the current velocity of the object
-//   @return velocity_, the current velocity of the object
-inline float Object::velocity() const {
-  return velocity_;
+// Accessor for the current speed of the object
+//   @return speed_, the current speed of the object
+inline float Object::speed() const {
+  return speed_;
 }
 
 // MUTATORS:
