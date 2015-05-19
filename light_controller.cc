@@ -33,6 +33,7 @@ bool LightController::Init(GLuint program_id)
 
 void LightController::SetDirectionalLight(const DirectionalLight& light)
 {
+	// Send to shader
 	glUseProgram(program_id_);
 	glUniform3fv(directional_light_location_.AmbientIntensity, 1, glm::value_ptr(light.AmbientIntensity));
 	glUniform3fv(directional_light_location_.DiffuseIntensity, 1, glm::value_ptr(light.DiffuseIntensity));

@@ -112,9 +112,10 @@ void Controller::SetupLighting(const GLuint &program_id) {
     exit(0);
   }
 
+  // TODO @MITCH FOR CTRL F
   // Send directional light
   directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  directional_light_.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  directional_light_.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
   // directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
   directional_light_.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
   // directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
