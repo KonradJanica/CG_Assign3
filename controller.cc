@@ -22,7 +22,6 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
                      glm::vec3(0.0f, 0.3f, 10.0f), // Translation
                      glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
                      glm::vec3(0.3f, 0.3f, 0.3f)); // Scale
-    car_->EnablePhysics(0.0001,0.00001,0);
   } else {
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
     objects_.push_back(object);
@@ -127,48 +126,15 @@ void Controller::UpdatePhysics() {
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
-  float MOVESPEED = 0.004f * delta_time_;
-  float TURNRATE = 0.2f * delta_time_;
+  ///////////////// CAMERA CONTROLS
+  // point at car
+  camera_->UpdateCarTick(car_);
 
-  // Used to calculate car movement
-  glm::vec3 new_translation = car_->translation();
-  glm::vec3 rotation = car_->rotation();
-  // Used to update camera
-  glm::vec3 displacement = glm::vec3(0,0,0);
-
-  if (is_key_pressed_hash_.at('w')) {
-    float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
-    float z_movement = MOVESPEED * cos(DEG2RAD(rotation.y));
-    new_translation.x += x_movement;
-    new_translation.z += z_movement;
-    car_->set_translation(new_translation);
-    displacement.x += x_movement;
-    displacement.z += z_movement;
-  }
-  if (is_key_pressed_hash_.at('s')) {
-    float x_movement = MOVESPEED * sin(DEG2RAD(rotation.y));
-    float z_movement = MOVESPEED * cos(DEG2RAD(rotation.y));
-    new_translation.x -= x_movement;
-    new_translation.z -= z_movement;
-    car_->set_translation(new_translation);
-    displacement.x -= x_movement;
-    displacement.z -= z_movement;
-  }
-  car_->set_displacement(displacement);
-
-  // No Acceleration
-  if (!is_key_pressed_hash_.at('w') && !is_key_pressed_hash_.at('s')) {
-    // car_->Accelerate(0);
-  }
-  if (is_key_pressed_hash_.at('a')) {
-    car_->set_rotation(glm::vec3(car_->rotation().x, car_->rotation().y + TURNRATE, car_->rotation().z));
-  }
-  if (is_key_pressed_hash_.at('d')) {
-    car_->set_rotation(glm::vec3(car_->rotation().x, car_->rotation().y - TURNRATE, car_->rotation().z));
-  }
+  car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
 
   ///////////////// COLLISION TESTING TODO TODO
   const std::queue<std::unordered_map<float,std::pair<float,float>>> &col = terrain_->collision_queue_hash();
+  const glm::vec3 &new_translation = car_->translation();
   float car_z = new_translation.z;
   car_z = round(car_z);
   // printf("car_z = %f\n", car_z);
@@ -195,7 +161,4 @@ void Controller::UpdatePhysics() {
   }
   // printf("%f\n", current_frame);
 
-  ///////////////// CAMERA CONTROLS
-  // point at car
-  camera_->UpdateCarTick(car_);
 }

@@ -1,57 +1,70 @@
 #include "object.h"
 
 // Construct with position setting parameters
-Object::Object(const glm::vec3 &translation, const glm::vec3 &rotation, const glm::vec3 &scale)
-  : translation_(translation), rotation_(rotation), displacement_(0), scale_(scale), physics_extension_(0) {
+Object::Object(const glm::vec3 &translation,
+               const glm::vec3 &rotation,
+               const glm::vec3 &scale,
+               float default_velocity)
+  : translation_(translation), rotation_(rotation), scale_(scale),
+    displacement_(0), velocity_(default_velocity) {
     UpdateModelMatrix();
   }
 
-// Enables the physics extension
-//  @warn Is created on heap, needs to be deleted afterwards
-void Object::EnablePhysics(const float &velocity, const float &acceleration, const float &turn_rate) {
-  if (IsPhysics()) {
-    printf("Physics being overwritten, possible memory leak\n");
+// Updates the all the movement data for the object
+// @warn should be called in controller tick
+void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
+  float MOVESPEED = 0.004f * delta_time;
+  float TURNRATE = 0.2f * delta_time;
+
+  // Used to update camera
+  displacement_ = glm::vec3(0,0,0);
+
+  if (is_key_pressed_hash.at('w')) {
+    velocity_ += 0.00001f * delta_time;
   }
-  physics_extension_ = new Physics(velocity, acceleration, turn_rate);
+  if (is_key_pressed_hash.at('s')) {
+    velocity_ += -0.00005f * delta_time;
+  }
+
+  if (velocity() > 0) {
+    if (is_key_pressed_hash.at('a')) {
+      float rot = TURNRATE * 0.005f/velocity_;
+      if (rot > TURNRATE)
+        rot = TURNRATE;
+      set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
+    }
+    if (is_key_pressed_hash.at('d')) {
+      float rot = TURNRATE * 0.005f/velocity_;
+      if (rot > TURNRATE)
+        rot = TURNRATE;
+      set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
+    }
+  }
 }
 
-// Tests for whether Physics are enabled for the object
-bool Object::IsPhysics() const {
-  return physics_extension_;
-}
-
-// Increases the acceleration of the object by given amount
-//   TODO a maximum acceleration?
-void Object::Accelerate(const float &amount) {
-  physics_extension_->acceleration += amount;
-}
-
-// Decreases the acceleration of the object by given amount
-//   TODO a minimum acceleration?
-void Object::Deccelerate(const float &amount) {
-  physics_extension_->acceleration -= amount;
+// Sets the acceleration of the object to given amount
+// TODO proper comment
+void Object::CalcPosition() {
+  float x_movement = velocity_ * sin(DEG2RAD(rotation().y));
+  float z_movement = velocity_ * cos(DEG2RAD(rotation().y));
+  translation_.x += x_movement;
+  translation_.z += z_movement;
+  displacement_.x += x_movement;
+  displacement_.z += z_movement;
+  velocity_ -= 0.000001f;
+  if (velocity_ < 0)
+    velocity_ = 0;
 }
 
 // Updates the transform matrix using glLookAt
 //  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateModelMatrix() {
-  if (IsPhysics()) {
-    // Calculate Delta Time to even out for different frame rates
-    GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
-    GLfloat &delta_time = physics_extension_->delta_time;
-    GLfloat &last_frame = physics_extension_->last_frame;
-    delta_time = current_frame - last_frame;
-    last_frame = current_frame;
-    // Calculate Physics
-    physics_extension_->velocity += physics_extension_->acceleration * delta_time;
-    // position_ += physics_extension_->velocity * direction_;
-  }
-  // model_matrix_ = glm::lookAt(position_, pdirectionosition_+ direction_, up_);
+  CalcPosition();
 
   // Scale of object
   glm::mat4 scale = glm::scale(  glm::mat4(1.0f), 
-          glm::vec3(scale_.x, scale_.y, scale_.z));
+      glm::vec3(scale_.x, scale_.y, scale_.z));
 
   // Rotation of object
   glm::mat4 rotate = glm::mat4(1.0f);
@@ -61,7 +74,7 @@ void Object::UpdateModelMatrix() {
 
   // Translation of object
   glm::mat4 translate = glm::translate(  glm::mat4(1.0f), 
-          glm::vec3(translation_.x, translation_.y, translation_.z));
+      glm::vec3(translation_.x, translation_.y, translation_.z));
 
   model_matrix_ = translate * rotate * scale;
 }

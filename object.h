@@ -17,6 +17,10 @@
 #include <GL/glut.h>
 #endif
 
+#define M_PI 3.14159265358979323846
+#define DEG2RAD(x) ((x)*M_PI/180.0)
+#define RAD2DEG(x) ((x)*180.0/M_PI)
+
 // Object call contains a model by inhertiance
 //  Adds extra methods and members to control matrix transformations
 //  Can also hold physics information if it is a moving object
@@ -24,27 +28,11 @@
 //  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
-    // The data required to move an object with physics
-    //   Data is updated in UpdateModelMatrix()
-    struct Physics {
-      // The movement of the object in it's direction
-      float velocity;
-      // The amount to add to velocity each tick
-      float acceleration;
-      // The turn speed of the object
-      //  TODO should be added to direction with input left/right
-      float turn_rate;
-      // Used for evening out over different frame rates
-      GLfloat delta_time;
-      // Used for evening out over different frame rates
-      GLfloat last_frame;
-      Physics(const float &v, const float &a, const float &t)
-        : velocity(v), acceleration(a), turn_rate(t),
-        delta_time(0), last_frame(0) {};
-    };
-
     // Construct with position setting parameters
-    Object(const glm::vec3 &translation, const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), const glm::vec3 &scale = glm::vec3(1,1,1));
+    Object(const glm::vec3 &translation, 
+           const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), 
+           const glm::vec3 &scale = glm::vec3(1,1,1),
+           float default_velocity = 0);
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
@@ -70,19 +58,17 @@ class Object {
     inline void set_rotation(glm::vec3 new_rotation);
     // Sets the displacement
     inline void set_displacement(glm::vec3 new_displacement);
-    
+
     // PHYSICS:
-    // Enables the physics extension
-    //  @warn Is created on heap, needs to be deleted afterwards
-    void EnablePhysics(const float &velocity, const float &acceleration, const float &turn_rate);
-    // Tests for whether Physics are enabled for the object
-    bool IsPhysics() const;
-    // Increases the acceleration of the object by given amount
-    //   TODO a maximum acceleration?
-    void Accelerate(const float &amount);
-    // Decreases the acceleration of the object by given amount
-    //   TODO a minimum acceleration?
-    void Deccelerate(const float &amount);
+    // Updates the all the movement data for the object
+    // @warn should be called in controller tick
+    void ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash);
+    // Sets the acceleration of the object to given amount
+    // TODO comment
+    void CalcPosition();
+    // Accessor for the current velocity of the object
+    //   @return velocity_, the current velocity of the object
+    inline float velocity() const;
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -147,9 +133,8 @@ class Object {
     //   The scale of the object
     glm::vec3 scale_;
 
-    // The physics extension for moving objects
-    //   Will be 0 (null_ptr) if doesn't exist
-    Physics * physics_extension_;
+    // The velocity of the object in the direction it is facing
+    float velocity_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);
@@ -172,6 +157,11 @@ inline glm::vec3 Object::rotation() const {
 inline glm::vec3 Object::displacement() const {
   return displacement_;
 }
+// Accessor for the current velocity of the object
+//   @return velocity_, the current velocity of the object
+inline float Object::velocity() const {
+  return velocity_;
+}
 
 // MUTATORS:
 // Sets the position
@@ -188,4 +178,5 @@ inline void Object::set_rotation(glm::vec3 new_rotation) {
 inline void Object::set_displacement(glm::vec3 new_displacement) {
   displacement_ = new_displacement;
 }
+
 #endif
