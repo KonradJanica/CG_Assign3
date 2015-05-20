@@ -104,21 +104,7 @@ void render() {
   glClearColor(g_colour.x, g_colour.y, g_colour.z, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  g_camera->UpdateCamera();
-
-  UpdateProjection();
-
-  // Render ALL
-  //g_renderer->Render();
-
-  // This renders model 0
-  // g_controller->Render(0);
-  // Renders the car model
-  // g_controller->DrawCar();
-
   g_controller->Draw();
-
-  // g_controller->RenderTerrain();
 
   // Render axis last so on top
   if (g_coord_axis) {
@@ -174,6 +160,9 @@ void idle() {
   }
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
+
+  g_camera->UpdateCamera();
+  UpdateProjection();
 
   glutPostRedisplay();
 }

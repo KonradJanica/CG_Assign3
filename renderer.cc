@@ -88,9 +88,12 @@ void Renderer::Render(Object * object, const Camera * camera) const {
   }
 
   // Update Physics
-  if (object->speed()) {
-    object->UpdateModelMatrix();
-  }
+  // This optimization doesnt allow braking animation
+  // the compiler might do this for us
+  // if (object->speed()) {
+  //   object->UpdateModelMatrix();
+  // }
+  object->UpdateModelMatrix();
 }
 
 // Render Coordinate Axis 

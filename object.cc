@@ -24,6 +24,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   float AIRRESSISTANCE = 0.4257;  //proportional constant
   float FRICTION = AIRRESSISTANCE * 30;
   float SPEEDSCALE = 5; //the conversions from real speed to game movement
+  float WEIGHT = MASS * 9.8; // m * g
+  float LENGTH = 4.8; //metres  length of car
+  float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
 
   // SETUP VARS
   // Used to update camera
@@ -73,18 +76,31 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   // CALCULATE ACCELERATION => a = F/M
   float acceleration_x = force_x / MASS;
   float acceleration_z = force_z / MASS;
+  float acceleration_combined = sqrt(acceleration_x * acceleration_x + acceleration_z * acceleration_z);
+  if (acceleration_x * direction_x < 0 || acceleration_z * direction_z < 0) {
+    acceleration_combined = -acceleration_combined;
+  }
+
+  // CALCULATE CENTRE OF GRAVITY (PITCH OF CAR)
+  float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
+  float weight_rear = 0.5*WEIGHT + HEIGHT/LENGTH*MASS*acceleration_combined;
+  float pitch = WEIGHT/2 - weight_rear;
+  pitch /= WEIGHT/2; //normalize pitch [-1,1]
+  pitch *= 10;
+  printf("pitch = %f\n", pitch);
+  set_rotation(glm::vec3(pitch, rotation().y, 0));
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x += delta_time * acceleration_x;
   velocity_z += delta_time * acceleration_z;
 
   // CALCULATE SPEED
-  if (velocity_x < 0 && velocity_z < 0) {
+  if (velocity_x * direction_x < 0 || velocity_z * direction_z < 0) {
     speed_ = 0;
   } else {
     speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
   }
-  printf("speed = %f\n", speed_);
+  // printf("speed = %f\n", speed_);
   // convert speed to game world speed
   // TODO put into separate constants class
   velocity_x /= SPEEDSCALE;
@@ -106,10 +122,10 @@ void Object::UpdateModelMatrix() {
   glm::mat4 scale = glm::scale(  glm::mat4(1.0f), 
       glm::vec3(scale_.x, scale_.y, scale_.z));
 
-  // Rotation of object
+  // Rotation of object - @warn order of rotation matters
   glm::mat4 rotate = glm::mat4(1.0f);
-  rotate = glm::rotate(rotate, rotation_.x, glm::vec3(1, 0, 0));
   rotate = glm::rotate(rotate, rotation_.y, glm::vec3(0, 1, 0));
+  rotate = glm::rotate(rotate, rotation_.x, glm::vec3(1, 0, 0));
   rotate = glm::rotate(rotate, rotation_.z, glm::vec3(0, 0, 1));
 
   // Translation of object
