@@ -8,7 +8,31 @@ Object::Object(const glm::vec3 &translation,
   : translation_(translation), rotation_(rotation), scale_(scale),
     displacement_(0), speed_(default_speed) {
     UpdateModelMatrix();
-  }
+    }
+
+// Works out the maximum speed achieveable per gear
+//   @param  the gear ratio
+//   @return  the max speed of given gear ratio
+float MaxSpeedPerGear(float g_num) {
+  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  float WHEELRADIUS = 0.33; //metres  radius of tire
+  float WHEELROTATIONDISTANCE = 2.14; //metres
+  float MAXRPM = 4400;
+  float MAXSPEEDCONVERT = MAXRPM/g_num/DIFFERENTIALRATIO/60*WHEELROTATIONDISTANCE*3.6;
+  return MAXSPEEDCONVERT;
+};
+
+// Works out the maximum force per gear
+//   @param  the gear ratio
+//   @return  the maximum force per gear
+float MaxEngineForcePerGear(float g_num, float max_torque) {
+  // float MAXTORQUE = 475; //N.m  depending on MAXRPM
+  float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
+  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  float WHEELRADIUS = 0.33; //metres  radius of tire
+  float ENGINEFORCE = MAXTORQUE*g_num*DIFFERENTIALRATIO*TRANSMISSIONEFFICIENCY/WHEELRADIUS;
+  return ENGINEFORCE;
+};
 
 // Updates the all the movement data for the object
 // @warn should be called in controller tick
@@ -19,14 +43,21 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   // TODO put into separate constants class
   float TURNRATE = 100 * delta_time;
   float MASS = 1500; //kg
-  float ENGINEFORCE = 9000; //newtons
+  float ENGINEFORCE = 9000; //newtons (real 1st Gear value is 9000)
   float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
   float AIRRESSISTANCE = 0.4257;  //proportional constant
   float FRICTION = AIRRESSISTANCE * 30;
-  float SPEEDSCALE = 5; //the conversions from real speed to game movement
+  float SPEEDSCALE = 10; //the conversions from real speed to game movement
   float WEIGHT = MASS * 9.8; // m * g
   float LENGTH = 4.8; //metres  length of car
   float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
+
+  // GEAR RATIOS
+  //   @warn dummy gear[0]
+  float GEAR_RATIOS[] = { -1, 2.66, 1.78, 1.30, 1.00, 0.74, 0.50 };
+  // Max torque per gear
+  //   @warn dummy gear[0]
+  float GEAR_TORQUE[] = { -1, 4400, 2900, 2200, 1650, 1250, 700 };
 
   // SETUP VARS
   // Used to update camera
@@ -42,13 +73,13 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
-      float rot = TURNRATE * 20/speed_;
+      float rot = TURNRATE * 80/speed_;
       if (rot > TURNRATE)
         rot = TURNRATE;
       set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
     }
     if (is_key_pressed_hash.at('d')) {
-      float rot = TURNRATE * 20/speed_;
+      float rot = TURNRATE * 80/speed_;
       if (rot > TURNRATE)
         rot = TURNRATE;
       set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
@@ -57,6 +88,22 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
 
   if (is_key_pressed_hash.at('w')) {
+    // simulated gear shifting
+    // real car physics use rpm
+    if (speed() < MaxSpeedPerGear(GEAR_RATIOS[1])) {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[1], GEAR_TORQUE[1]);
+    } else if (speed() < MaxSpeedPerGear(GEAR_RATIOS[2])) {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[2], GEAR_TORQUE[2]);
+    } else if (speed() < MaxSpeedPerGear(GEAR_RATIOS[3])) {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[3], GEAR_TORQUE[3]);
+    } else if (speed() < MaxSpeedPerGear(GEAR_RATIOS[4])) {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[4], GEAR_TORQUE[4]);
+    } else if (speed() < MaxSpeedPerGear(GEAR_RATIOS[5])) {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[5], GEAR_TORQUE[5]);
+    } else {
+      ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[6], GEAR_TORQUE[6]);
+    }
+    printf("ENGINEFORCE = %f\n",ENGINEFORCE);
     force_x += ENGINEFORCE * direction_x;
     force_z += ENGINEFORCE * direction_z;
     // TODO switch gear shift different accelerations
@@ -66,41 +113,46 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     force_z -= BRAKINGFORCE * direction_z;
   }
 
-  // Rolling resistance (friction of tires)
-  force_x -= FRICTION * velocity_x * speed_;
-  force_z -= FRICTION * velocity_z * speed_;
-  // Air resistance x
-  force_x -= AIRRESSISTANCE * speed_;
-  force_z -= AIRRESSISTANCE * speed_;
 
-  // CALCULATE ACCELERATION => a = F/M
+  // CALCULATE ACCELERATION (WITHOUT RESISTANCES) => a = F/M
   float acceleration_x = force_x / MASS;
   float acceleration_z = force_z / MASS;
   float acceleration_combined = sqrt(acceleration_x * acceleration_x + acceleration_z * acceleration_z);
-  if (acceleration_x * direction_x < 0 || acceleration_z * direction_z < 0) {
+  if (acceleration_x * direction_x < 0 && acceleration_z * direction_z < 0) {
     acceleration_combined = -acceleration_combined;
+    acceleration_combined /= 40/speed_; //reduce braking pitch
   }
 
   // CALCULATE CENTRE OF GRAVITY (PITCH OF CAR)
-  float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
+  // float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
   float weight_rear = 0.5*WEIGHT + HEIGHT/LENGTH*MASS*acceleration_combined;
   float pitch = WEIGHT/2 - weight_rear;
   pitch /= WEIGHT/2; //normalize pitch [-1,1]
-  pitch *= 10;
-  printf("pitch = %f\n", pitch);
+  // pitch *= 10;
+  // printf("pitch = %f\n", pitch);
   set_rotation(glm::vec3(pitch, rotation().y, 0));
+
+  // Rolling resistance (friction of tires)
+  force_x -= AIRRESSISTANCE * velocity_x * speed_;
+  force_z -= AIRRESSISTANCE * velocity_z * speed_;
+  // Air resistance x
+  force_x -= FRICTION * velocity_x;
+  force_z -= FRICTION * velocity_z;
+  // CALCULATE ACCELERATION (WITH RESISTANCES) => a = F/M
+  acceleration_x = force_x / MASS;
+  acceleration_z = force_z / MASS;
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x += delta_time * acceleration_x;
   velocity_z += delta_time * acceleration_z;
 
   // CALCULATE SPEED
-  if (velocity_x * direction_x < 0 || velocity_z * direction_z < 0) {
+  if (velocity_x * direction_x < 0 && velocity_z * direction_z < 0) {
     speed_ = 0;
   } else {
     speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
   }
-  // printf("speed = %f\n", speed_);
+  printf("speed = %f\n", speed_);
   // convert speed to game world speed
   // TODO put into separate constants class
   velocity_x /= SPEEDSCALE;
