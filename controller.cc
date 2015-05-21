@@ -118,19 +118,38 @@ void Controller::EnableTerrain(const GLuint &program_id, const GLuint &water_id)
   terrain_ = new Terrain(program_id, water_id);
 }
 
-// The controllers physics update tick
-//   Checks keypresses and calculates acceleration
-void Controller::UpdatePhysics() {
-
-  // TODO remove this and make only 1 delta time calculation
+// The main control tick
+//   Controls everything: camera, inputs, physics, collisions
+void Controller::UpdateGame() {
+  // calculate delta time
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
-  ///////////////// CAMERA CONTROLS
-  // point at car
-  camera_->UpdateCarTick(car_);
+  UpdateCamera();
+  UpdatePhysics();
+}
 
+// The controllers camera update tick
+//   Uses car position (for chase and 1st person view)
+//   and checks keypresses for freeview
+//   @warn should be called before car movement
+void Controller::UpdateCamera() {
+  // CAMERA CONTROLS
+  // Freeview movement
+  camera_->Movement(delta_time_, is_key_pressed_hash_); 
+  // Point at car
+  camera_->UpdateCarTick(car_);
+  // Update camera lookAt
+  camera_->UpdateCamera();
+}
+
+// The controllers physics update tick
+//   Checks keypresses and calculates acceleration
+void Controller::UpdatePhysics() {
+
+  // Sets variables required for camera
+  //  i.e. camera has access to car in UpdateCarTick(car_)
   car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
 
   ///////////////// COLLISION TESTING TODO TODO
@@ -157,7 +176,7 @@ void Controller::UpdatePhysics() {
     if (car_x >= min_x && car_x <= max_x) {
       //inside bounds
     } else {
-      printf("collision on x! %f\n", current_frame);
+      printf("collision on x!\n");
     }
   }
   // printf("%f\n", current_frame);

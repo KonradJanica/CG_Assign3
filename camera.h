@@ -45,14 +45,7 @@ class Camera {
     // mode and orientation
     void CycleState();
     // Better method using is_key_pressed_hash for multiple inputs
-    void Movement();
-    // Moves camera position by the x,y,z translation specified
-    //   @param translation, the x,y,z amounts to move camera position by
-    void Movement(const glm::vec3 &translation);
-    // Trues the key hash on key down event
-    inline void KeyPressed(const int &key);
-    // Falses the key hash on key down event
-    inline void KeyReleased(const int &key);
+    void Movement(float delta_time, const std::vector<bool> &is_key_pressed_hash);
     // Changes Direction by X and Y mouse inputs
     //   Calculates the difference of previous mouse positions
     //   and current to work out the new direction
@@ -60,10 +53,6 @@ class Camera {
     //   @param int y, new mouse y position
     //   @warn relies on UpdatePreviousMouse(x,y) to work
     void ChangeDirection(int x, int y);
-    // Changes the direction of the camera to face the given target
-    //   @param point, the position vertex to point at
-    //   @warn TODO very unoptimized (UpdateCamera should change)
-    void ChangeDirection(const glm::vec3 &point);
     // Changes Aspect ratio to Zoom the camera
     //   Calculates the difference of previous mouse y positions
     //   and current to work out the new aspect
@@ -118,8 +107,6 @@ class Camera {
     GLfloat yaw_;
     // The Pitch (Left/Right) of the Camera
     GLfloat pitch_;
-    // Hash representing Glut Special Keys Pressed
-    std::vector<bool> is_key_pressed_hash_;
     // Time between current frame and last frame
     GLfloat delta_time_;	
     // Time of last frame
@@ -136,16 +123,6 @@ class Camera {
     bool is_right_button_;
 };
 
-// Trues the key hash on key down event
-//   @param a key corresponding to is_key_pressed_hash_
-inline void Camera::KeyPressed(const int &key) {
-  is_key_pressed_hash_.at(key) = true;
-}
-// Falses the key hash on key down event
-//   @param a key corresponding to is_key_pressed_hash_
-inline void Camera::KeyReleased(const int &key) {
-  is_key_pressed_hash_.at(key) = false;
-}
 // Mutates the cameras position
 //   @warn Used to setup default camera, not tested for other use
 inline void Camera::ResetPosition(const glm::vec3 &camera_position) {

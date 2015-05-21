@@ -5,8 +5,6 @@ Camera::Camera() : state_(kFreeView),
   cam_pos_(glm::vec3(0.0f,5.0f,-10.0f)), cam_front_(glm::vec3(0.0f, -0.5f, 1.0f)), cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)), 
   aspect_(45.0f), yaw_(kPi/2), pitch_(0.0f), delta_time_(0.0f), last_frame_(0.0f) {
   view_matrix_ = glm::lookAt(cam_pos_, cam_pos_ + cam_front_, cam_up_);
-  is_key_pressed_hash_.reserve(256);
-  is_key_pressed_hash_.resize(256);
 }
 
 // Changes the current state of the camera, hence changes the viewing
@@ -31,28 +29,20 @@ void Camera::CycleState() {
 //   Strafes left/right and moves forward/backward
 //   Uses Delta Time to standardize the speed to FPS
 //   @warn relies on member function KeyPressed(int) and KeyReleased(int)
-void Camera::Movement() {
-    GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
-    delta_time_ = current_frame - last_frame_;
-    last_frame_ = current_frame;
-    GLfloat cameraSpeed = 0.005f * delta_time_;
-    if (is_key_pressed_hash_.at(GLUT_KEY_LEFT)) {
+void Camera::Movement(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
+    GLfloat cameraSpeed = 0.005f * delta_time;
+    if (is_key_pressed_hash.at(GLUT_KEY_LEFT)) {
       cam_pos_ -= glm::normalize(glm::cross(cam_front_, cam_up_)) * cameraSpeed;
     }
-    if (is_key_pressed_hash_.at(GLUT_KEY_RIGHT)) {
+    if (is_key_pressed_hash.at(GLUT_KEY_RIGHT)) {
       cam_pos_ += glm::normalize(glm::cross(cam_front_, cam_up_)) * cameraSpeed;
     }
-    if (is_key_pressed_hash_.at(GLUT_KEY_UP)) {
+    if (is_key_pressed_hash.at(GLUT_KEY_UP)) {
       cam_pos_ += cameraSpeed * cam_front_;
     }
-    if (is_key_pressed_hash_.at(GLUT_KEY_DOWN)) {
+    if (is_key_pressed_hash.at(GLUT_KEY_DOWN)) {
       cam_pos_ -= cameraSpeed * cam_front_;
     }
-}
-
-// Moves camera position by the x,y,z translation specified
-//   @param translation, the x,y,z amounts to move camera position by
-void Camera::Movement(const glm::vec3 &translation) {
 }
 
 // Changes Direction by X and Y mouse inputs
@@ -65,8 +55,6 @@ void Camera::Movement(const glm::vec3 &translation) {
 void Camera::ChangeDirection(int x, int y) {
     GLfloat xoffset = x - prev_mouse_x_;
     GLfloat yoffset = prev_mouse_y_ - y;
-    //prev_mouse_x_ = x;
-    //prev_mouse_y_ = y;
 
     GLfloat sensitivity = 0.01;
     xoffset *= sensitivity;
@@ -85,12 +73,6 @@ void Camera::ChangeDirection(int x, int y) {
     front.y = sin(pitch_);
     front.z = sin(yaw_) * cos(pitch_);
     cam_front_ = glm::normalize(front);
-}
-
-// Changes the direction of the camera to face the given target
-//  @param point, the position vertex to point at
-//  @warn TODO very unoptimized (UpdateCamera should change)
-void Camera::ChangeDirection(const glm::vec3 &point) {
 }
 
 // Changes Aspect ratio to Zoom the camera

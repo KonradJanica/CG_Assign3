@@ -51,10 +51,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image/stb_image.h"
 
-#define M_PI 3.14159265358979323846
-#define DEG2RAD(x) ((x)*M_PI/180.0)
-#define RAD2DEG(x) ((x)*180.0/M_PI)
-
 Renderer *g_renderer;
 Controller *g_controller;
 
@@ -71,8 +67,6 @@ enum Colours {
 int g_background = kOldGold;
 glm::vec3 g_colour = glm::vec3(0.71,0.61,0.23);
 
-// Lighting Globals
-int g_lighting_mode = 1;
 
 // Fog global
 int g_fog_mode = 0;
@@ -87,7 +81,7 @@ int g_window_x = 640;
 int g_window_y = 480;
 
 void UpdateProjection() {
-  glm::mat4 projection = glm::perspective(g_camera->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
+  glm::mat4 projection = glm::perspective(g_controller->camera()->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
   for (unsigned int i = 0; i < 4; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
@@ -105,11 +99,6 @@ void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   g_controller->Draw();
-
-  // Render axis last so on top
-  if (g_coord_axis) {
-    // g_controller->RenderAxis();
-  }
 
   glUseProgram(0);
 
@@ -137,20 +126,8 @@ void idle() {
     g_past = time;
   }
 
-  // Keyboard camera movement tick
-  g_camera->Movement();
-
   // Physics movement tick
-  g_controller->UpdatePhysics();
-
-  // Headlight dynamic lighting
-  if (g_lighting_mode == 0) {
-    float x,y,z;
-    x = g_camera->cam_pos().x;
-    y = g_camera->cam_pos().y;
-    z = g_camera->cam_pos().z;
-    g_controller->SetLightPosition(x,y,z,1.0f);
-  }
+  g_controller->UpdateGame();
 
   glUseProgram(g_program_id[3]);
   int timeHandle = glGetUniformLocation(g_program_id[3], "elapsed");
@@ -161,7 +138,6 @@ void idle() {
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
 
-  g_camera->UpdateCamera();
   UpdateProjection();
 
   glutPostRedisplay();
@@ -194,12 +170,12 @@ void MotionFunc(int x, int y) {
 
 void SpecialPressed( int key, int x, int y )
 {
-  g_camera->KeyPressed(key);
+  g_controller->KeyPressed(key);
 }
 
 void SpecialReleased( int key, int x, int y )
 {
-  g_camera->KeyReleased(key);
+  g_controller->KeyReleased(key);
 }
 
 /**
@@ -210,17 +186,7 @@ void SpecialReleased( int key, int x, int y )
  * @param y, not used
  */
 void KeyboardUp(unsigned char key, int x, int y) {
-
-  // We simply check the key argument against characters we care about, in this case A and D
-  switch(key) 
-  {
-    case 'w':
-    case 's':
-    case 'a':
-    case 'd':
-      g_controller->KeyReleased(key);
-      break;
-  }
+  g_controller->KeyReleased(key);
 }
 
 /**

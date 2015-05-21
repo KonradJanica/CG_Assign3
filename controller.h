@@ -68,11 +68,12 @@ class Controller {
     // Accessor for Camera Object
     inline Camera * camera();
 
+    // TICKS
+    // The main control tick
+    //   Controls everything: camera, inputs, physics, collisions
+    void UpdateGame();
+
     // CONTROLS
-    // The controllers physics update tick
-    //   Checks keypresses and calculates acceleration
-    //   TODO not sure if this belongs in public, can be used for lighting too etc.
-    void UpdatePhysics();
     // Trues the key hash on key down event
     inline void KeyPressed(const int &key);
     // Falses the key hash on key down event
@@ -91,6 +92,17 @@ class Controller {
     Camera * camera_;
     // The terrain object
     Terrain * terrain_;
+
+    // INTERNAL TICKS
+    // The controllers camera update tick
+    //   Uses car position (for chase and 1st person view)
+    //   and checks keypresses for freeview
+    //   @warn should be called before car movement
+    void UpdateCamera();
+    // The controllers physics update tick
+    //   Checks keypresses and calculates acceleration
+    //   TODO not sure if this belongs in public, can be used for lighting too etc.
+    void UpdatePhysics();
 
     // The light controller
     LightController * light_controller_;
