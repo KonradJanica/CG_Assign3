@@ -2,13 +2,15 @@
 
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &translation,
-               const glm::vec3 &rotation,
-               const glm::vec3 &scale,
-               float default_speed)
+    const glm::vec3 &rotation,
+    const glm::vec3 &scale,
+    float default_speed,
+    bool debugging_on)
   : translation_(translation), rotation_(rotation), scale_(scale),
-    displacement_(0), speed_(default_speed), centri_speed_(0) {
+  displacement_(0), speed_(default_speed), centri_speed_(0),
+  is_debugging_(debugging_on) {
     UpdateModelMatrix();
-    }
+  }
 
 // Works out the maximum speed achieveable per gear
 //   @param  the gear ratio
@@ -89,7 +91,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     } else {
       ENGINEFORCE = MaxEngineForcePerGear(GEAR_RATIOS[6], GEAR_TORQUE[6]);
     }
-    printf("ENGINEFORCE = %f\n",ENGINEFORCE);
+    // if (is_debugging_) {
+    //   printf("ENGINEFORCE = %f\n",ENGINEFORCE);
+    // }
     force_x += ENGINEFORCE * direction_x;
     force_z += ENGINEFORCE * direction_z;
     // TODO switch gear shift different accelerations
@@ -114,7 +118,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     acceleration_combined = -acceleration_combined;
     acceleration_combined /= 40/speed_; //reduce braking pitch
   }
-  printf("a2 = %f\n",acceleration_combined);
+  if (is_debugging_) {
+    printf("forward acceleration magnitude = %f\n",acceleration_combined);
+  }
 
   // CALCULATE CENTRE OF GRAVITY (PITCH OF CAR)
   // float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
@@ -149,21 +155,23 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     v = 45;
   }
   TURNRATE = 0.2; //radians per tick
-  printf("t = %f\n",TURNRATE);
+  // printf("t = %f\n",TURNRATE);
   float dt = delta_time; //milisecond per tick
   dt = 1/delta_time; //tick per milisecond
   dt /= 1000; //tick per second
   float w = TURNRATE * dt; //radians per second
   float r = v/w;
-  printf("r = %f\n",r);
+  // printf("r = %f\n",r);
   float a = v*v/r;
-  printf("a = %f\n",a);
+  if (is_debugging_) {
+    printf("centripetal acceleration = %f\n",a);
+  }
   if (is_key_pressed_hash.at('w')) {
     a *= 3;
   } else if (is_key_pressed_hash.at('s')) {
     a *= -1;
   }
-  
+
   float centripetal_ax = 0;
   float centripetal_az = 0;
   float centripeta_velocity_x = 0;
@@ -211,7 +219,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     centripeta_velocity_x += delta_time * centripetal_ax;
     centripeta_velocity_z += delta_time * centripetal_az;
     centri_speed_ += delta_time * a;
-    printf("cv = %f, v = %f\n", centri_speed_, speed_);
+    if (is_debugging_) {
+      printf("centripetal velocity = %f\n", centri_speed_);
+    }
     velocity_x += centripeta_velocity_x;
     velocity_z += centripeta_velocity_z;
   }

@@ -33,7 +33,8 @@ class Object {
     Object(const glm::vec3 &translation, 
            const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), 
            const glm::vec3 &scale = glm::vec3(1,1,1),
-           float default_speed = 0);
+           float default_speed = 0,
+           bool debugging_on = false);
 
     // Updates the model matrix using glLookAt
     //  Includes physics calulations and movements if they exist
@@ -136,7 +137,11 @@ class Object {
 
     // The speed of the object in the direction it is facing
     float speed_;
+    // The speed of the object at 90 degrees towards turning center
     float centri_speed_;
+
+    // Verbose debugging - prints physics variables
+    bool is_debugging_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);

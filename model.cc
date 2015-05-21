@@ -2,8 +2,9 @@
 
 Model::Model(const GLuint &program_id, const std::string &model_filename,
     // Next line of parameters are optional variables for object (parent) construction
-    const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale)
-: Object(position, rotation, scale), program_id_(program_id), amount_points_(0) {
+    const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale,
+    float speed, bool debug)
+: Object(position, rotation, scale, speed, debug), program_id_(program_id), amount_points_(0) {
 
   model_data_ = new ModelData( model_filename );
   subdir_ = model_filename.substr(0, model_filename.find_last_of('/') + 1);
