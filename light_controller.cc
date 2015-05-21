@@ -1,143 +1,151 @@
 #include "light_controller.h"
 
-LightController::LightController()
+void LightController::SetDirectionalLight(GLuint program_id, const DirectionalLight& light)
 {
+  glUseProgram(program_id);
 
+  int dirAmbientHandle = glGetUniformLocation(program_id, "gDirectionalLight.Base.AmbientIntensity");
+  int dirDiffuseHandle = glGetUniformLocation(program_id, "gDirectionalLight.Base.DiffuseIntensity");
+  int dirSpecularHandle = glGetUniformLocation(program_id, "gDirectionalLight.Base.SpecularIntensity");
+  int dirDirectionHandle = glGetUniformLocation(program_id, "gDirectionalLight.Direction");
+
+  if (dirAmbientHandle == -1 ||
+      dirDiffuseHandle == -1 ||
+      dirSpecularHandle == -1 ||
+      dirDirectionHandle == -1) 
+  {
+    fprintf(stderr, "Could not locate uniforms required for directional light\n");
+    exit(0);
+  }
+
+
+  glUniform3fv(dirAmbientHandle, 1, glm::value_ptr(light.AmbientIntensity));
+  glUniform3fv(dirDiffuseHandle, 1, glm::value_ptr(light.DiffuseIntensity));
+  glUniform3fv(dirSpecularHandle, 1, glm::value_ptr(light.SpecularIntensity));
+  glUniform3fv(dirDirectionHandle, 1, glm::value_ptr(light.Direction));
 }
 
-bool LightController::Init(GLuint program_id)
+void LightController::SetPointLights(GLuint program_id, unsigned int numLights, const PointLight* lights)
 {
-	program_id_ = program_id;
+  glUseProgram(program_id);
+  const unsigned int MAX_LIGHTS = 10;
+  assert(numLights < MAX_LIGHTS && "Exceeded maximum allowable amount of point lights\n");
+  
+  int numPointLightsHandle = glGetUniformLocation(program_id, "gNumPointLights");
+  if (numPointLightsHandle == -1) {
+    fprintf(stderr, "Unable to locate uniform 'gNumPointLights'\n");
+    exit(0);
+  }
 
-	glUseProgram(program_id_);
+  glUniform1i(numPointLightsHandle, numLights);
 
-	num_point_lights_location_ = glGetUniformLocation(program_id_, "gNumPointLights");
-	num_spot_lights_location_ = glGetUniformLocation(program_id_, "gNumSpotLights");
-	directional_light_location_.AmbientIntensity = glGetUniformLocation(program_id_, "gDirectionalLight.Base.AmbientIntensity");
-	directional_light_location_.DiffuseIntensity = glGetUniformLocation(program_id_, "gDirectionalLight.Base.DiffuseIntensity");
-	directional_light_location_.SpecularIntensity = glGetUniformLocation(program_id_, "gDirectionalLight.Base.SpecularIntensity");
-	directional_light_location_.Direction = glGetUniformLocation(program_id_, "gDirectionalLight.Direction");
+  for (unsigned int i = 0; i < numLights; i++)
+  {
+    char uniformName[256];
+    memset(uniformName, 0, sizeof(uniformName));
 
-	if (num_point_lights_location_ == -1 ||
-		num_spot_lights_location_ == -1 ||
-		directional_light_location_.AmbientIntensity == -1 ||
-		directional_light_location_.DiffuseIntensity == -1 ||
-		directional_light_location_.SpecularIntensity == -1 ||
-		directional_light_location_.Direction == -1) 
-	{
-		return false;
-	}
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.AmbientIntensity", i);
+    int pointAmbientHandle = glGetUniformLocation(program_id, uniformName);
 
-	return true;
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.DiffuseIntensity", i);
+    int pointDiffuseHandle = glGetUniformLocation(program_id, uniformName);
+
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.SpecularIntensity", i);
+    int pointSpecularHandle = glGetUniformLocation(program_id, uniformName);
+
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Position", i);
+    int pointPositionHandle = glGetUniformLocation(program_id, uniformName);
+
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Constant", i);
+    int pointAttenConstantHandle = glGetUniformLocation(program_id, uniformName);
+
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Linear", i);
+    int pointAttenLinearHandle = glGetUniformLocation(program_id, uniformName);
+
+    snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Exp", i);
+    int pointAttenExpHandle = glGetUniformLocation(program_id, uniformName);
+
+    if (pointAmbientHandle == -1 || pointDiffuseHandle == -1 || pointSpecularHandle == -1 ||
+        pointPositionHandle == -1 || pointAttenConstantHandle == -1 || 
+        pointAttenLinearHandle == -1 || pointAttenExpHandle == -1) 
+    {
+      fprintf(stderr, "Could not locate uniforms required for point light\n");
+      exit(0);
+    }
+
+    glUniform3fv(pointAmbientHandle, 1, glm::value_ptr(lights[i].AmbientIntensity));
+    glUniform3fv(pointDiffuseHandle, 1, glm::value_ptr(lights[i].DiffuseIntensity));
+    glUniform3fv(pointSpecularHandle, 1, glm::value_ptr(lights[i].SpecularIntensity));
+    glUniform3fv(pointPositionHandle, 1, glm::value_ptr(lights[i].Position));
+    glUniform1f(pointAttenConstantHandle, lights[i].Attenuation.Constant);
+    glUniform1f(pointAttenLinearHandle, lights[i].Attenuation.Linear);
+    glUniform1f(pointAttenExpHandle, lights[i].Attenuation.Exp);
+  }
 }
 
-void LightController::SetDirectionalLight(const DirectionalLight& light)
+void LightController::SetSpotLights(GLuint program_id, unsigned int numLights, const SpotLight* lights)
 {
-	glUseProgram(program_id_);
-	glUniform3fv(directional_light_location_.AmbientIntensity, 1, glm::value_ptr(light.AmbientIntensity));
-	glUniform3fv(directional_light_location_.DiffuseIntensity, 1, glm::value_ptr(light.DiffuseIntensity));
-	glUniform3fv(directional_light_location_.SpecularIntensity, 1, glm::value_ptr(light.SpecularIntensity));
-	glUniform3fv(directional_light_location_.Direction, 1, glm::value_ptr(light.Direction));
-}
+  glUseProgram(program_id);
+  const unsigned int MAX_LIGHTS = 10;
+  assert(numLights < MAX_LIGHTS && "Exceeded maximum allowable amount of spot lights\n");
 
-void LightController::SetPointLights(unsigned int numLights, const PointLight* lights)
-{
-	const unsigned int MAX_LIGHTS = 10;
-	assert(numLights < MAX_LIGHTS && "Exceeded maximum allowable amount of point lights\n");
+  int numSpotLightsHandle = glGetUniformLocation(program_id, "gNumSpotLights");
+  if (numSpotLightsHandle == -1) {
+    fprintf(stderr, "Unable to locate uniform 'gNumSpotLights'\n");
+    exit(0);
+  }
 
-	glUseProgram(program_id_);
+  glUniform1i(numSpotLightsHandle, numLights);
 
-	glUniform1i(num_point_lights_location_, numLights);
+  for (unsigned int i = 0; i < numLights; i++)
+  {
+    char uniformName[256];
+    memset(uniformName, 0, sizeof(uniformName));
 
-	point_light_locations_.resize(numLights);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.AmbientIntensity", i);
+    int spotAmbientHandle = glGetUniformLocation(program_id, uniformName);
 
-	for (unsigned int i = 0; i < numLights; i++)
-	{
-		char uniformName[256];
-		memset(uniformName, 0, sizeof(uniformName));
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.DiffuseIntensity", i);
+    int spotDiffuseHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.AmbientIntensity", i);
-		point_light_locations_[i].AmbientIntensity = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.SpecularIntensity", i);
+    int spotSpecularHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.DiffuseIntensity", i);
-		point_light_locations_[i].DiffuseIntensity = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Position", i);
+    int spotPositionHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Base.SpecularIntensity", i);
-		point_light_locations_[i].SpecularIntensity = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Constant", i);
+    int spotAttenConstantHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Position", i);
-		point_light_locations_[i].Position = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Linear", i);
+    int spotAttenLinearHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Constant", i);
-		point_light_locations_[i].Attenuation.Constant = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Exp", i);
+    int spotAttenExpHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Linear", i);
-		point_light_locations_[i].Attenuation.Linear = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Direction", i);
+    int spotDirectionHandle = glGetUniformLocation(program_id, uniformName);
 
-		snprintf(uniformName, sizeof(uniformName), "gPointLights[%d].Atten.Exp", i);
-		point_light_locations_[i].Attenuation.Exp = glGetUniformLocation(program_id_, uniformName);
+    snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].CosineCutoff", i);
+    int spotCosineHandle = glGetUniformLocation(program_id, uniformName);
 
-		glUniform3fv(point_light_locations_[i].AmbientIntensity, 1, glm::value_ptr(lights[i].AmbientIntensity));
-		glUniform3fv(point_light_locations_[i].DiffuseIntensity, 1, glm::value_ptr(lights[i].DiffuseIntensity));
-		glUniform3fv(point_light_locations_[i].SpecularIntensity, 1, glm::value_ptr(lights[i].SpecularIntensity));
-		glUniform3fv(point_light_locations_[i].Position, 1, glm::value_ptr(lights[i].Position));
-		glUniform1f(point_light_locations_[i].Attenuation.Constant, lights[i].Attenuation.Constant);
-		glUniform1f(point_light_locations_[i].Attenuation.Linear, lights[i].Attenuation.Linear);
-		glUniform1f(point_light_locations_[i].Attenuation.Exp, lights[i].Attenuation.Exp);
-	}
-}
+    if (spotAmbientHandle == -1 || spotDiffuseHandle == -1 || spotSpecularHandle == -1 ||
+        spotPositionHandle == -1 || spotAttenConstantHandle == -1 ||
+        spotAttenLinearHandle == -1 || spotAttenExpHandle == -1 ||
+        spotDirectionHandle == -1 || spotCosineHandle == -1)
+    {
+      fprintf(stderr, "Could not locate uniforms required for point light\n");
+      exit(0);
+    }
 
-void LightController::SetSpotLights(unsigned int numLights, const SpotLight* lights)
-{
-	const unsigned int MAX_LIGHTS = 10;
-	assert(numLights < MAX_LIGHTS && "Exceeded maximum allowable amount of spot lights\n");
-
-	glUseProgram(program_id_);
-
-	glUniform1i(num_spot_lights_location_, numLights);
-
-	spot_light_locations_.resize(numLights);
-
-	for (unsigned int i = 0; i < numLights; i++)
-	{
-		char uniformName[256];
-		memset(uniformName, 0, sizeof(uniformName));
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.AmbientIntensity", i);
-		spot_light_locations_[i].AmbientIntensity = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.DiffuseIntensity", i);
-		spot_light_locations_[i].DiffuseIntensity = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Base.SpecularIntensity", i);
-		spot_light_locations_[i].SpecularIntensity = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Position", i);
-		spot_light_locations_[i].Position = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Constant", i);
-		spot_light_locations_[i].Attenuation.Constant = glGetUniformLocation(program_id_, uniformName);
-		
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Linear", i);
-		spot_light_locations_[i].Attenuation.Linear = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Base.Atten.Exp", i);
-		spot_light_locations_[i].Attenuation.Exp = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].Direction", i);
-		spot_light_locations_[i].Direction = glGetUniformLocation(program_id_, uniformName);
-
-		snprintf(uniformName, sizeof(uniformName), "gSpotLights[%d].CosineCutoff", i);
-		spot_light_locations_[i].CosineCutoff = glGetUniformLocation(program_id_, uniformName);
-
-		glUniform3fv(spot_light_locations_[i].AmbientIntensity, 1, glm::value_ptr(lights[i].AmbientIntensity));
-		glUniform3fv(spot_light_locations_[i].DiffuseIntensity, 1, glm::value_ptr(lights[i].DiffuseIntensity));
-		glUniform3fv(spot_light_locations_[i].SpecularIntensity, 1, glm::value_ptr(lights[i].SpecularIntensity));
-		glUniform3fv(spot_light_locations_[i].Position, 1, glm::value_ptr(lights[i].Position));
-		glUniform3fv(spot_light_locations_[i].Direction, 1, glm::value_ptr(lights[i].Direction));
-		glUniform1f(spot_light_locations_[i].CosineCutoff, lights[i].CosineCutoff);
-		glUniform1f(spot_light_locations_[i].Attenuation.Constant, lights[i].Attenuation.Constant);
-		glUniform1f(spot_light_locations_[i].Attenuation.Linear, lights[i].Attenuation.Linear);
-		glUniform1f(spot_light_locations_[i].Attenuation.Exp, lights[i].Attenuation.Exp);
-	}
+    glUniform3fv(spotAmbientHandle, 1, glm::value_ptr(lights[i].AmbientIntensity));
+    glUniform3fv(spotDiffuseHandle, 1, glm::value_ptr(lights[i].DiffuseIntensity));
+    glUniform3fv(spotSpecularHandle, 1, glm::value_ptr(lights[i].SpecularIntensity));
+    glUniform3fv(spotPositionHandle, 1, glm::value_ptr(lights[i].Position));
+    glUniform3fv(spotDirectionHandle, 1, glm::value_ptr(lights[i].Direction));
+    glUniform1f(spotCosineHandle, lights[i].CosineCutoff);
+    glUniform1f(spotAttenConstantHandle, lights[i].Attenuation.Constant);
+    glUniform1f(spotAttenLinearHandle, lights[i].Attenuation.Linear);
+    glUniform1f(spotAttenExpHandle, lights[i].Attenuation.Exp);
+  }
 }
