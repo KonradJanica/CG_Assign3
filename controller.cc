@@ -19,10 +19,10 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename, 
-                     glm::vec3(0.0f, 0.3f, 10.0f), // Translation
+                     glm::vec3(0.0f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
                      glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
                      glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
-                     0, true); // starting speed and debugging mode
+                     0, false); // starting speed and debugging mode
   } else {
     Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
     objects_.push_back(object);

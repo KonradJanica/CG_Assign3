@@ -26,13 +26,16 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
 
     // Generate Starting Terrain
     // This is the amount of tiles that will be in the circular_vector at all times
-    // TODO obviously 3 for test/demo purposes
-    // Always start with straight piece so car is on road
+    // Always start with 2 straight pieces so car is on 2nd tile road
+    //   and so can't see first tile being popped off
     GenerateTerrain();
     // Water needs indices and UV coordinates from Terrain generation.
     //   i.e. needs to be called succeeding an initial Terrain.
     GenerateWater();
-    for (int x = 0; x < 2; ++x) {
+    // Pop off first collision map which is already behind car
+    col_pop();
+    GenerateTerrain();
+    for (int x = 0; x < 5; ++x) {
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
       RandomizeGeneration();
