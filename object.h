@@ -136,6 +136,7 @@ class Object {
 
     // The speed of the object in the direction it is facing
     float speed_;
+    float centri_speed_;
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);

@@ -6,7 +6,7 @@ Object::Object(const glm::vec3 &translation,
                const glm::vec3 &scale,
                float default_speed)
   : translation_(translation), rotation_(rotation), scale_(scale),
-    displacement_(0), speed_(default_speed) {
+    displacement_(0), speed_(default_speed), centri_speed_(0) {
     UpdateModelMatrix();
     }
 
@@ -71,20 +71,6 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   float velocity_x = speed_ * direction_x;
   float velocity_z = speed_ * direction_z;
 
-  if (speed() > 0) {
-    if (is_key_pressed_hash.at('a')) {
-      float rot = TURNRATE * 80/speed_;
-      if (rot > TURNRATE)
-        rot = TURNRATE;
-      set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
-    }
-    if (is_key_pressed_hash.at('d')) {
-      float rot = TURNRATE * 80/speed_;
-      if (rot > TURNRATE)
-        rot = TURNRATE;
-      set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
-    }
-  }
 
 
   if (is_key_pressed_hash.at('w')) {
@@ -113,8 +99,14 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     force_z -= BRAKINGFORCE * direction_z;
   }
 
+  // Rolling resistance (friction of tires)
+  force_x -= AIRRESSISTANCE * velocity_x * speed_;
+  force_z -= AIRRESSISTANCE * velocity_z * speed_;
+  // Air resistance x
+  force_x -= FRICTION * velocity_x;
+  force_z -= FRICTION * velocity_z;
 
-  // CALCULATE ACCELERATION (WITHOUT RESISTANCES) => a = F/M
+  // CALCULATE ACCELERATION => a = F/M
   float acceleration_x = force_x / MASS;
   float acceleration_z = force_z / MASS;
   float acceleration_combined = sqrt(acceleration_x * acceleration_x + acceleration_z * acceleration_z);
@@ -122,25 +114,90 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     acceleration_combined = -acceleration_combined;
     acceleration_combined /= 40/speed_; //reduce braking pitch
   }
+  printf("a2 = %f\n",acceleration_combined);
 
   // CALCULATE CENTRE OF GRAVITY (PITCH OF CAR)
   // float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
   float weight_rear = 0.5*WEIGHT + HEIGHT/LENGTH*MASS*acceleration_combined;
   float pitch = WEIGHT/2 - weight_rear;
   pitch /= WEIGHT/2; //normalize pitch [-1,1]
-  // pitch *= 10;
   // printf("pitch = %f\n", pitch);
   set_rotation(glm::vec3(pitch, rotation().y, 0));
 
-  // Rolling resistance (friction of tires)
-  force_x -= AIRRESSISTANCE * velocity_x * speed_;
-  force_z -= AIRRESSISTANCE * velocity_z * speed_;
-  // Air resistance x
-  force_x -= FRICTION * velocity_x;
-  force_z -= FRICTION * velocity_z;
-  // CALCULATE ACCELERATION (WITH RESISTANCES) => a = F/M
-  acceleration_x = force_x / MASS;
-  acceleration_z = force_z / MASS;
+  // CALCULATE WHEEL SPINS
+  if (force_x > 0 && force_z > 0) {
+    float force_combined = sqrt(force_x * force_x + force_z * force_z);
+    if (force_combined > weight_rear * 4.0) {
+      // TODO SPIN ANIMATION AND SOUND
+      //
+      printf("SPIN SPIN WHEELS SPIN");
+
+      // CALCULATE NON-SPINNING ACCELERATION
+      force_x = weight_rear * 4.0 * direction_x;
+      force_z = weight_rear * 4.0 * direction_z;
+      acceleration_x = force_x / MASS;
+      acceleration_z = force_z / MASS;
+    }
+  }
+
+
+  float v = sqrt(velocity_x*velocity_x + velocity_z*velocity_z);
+  // float a = sqrt(acceleration_x*acceleration_x + acceleration_z*acceleration_z);
+  // float a = v*v/r;
+  // printf("r = %f\n", r);
+  if (v < 45) {
+    v = 45;
+  }
+  TURNRATE = 0.2; //radians per tick
+  printf("t = %f\n",TURNRATE);
+  float dt = delta_time; //milisecond per tick
+  dt = 1/delta_time; //tick per milisecond
+  dt /= 1000; //tick per second
+  float w = TURNRATE * dt; //radians per second
+  float r = v/w;
+  printf("r = %f\n",r);
+  float a = v*v/r;
+  printf("a = %f\n",a);
+  if (is_key_pressed_hash.at('w')) {
+    a *= 3;
+  } else if (is_key_pressed_hash.at('s')) {
+    a *= -1;
+  }
+  
+  float centripetal_ax = 0;
+  float centripetal_az = 0;
+  float centripeta_velocity_x = 0;
+  float centripeta_velocity_z = 0;
+  if (speed() > 0) {
+    bool is_turn = false;
+    if (is_key_pressed_hash.at('a')) {
+      float rot = 10.5/v;
+      // rot = TURNRATE;
+      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
+      centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
+      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      centripetal_ax = centre_of_circle_vector.x * a;
+      centripetal_az = centre_of_circle_vector.z * a;
+      set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
+      is_turn = true;
+    }
+    if (is_key_pressed_hash.at('d')) {
+      float rot = 10.5/v;
+      // rot = TURNRATE;
+      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
+      centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
+      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      a *= -1;
+      centripetal_ax = centre_of_circle_vector.x * a;
+      centripetal_az = centre_of_circle_vector.z * a;
+      set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
+      is_turn = true;
+    }
+    if (!is_turn)
+      centri_speed_ = 0;
+  }
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x += delta_time * acceleration_x;
@@ -151,6 +208,12 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     speed_ = 0;
   } else {
     speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
+    centripeta_velocity_x += delta_time * centripetal_ax;
+    centripeta_velocity_z += delta_time * centripetal_az;
+    centri_speed_ += delta_time * a;
+    printf("cv = %f, v = %f\n", centri_speed_, speed_);
+    velocity_x += centripeta_velocity_x;
+    velocity_z += centripeta_velocity_z;
   }
   printf("speed = %f\n", speed_);
   // convert speed to game world speed
