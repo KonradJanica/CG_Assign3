@@ -1,9 +1,12 @@
 #include "terrain.h"
 
+#include "glm/gtx/rotate_vector.hpp"
+
 Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height)
   : x_length_(width), z_length_(height),
   indice_count_(0), road_indice_count_(0),
-  terrain_program_id_(program_id), terrain_water_id_(water_id) {
+  terrain_program_id_(program_id), terrain_water_id_(water_id),
+  rotation_(0) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -39,6 +42,7 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
       RandomizeGeneration();
+      // GenerateTerrain();
     }
   }
 
@@ -52,7 +56,8 @@ void Terrain::ProceedTiles() {
 
   // Generates a random terrain piece and pushes it back
   // into circular_vector VAO buffer
-  RandomizeGeneration();
+      RandomizeGeneration();
+      // GenerateTerrain();
 }
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
@@ -346,10 +351,35 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
         // case 1: x^2 turnning road
         case kTurnLeft:
           float zSquare = zPosition * zPosition; //x^2
-          xPosition = zSquare/(position_range*2.5) + xPosition;
+          xPosition = zSquare/(position_range*5.5) + xPosition;
           break;
       }
 
+      vertices.at(offset) = glm::vec3(xPosition, yPosition, zPosition);
+    }
+  }
+  // special point for finding pivot translation
+  glm::vec3 &pivot = vertices.at(20*x_length_/36 );
+  // pivot.y = 1000000;
+  // normals_road_.push_back(normals.at(x + z*x_length_));
+  glm::vec3 foo = glm::rotateY(pivot, rotation_);
+  float translate_x = pivot.x - foo.x;
+  float translate_z = pivot.z - foo.z;
+  for (int y = 0; y < z_length_; y++) {
+    for (int x = 0; x < x_length_; x++) {
+      offset = (y*x_length_)+x;
+
+      glm::vec3 foo = vertices.at(offset);
+      // foo = glm::rotate(foo, 30.0f, glm::vec3(next_tile_start_.x,1,next_tile_start_.y));
+      foo = glm::rotateY(foo, rotation_);
+      // foo = foo - ( glm::vec3(next_tile_start_.x, 0, next_tile_start_.y));
+      float xPosition = foo.x + translate_x;
+      float zPosition = foo.z + translate_z;
+      // xPosition = foo.x + position_range/2;
+      float yPosition = foo.y;
+
+      // vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+      //     zPosition + next_tile_start_.y);
       vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
           zPosition + next_tile_start_.y);
 
@@ -366,14 +396,26 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
   // Water or Terrain
   switch(tile_type) {
-    case 0:
+    case kTerrain:
+      const glm::vec3 &pivot_end = vertices.at(20*x_length_/36 + (z_length_-2)*x_length_);
       // Set next z position
       next_tile_start_.y = max_z;
+      next_tile_start_.y = pivot_end.z;
 
+      // max_x = pivot.x;
       // Calculate next_tile_start_.x position (next X tile position)
       float displacement_x = max_x - prev_max_x_;
       prev_max_x_ = max_x - displacement_x;
+
+      displacement_x = pivot_end.x - pivot.x;
       next_tile_start_.x += displacement_x;
+      // next_tile_start_.x = position_range/2 - pivot.x;
+      break;
+  }
+  switch(road_type) {
+    case kTurnLeft:
+      rotation_ += 20;
+      // rotation_ = 0;
       break;
   }
 }

@@ -155,6 +155,10 @@ class Terrain {
     //   These should only be generated once as x_lengths and z_lengths are the
     //   same between tiles.
     std::vector<int> indices_road_;
+    // Current road tile end rotation
+    //   The rotation of the entire next tile from positive z
+    //   Positive degrees rotate leftwards (anti cw from spidermans facing)
+    float rotation_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();
