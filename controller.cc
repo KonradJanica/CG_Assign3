@@ -160,6 +160,7 @@ void Controller::UpdatePhysics() {
   const std::queue<std::unordered_map<float,std::pair<float,float>>> &col = terrain_->collision_queue_hash();
   const glm::vec3 &new_translation = car_->translation();
   float car_z = new_translation.z;
+  printf("x = %f, y = %f, z = %f\n",new_translation.x,new_translation.y,new_translation.z );
   car_z = round(car_z);
   // printf("car_z = %f\n", car_z);
   std::unordered_map<float,std::pair<float,float>> road_tile1;
