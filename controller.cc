@@ -86,8 +86,8 @@ void Controller::PositionLights() {
   // Spot lights
   std::vector<SpotLight> spotLights;
   // Main car headlights
-  for (unsigned int i = 0; i < 1; i++) {
-    glm::mat4 headlightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.45f));
+  for (unsigned int i = 0; i < 2; i++) {
+    glm::mat4 headlightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.0f, 1.45f));
     glm::mat3 headlightNormMatrix = glm::mat3(car_mv_matrix);
 
     SpotLight headlight;
@@ -95,7 +95,7 @@ void Controller::PositionLights() {
     headlight.SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
     headlight.Position = glm::vec3(car_mv_matrix * headlightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     headlight.Direction = headlightNormMatrix * glm::vec3(0.0f, -0.3f, 1.0f);
-    headlight.CosineCutoff = cos(DEG2RAD(20.0f));
+    headlight.CosineCutoff = cos(DEG2RAD(30.0f));
     headlight.Attenuation.Constant = 0.5f;
     headlight.Attenuation.Linear = 0.1f;
     headlight.Attenuation.Exp = 0.01f;
