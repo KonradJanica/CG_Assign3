@@ -1,4 +1,4 @@
-#version 150
+#version 130
 
 // manyAttributes.vp
 // This shader passes on colour values to be interpolated by the fixed functionality

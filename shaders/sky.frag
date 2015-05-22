@@ -1,4 +1,4 @@
-#version 150
+#version 130
 
 // manyAttributes.fp
 // An example of using interpolated values from the previous stage
