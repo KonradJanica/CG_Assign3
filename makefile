@@ -21,6 +21,12 @@ ifneq (, $(findstring Darwin, $(PLATFORM)))
 	EXT = 
 endif
 
+ifneq (, $(findstring MINGW, $(PLATFORM)))
+	GL_LIBS = -lopengl32 -lglut -lGLEW32
+	EXT = .exe
+	DEFS = -DWIN32
+endif
+
 CC = g++ -std=c++0x -Wno-switch-enum
 LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
