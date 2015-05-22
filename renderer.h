@@ -9,6 +9,7 @@
 #include "camera.h"
 #include "terrain.h"
 #include "object.h"
+#include "Skybox.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -46,6 +47,8 @@ class Renderer {
     //   @warn requires EnableTerrain()
     void RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const;
     void RenderTerrain();
+
+    void RenderSkybox(const Skybox * Sky, const Camera * camera) const;
 
   private:
     // The VAO Handle for the Axis Coordinates

@@ -22,7 +22,7 @@ ifneq (, $(findstring Darwin, $(PLATFORM)))
 endif
 
 CC = g++ -std=c++0x -Wno-switch-enum
-LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o controller.o main.o
+LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o Skybox.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
 
 .PHONY:  clean
@@ -40,6 +40,9 @@ controller.o : controller.cc controller.h light_controller.h renderer.h camera.h
 
 light_controller.o: light_controller.cc light_controller.h
 	$(CC) $(CPPFLAGS) -c light_controller.cc
+
+Skybox.o: Skybox.cc Skybox.h
+	$(CC) $(CPPFLAGS) -c Skybox.cc
 
 renderer.o : renderer.cc renderer.h camera.h terrain.h object.h model.h
 	$(CC) $(CPPFLAGS) -c renderer.cc

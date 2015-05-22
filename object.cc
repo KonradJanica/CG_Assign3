@@ -225,7 +225,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     velocity_x += centripeta_velocity_x;
     velocity_z += centripeta_velocity_z;
   }
-  printf("speed = %f\n", speed_);
+  //printf("speed = %f\n", speed_);
   // convert speed to game world speed
   // TODO put into separate constants class
   velocity_x /= SPEEDSCALE;

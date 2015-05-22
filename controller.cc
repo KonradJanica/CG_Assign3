@@ -9,8 +9,13 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
   camera_ = new Camera;
   is_key_pressed_hash_.reserve(256);
   is_key_pressed_hash_.resize(256);
+
 }
 
+void Controller::AddSkybox(const GLuint &program_id)
+{
+  skybox_ = new Skybox(program_id);
+}
 // Adds a model to the member vector
 //   @param program_id, a shader program
 //   @param model_filename, a string containing the path of the .obj file
@@ -34,18 +39,20 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
-
+  renderer_->RenderSkybox(skybox_, camera_);
   // Spider-man
-  renderer_->Render(objects_.at(0), camera_);
+  //renderer_->Render(objects_.at(0), camera_);
   // Car with physics
-  renderer_->Render(car_, camera_);
+  //renderer_->Render(car_, camera_);
   // Terrain
-  renderer_->Render(terrain_, camera_);
+  //renderer_->Render(terrain_, camera_);
 
-  renderer_->RenderWater(terrain_, camera_, light_pos_);
+  //renderer_->RenderWater(terrain_, camera_, light_pos_);
   // Axis
   // TODO Toggle
-  renderer_->RenderAxis(camera_);
+  //renderer_->RenderAxis(camera_);
+
+  
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties

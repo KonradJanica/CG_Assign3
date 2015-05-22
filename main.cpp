@@ -47,6 +47,7 @@
 #include "renderer.h"
 #include "camera.h"
 #include "controller.h"
+#include "Skybox.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image/stb_image.h"
@@ -55,7 +56,7 @@ Renderer *g_renderer;
 Controller *g_controller;
 
 // Our shader program
-GLuint g_program_id[4];
+GLuint g_program_id[5];
 
 // Background controls
 enum Colours {
@@ -82,7 +83,7 @@ int g_window_y = 480;
 
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(g_controller->camera()->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
-  for (unsigned int i = 0; i < 4; i++) {
+  for (unsigned int i = 0; i < 5; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
     assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
@@ -133,7 +134,7 @@ void idle() {
   int timeHandle = glGetUniformLocation(g_program_id[3], "elapsed");
   if(timeHandle == -1)
   {
-    printf("Could not get handle for time var \n");
+    //printf("Could not get handle for time var \n");
   }
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
@@ -317,6 +318,10 @@ int main(int argc, char **argv) {
   if (g_program_id[3] == 0)
     return 1;
 
+  g_program_id[4] = LoadShaders("shaders/sky.vert", "shaders/sky.frag");
+  if (g_program_id[4] == 0)
+    return 1;
+
 
   g_renderer = new Renderer();
   // Construct Axis VAO
@@ -336,6 +341,8 @@ int main(int argc, char **argv) {
 
   // Setup lighting
   g_controller->SetupLighting(g_program_id[2]);
+
+  g_controller->AddSkybox(g_program_id[4]);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);

@@ -8,6 +8,52 @@ Renderer::Renderer(const bool &debug_flag)
   : coord_vao_handle(0), is_debugging_(debug_flag) {
 }
 
+void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
+{
+  int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
+  if (mvHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  int cubeHandle = glGetUniformLocation(Sky->skyshader(), "cubeMap");
+  if (cubeHandle == -1) {
+    if (is_debugging_) {
+      fprintf(stderr, "Could not find uniform variables\n");
+      exit(1);
+    }
+  }
+
+  int texHandle = glGetUniformLocation(Sky->skyshader(), "skybox");
+  if (texHandle == -1) {
+    if (is_debugging_) {
+      fprintf(stderr, "Could not find uniform variables\n");
+      exit(1);
+    }
+  }
+
+  // Draw skybox first
+  glDepthMask(GL_FALSE);// Remember to turn depth writing off
+  glUseProgram(Sky->skyshader());
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  
+
+  glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
+  glUniform1i(texHandle, 0);
+
+  
+  // Create and send view matrix with translation stripped
+  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera->view_matrix()));
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
+
+  // skybox cube
+  glBindVertexArray(Sky->skyboxvao());
+  //glDrawElements(GL_TRIANGLES, 50, GL_UNSIGNED_INT, 0);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+
+  glDepthMask(GL_TRUE);
+}
+
 // Draws/Renders the passed in objects (with their models) to the scene
 //   Should be called in the render loop
 //   @param Object * object, an object to render
