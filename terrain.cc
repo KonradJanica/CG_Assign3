@@ -360,7 +360,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
   // special point for finding pivot translation
   glm::vec3 &pivot = vertices.at(20*x_length_/36 );
-  // pivot.y = 1000000;
+  pivot.y = 1000000;
   // normals_road_.push_back(normals.at(x + z*x_length_));
   glm::vec3 foo = glm::rotateY(pivot, rotation_);
   float translate_x = pivot.x - foo.x;

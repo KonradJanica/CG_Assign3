@@ -173,10 +173,14 @@ void Controller::UpdatePhysics() {
     float min_x = got->second.first;
     float max_x = got->second.second;
     float car_x = new_translation.x;
-    if (car_x >= min_x && car_x <= max_x) {
+    if (car_x >= min_x && car_x <= max_x || car_x <= min_x && car_x >= max_x) {
       //inside bounds
     } else {
-      printf("collision on x!\n");
+      // printf("collision on x!\n");
+    // TODO fix check end of tile...
+    terrain_->col_pop();
+    // TODO obviously this needs to be done further back from view space
+    terrain_->ProceedTiles();
     }
   }
   // printf("%f\n", current_frame);
