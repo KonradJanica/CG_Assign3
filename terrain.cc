@@ -555,7 +555,7 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadCollisionMap() {
-  std::vector<std::pair<glm::vec3,glm::vec3>> tile_map;
+  colisn_vec tile_map;
   tile_map.reserve(z_length_);
   std::pair<glm::vec3,glm::vec3> min_max_x_pair;
   unsigned int x_new_row_size = 22*x_length_/36 - 17*x_length_/36;

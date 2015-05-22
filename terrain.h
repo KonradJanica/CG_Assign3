@@ -5,8 +5,6 @@
 #include <string>
 #include <cassert>
 #include <queue>
-#include <unordered_map>
-#include <list>
 
 #include "model_data.h"
 #include "model.h"
@@ -71,7 +69,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::queue<std::vector<std::pair<glm::vec3,glm::vec3>>> collision_queue_hash() const;
+    inline std::queue<colisn_vec> collision_queue_hash() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
