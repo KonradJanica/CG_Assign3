@@ -205,6 +205,10 @@ void keyboardDown(unsigned char key, int x, int y) {
     case 's':
     case 'a':
     case 'd':
+    case 'i':
+    case 'j':
+    case 'k':
+    case 'l':
       g_controller->KeyPressed(key);
       break;
     case 'f':
@@ -342,8 +346,8 @@ int main(int argc, char **argv) {
   glutKeyboardUpFunc(KeyboardUp);
   glutMotionFunc(MotionFunc);
   glutMouseFunc(MouseFunc);
-  glutSpecialFunc(SpecialPressed);
-  glutSpecialUpFunc(SpecialReleased);
+  // glutSpecialFunc(SpecialPressed); // arrow keys etc.
+  // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);
   glutDisplayFunc(render);
   glutMainLoop();

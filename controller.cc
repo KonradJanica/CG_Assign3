@@ -84,18 +84,14 @@ void Controller::PositionLights() {
     pointLights[i].Attenuation.Exp = 5.0f;
   }
 
-  light_controller_->SetDirectionalLight(dirLight);
-  light_controller_->SetSpotLights(1, spotLight);
-  light_controller_->SetPointLights(2, pointLights);
+  light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
+  light_controller_->SetSpotLights(car_->program_id(), 1, spotLight);
+  light_controller_->SetPointLights(car_->program_id(), 2, pointLights);
 }
 
 // Setup Light Components into Uniform Variables for Shader
 void Controller::SetupLighting(const GLuint &program_id) {
   light_controller_ = new LightController();
-  if (!light_controller_->Init(program_id)) {
-    fprintf(stderr, "Error initialising light controller\n");
-    exit(0);
-  }
 
   // Send directional light
   directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
