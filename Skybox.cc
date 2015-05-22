@@ -5,7 +5,10 @@
  * Skybox.cc, Simple iplementation of a skybox in openGL
  * 
  * This file is a simple implementation of a skybox in openGL
- * for more clarification read the comments describing each function 
+ * for more clarification read the comments describing each function
+ *
+ * Inspiration drawn from http://learnopengl.com/#!Advanced-OpenGL/Cubemaps
+ * 
  */
 
 #include "Skybox.h"
@@ -28,18 +31,17 @@ Skybox::Skybox(const GLuint &program_id)
 		GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
 		GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
 	*/
-  faces.push_back("textures/alpine_right.jpg"); // LEFT SIDE OF CUBE
-  faces.push_back("textures/alpine_left.jpg");	// RIGHT SIDE OF CUBE
-  faces.push_back("textures/alpine_top.jpg");	// TOP (TOP OF CODE)
-  faces.push_back("textures/rock02.jpg"); 		// BOTTOM OF CUBE
-  faces.push_back("textures/alpine_front.jpg"); // FRONT (I.E. SIDE OF CUBE FURTHEST FROM YOU)
-  faces.push_back("textures/alpine_back.jpg"); // BACK (I.E. SIDE OF CUBE CLOSEST TO YOU)
-  skybox_tex_ = loadCubeTex(faces);
+  faces.push_back("textures/alpine_right.jpg"); // Left side of Cube
+  faces.push_back("textures/alpine_left.jpg");	// Right side of Cube
+  faces.push_back("textures/alpine_top.jpg");	// Top of cube
+  faces.push_back("textures/rock02.jpg"); 		// Bottom of cube
+  faces.push_back("textures/alpine_front.jpg"); // Front (side furthest from camera)
+  faces.push_back("textures/alpine_back.jpg"); 	// Back (side closest to camera)
 
-  printf("Made it to the end of skybox constructor \n");
+  // Load in the textures
+  skybox_tex_ = loadCubeTex(faces);  
 }
 
-// @Author - Mitch
 // Create a Skybox VAO (Essentially just a simple -1 to 1 cube)
 // @return - return the vao that has been created
 unsigned int Skybox::CreateVao()
@@ -48,7 +50,7 @@ unsigned int Skybox::CreateVao()
 
 	// 
 	float cubeVertices[] = {
-    // Positions          
+        
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -99,7 +101,6 @@ unsigned int Skybox::CreateVao()
 	glBindVertexArray(vaoHandle);
 
 	int vertLoc = glGetAttribLocation(skybox_shader_, "a_vertex");
-	//int colourLoc = glGetAttribLocation(skybox_shader_, "a_colour");
 
 	if(vertLoc == -1)
 	{
@@ -125,6 +126,9 @@ unsigned int Skybox::CreateVao()
   
 }
 
+// Generate a cubemap texture
+// @input - a vector containing the string names of the faces you want to be on the skybox
+// @return - The texture handle of the cubemap
 GLuint Skybox::loadCubeTex(std::vector<const GLchar*> faces)
 {
 

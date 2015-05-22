@@ -8,6 +8,11 @@ Renderer::Renderer(const bool &debug_flag)
   : coord_vao_handle(0), is_debugging_(debug_flag) {
 }
 
+//   Renders the passed in skybox to the scene
+//   Should be called in the controller
+//   @param Skybox * sky, the skybox to render
+//   @param Camera * camera, to get the camera matrix and correctly position world
+//   @warn this function is not responsible for NULL PTRs
 void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 {
   int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
@@ -33,24 +38,24 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
     }
   }
 
-  // Draw skybox first
-  glDepthMask(GL_FALSE);// Remember to turn depth writing off
+  // Draw skybox with depth testing off
+  glDepthMask(GL_FALSE);
   glUseProgram(Sky->skyshader());
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(texHandle, 0);
-
   
-  // Create and send view matrix with translation stripped
+  // Create and send view matrix with translation stripped in order for skybox
+  // to always be in thr right location
   glm::mat4 view_matrix = glm::mat4(glm::mat3(camera->view_matrix()));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
-  // skybox cube
+  // Render the Skybox
   glBindVertexArray(Sky->skyboxvao());
-  //glDrawElements(GL_TRIANGLES, 50, GL_UNSIGNED_INT, 0);
   glDrawArrays(GL_TRIANGLES, 0, 36);
 
+  // Re-enable depth testing
   glDepthMask(GL_TRUE);
 }
 
