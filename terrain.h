@@ -6,6 +6,7 @@
 #include <cassert>
 #include <queue>
 #include <unordered_map>
+#include <list>
 
 #include "model_data.h"
 #include "model.h"
@@ -66,7 +67,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
+    inline std::list<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
@@ -109,12 +110,13 @@ class Terrain {
     circular_vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     circular_vector<unsigned int> road_vao_handle_;
-    // A queue representing each road tile for collision checking
+    // A circular_vector representing each road tile for collision checking
+    //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //   Each key in the map represents a Z scanline
     //   Each pair of values of the key represents it's min X and max X
     //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
-    std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
+    std::list<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -289,7 +291,7 @@ inline int Terrain::road_indice_count() const {
 //   Each pair of values of the key represents it's min X and max X
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::queue<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
+inline std::list<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Pops the first collision map 
@@ -297,7 +299,7 @@ inline std::queue<std::unordered_map<float,std::pair<float,float>>> Terrain::col
 //   TODO remove and replace in circular buffer instead
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
-  collision_queue_hash_.pop();
+  collision_queue_hash_.pop_front();
 }
 
 #endif

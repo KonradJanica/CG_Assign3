@@ -12,6 +12,8 @@
 #include "renderer.h"
 #include "light_controller.h"
 
+#include <list>
+
 #include "glm/glm.hpp"
 #include <GL/glew.h>
 #include "lib/shader/shader.hpp"

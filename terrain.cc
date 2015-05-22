@@ -92,12 +92,13 @@ void Terrain::GenerateTerrain() {
   //    because the surface is relatively flat
   if (normals_road_.size() == 0)
     HelperMakeRoadNormals();
+  
+  // Collision map for current road tile
+  HelperMakeRoadCollisionMap();
 
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
-  // Collision map for current road tile
-  HelperMakeRoadCollisionMap();
 }
 
 // Turning Terrain Piece
@@ -121,11 +122,12 @@ void Terrain::GenerateTerrainTurn() {
   // if (normals_road_.size() == 0)
   //   HelperMakeRoadNormals();
 
+  // Collision map for current road tile
+  HelperMakeRoadCollisionMap();
+
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
-  // Collision map for current road tile
-  HelperMakeRoadCollisionMap();
 }
 
 // Water height map
@@ -528,7 +530,7 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
       // Top triangle (T0)
       indices_road_.push_back(vertexIndex);                        // V0
       indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
-      indices_road_.push_back(vertexIndex + 1);                    // V1
+      indices_road_.push_back(vertexIndex + 1);                    // V1 visualization
       // Bottom triangle (T1)
       indices_road_.push_back(vertexIndex);                        // V0
       indices_road_.push_back(vertexIndex + x_length_);            // V2
@@ -564,6 +566,8 @@ void Terrain::HelperMakeRoadCollisionMap() {
     z_key = round(z_key); // round value so key can be found
     min_max_x_pair.first = vertices_road_.at(0 + z).x; // min x
     min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).x; // max x
+    // vertices_road_.at(0+z).y = 10000; //minx visualization
+    // vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).y = 10000; //maxx visualization
 
     next_scanline.first = z_key;
     next_scanline.second = min_max_x_pair;
@@ -577,7 +581,7 @@ void Terrain::HelperMakeRoadCollisionMap() {
     // printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
   }
 
-  collision_queue_hash_.push(tile_map);
+  collision_queue_hash_.push_back(tile_map);
   // for (auto& x: collision_queue_hash_.front()) {
   //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
   // }
