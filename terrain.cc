@@ -362,7 +362,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
   // special point for finding pivot translation
   glm::vec3 &pivot = vertices.at(20*x_length_/36 );
-  pivot.y = 1000000;
+  // pivot.y = 1000000;
   // normals_road_.push_back(normals.at(x + z*x_length_));
   glm::vec3 foo = glm::rotateY(pivot, rotation_);
   float translate_x = pivot.x - foo.x;
@@ -555,23 +555,21 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadCollisionMap() {
-  std::map<float,std::pair<float,float>> tile_map;
-  // tile_map.reserve(z_length_);
-  std::pair<float,float> min_max_x_pair;
-  std::pair<float,std::pair<float,float>> next_scanline;
+  std::vector<std::pair<glm::vec3,glm::vec3>> tile_map;
+  tile_map.reserve(z_length_);
+  std::pair<glm::vec3,glm::vec3> min_max_x_pair;
   unsigned int x_new_row_size = 22*x_length_/36 - 17*x_length_/36;
 
   for (unsigned int z = 0; z < z_length_; ++z){
     float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
     // z_key = round(z_key); // round value so key can be found
-    min_max_x_pair.first = vertices_road_.at(0 + z).x; // min x
-    min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).x; // max x
+    min_max_x_pair.first = vertices_road_.at(0 + z); // left? side vertices
+    min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)); // other side vertices
+
     // vertices_road_.at(0+z).y = 10000; //minx visualization
     // vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).y = 10000; //maxx visualization
 
-    next_scanline.first = z_key;
-    next_scanline.second = min_max_x_pair;
-    tile_map.insert(next_scanline); // doesnt insert when duplicate
+    tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
     // tile_map[z_key] = min_max_x_pair; // overrides duplicates
 
 
@@ -581,7 +579,7 @@ void Terrain::HelperMakeRoadCollisionMap() {
     // printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
   }
 
-  collision_queue_hash_.push_back(tile_map);
+  collision_queue_hash_.push(tile_map);
   // for (auto& x: collision_queue_hash_.front()) {
   //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
   // }

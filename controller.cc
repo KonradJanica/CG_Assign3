@@ -140,6 +140,33 @@ void Controller::UpdateCamera() {
   camera_->UpdateCamera();
 }
 
+// The double area of a triangle 
+float AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
+  return (c.x*b.z - b.x*c.z) - (c.x*a.z - a.x*c.z) + (b.x*a.z - a.x*b.z);
+}
+
+// These are used for collisions and it's helper functions
+typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
+typedef std::vector<boundary_pair> col_vec;
+
+// Checks whether car is between boundary pair
+//   Creates 4 triangles out of the 4 points of the given square and returns 
+//   true if area is positive
+//   @warn input must be square for accurate results
+bool operator==(const glm::vec3 &car, std::pair<boundary_pair,boundary_pair> &bp) {
+  boundary_pair curr = bp.first;
+  boundary_pair next = bp.second;
+  glm::vec3 a = curr.first;
+  glm::vec3 b = curr.second;
+  glm::vec3 c = next.second;
+  glm::vec3 d = next.first;
+
+  if (AreaTriangle(a,b,car) > 0 || AreaTriangle(b,c,car) > 0 || 
+      AreaTriangle(c,d,car) > 0 || AreaTriangle(d,a,car) > 0)
+    return false;
+  return true;
+}
+
 // The controllers physics update tick
 //   Checks keypresses and calculates acceleration
 void Controller::UpdatePhysics() {
@@ -149,44 +176,44 @@ void Controller::UpdatePhysics() {
   car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
 
   ///////////////// COLLISION TESTING TODO TODO
-  typedef std::map<float,std::pair<float,float>>  col_map;
-  const std::list<col_map> &col = terrain_->collision_queue_hash();
-  const glm::vec3 &new_translation = car_->translation();
-  float car_z = new_translation.z;
-  // car_z = round(car_z);
+  const std::queue<col_vec> &col = terrain_->collision_queue_hash();
+  const glm::vec3 &car = car_->translation();
   // printf("car_z = %f\n", car_z);
-  const col_map &road_tile1  = col.front();
-  col_map::const_iterator got = road_tile1.lower_bound(car_z);
-  if (got == road_tile1.end()) {
-    printf("possible collision on Z, check next tile\n");
-    std::list<col_map>::const_iterator it = col.begin();
+  const col_vec head = col.front();
+  col_vec::const_iterator it = head.begin();
+
+  boundary_pair closest_pair;
+  float dis = FLT_MAX;
+  col_vec::const_iterator closest_it = head.begin();
+
+  while (it != head.end()) {
+    const glm::vec3 &cur_vec = it->first; // current vector pair
+    const glm::vec3 dv = cur_vec - car;   // distance vector
+    float cur_dis = sqrt(dv.x*dv.x + dv.y*dv.y + dv.z*dv.z);
+    if (cur_dis < dis) {
+      dis = cur_dis;
+      closest_pair = *it;
+      closest_it = it;
+    }
     it++;
-    const col_map &road_tile2 = *(it);
-    col_map::const_iterator got2 = road_tile2.lower_bound(car_z);
-    if (got2 == road_tile2.end()) {
-      printf("collision on z!\n");
-    } else {
-      printf("assuming end of tile reached, pop!\n");
-      // TODO fix check end of tile...
-      terrain_->col_pop();
-      // TODO obviously this needs to be done further back from view space
-      terrain_->ProceedTiles();
-    }
+  }
+  // Get vertice pair next to closest
+  //   but make sure it isn't the last pair overwise pop
+  closest_it++;
+  if (closest_it == head.end()) {
+    printf("assuming end of tile reached, pop!\n");
+    // TODO fix check end of tile...
+    terrain_->col_pop();
+    // TODO obviously this needs to be done further back from view space
+    terrain_->ProceedTiles();
   } else {
-    if (got != road_tile1.begin()) {
-      // find closest vertice
-      float diff_z_ = abs(got->first - car_z);
-      got--;
-      float diff_smaller_z_ = abs(got->first - car_z);
-      if (diff_z_ < diff_smaller_z_) {
-        got++;
-      }
-    }
-    // Check if x is in range
-    float min_x = got->second.first;
-    float max_x = got->second.second;
-    float car_x = new_translation.x;
-    if (car_x >= min_x && car_x <= max_x) {
+    boundary_pair next_pair = *closest_it;
+    closest_it--;
+    closest_it--;
+    boundary_pair previous_pair = *closest_it;
+    std::pair<boundary_pair,boundary_pair> bounding_box(previous_pair, next_pair);
+    // Check if car is in range
+    if (car == bounding_box) {
       //inside bounds
     } else {
       printf("collision on x!\n");
