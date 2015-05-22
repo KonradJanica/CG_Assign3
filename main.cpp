@@ -338,9 +338,6 @@ int main(int argc, char **argv) {
   // Setup terrain
   g_controller->EnableTerrain(g_program_id[2], g_program_id[3]);
 
-  // Setup lighting
-  g_controller->SetupLighting(g_program_id[2]);
-
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
   glutKeyboardUpFunc(KeyboardUp);

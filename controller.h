@@ -55,8 +55,6 @@ class Controller {
     //   Creates Terrain VAOs
     //   @warn terrain_ on heap, must be deleted after
     void EnableTerrain(const GLuint &program_id, const GLuint &water_id);
-    // Setup Light Components into Uniform Variables for Shader
-    void SetupLighting(const GLuint &program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
     // Accessor for largest vertex in indexed model
@@ -106,11 +104,6 @@ class Controller {
 
     // The light controller
     LightController * light_controller_;
-
-    // Lights
-    DirectionalLight directional_light_;
-    std::vector<PointLight> point_lights_; 
-    std::vector<SpotLight> spot_lights_;
 
     // Updates light properties with view matrix from camera
     void PositionLights();
