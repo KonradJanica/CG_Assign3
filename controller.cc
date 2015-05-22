@@ -173,10 +173,6 @@ void Controller::UpdatePhysics() {
       //inside bounds
     } else {
       // printf("collision on x!\n");
-    // TODO fix check end of tile...
-    terrain_->col_pop();
-    // TODO obviously this needs to be done further back from view space
-    terrain_->ProceedTiles();
     }
   }
   // printf("%f\n", current_frame);
