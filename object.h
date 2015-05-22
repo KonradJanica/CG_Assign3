@@ -128,12 +128,13 @@ class Object {
     glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
-    // The amount moved from last tick
-    glm::vec3 displacement_;
 
     // glm::scale transformation
     //   The scale of the object
     glm::vec3 scale_;
+
+    // The amount moved from last tick
+    glm::vec3 displacement_;
 
     // The speed of the object in the direction it is facing
     float speed_;
@@ -142,6 +143,16 @@ class Object {
 
     // Verbose debugging - prints physics variables
     bool is_debugging_;
+
+    // Works out the maximum speed achieveable per gear
+    //   @param  the gear ratio
+    //   @return  the max speed of given gear ratio
+    float MaxSpeedPerGear(float g_num);
+
+    // Works out the maximum force per gear
+    //   @param  the gear ratio
+    //   @return  the maximum force per gear
+    float MaxEngineForcePerGear(float g_num, float max_torque);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint &program_id, const std::string &model_filename);

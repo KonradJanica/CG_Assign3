@@ -7,7 +7,7 @@ Object::Object(const glm::vec3 &translation,
     float default_speed,
     bool debugging_on)
   : translation_(translation), rotation_(rotation), scale_(scale),
-  displacement_(0), speed_(default_speed), centri_speed_(0),
+  displacement_(0), speed_(default_speed), centri_speed_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
   }
@@ -15,7 +15,7 @@ Object::Object(const glm::vec3 &translation,
 // Works out the maximum speed achieveable per gear
 //   @param  the gear ratio
 //   @return  the max speed of given gear ratio
-float MaxSpeedPerGear(float g_num) {
+float Object::MaxSpeedPerGear(float g_num) {
   float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
   float WHEELRADIUS = 0.33; //metres  radius of tire
   float WHEELROTATIONDISTANCE = 2.14; //metres
@@ -27,7 +27,7 @@ float MaxSpeedPerGear(float g_num) {
 // Works out the maximum force per gear
 //   @param  the gear ratio
 //   @return  the maximum force per gear
-float MaxEngineForcePerGear(float g_num, float max_torque) {
+float Object::MaxEngineForcePerGear(float g_num, float max_torque) {
   // float MAXTORQUE = 475; //N.m  depending on MAXRPM
   float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
   float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
@@ -136,7 +136,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     if (force_combined > weight_rear * 4.0) {
       // TODO SPIN ANIMATION AND SOUND
       //
-      printf("SPIN SPIN WHEELS SPIN");
+      if (is_debugging_) {
+        printf("SPIN SPIN WHEELS SPIN\n");
+      }
 
       // CALCULATE NON-SPINNING ACCELERATION
       force_x = weight_rear * 4.0 * direction_x;
@@ -146,11 +148,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     }
   }
 
-
   float v = sqrt(velocity_x*velocity_x + velocity_z*velocity_z);
-  // float a = sqrt(acceleration_x*acceleration_x + acceleration_z*acceleration_z);
-  // float a = v*v/r;
-  // printf("r = %f\n", r);
   if (v < 45) {
     v = 45;
   }
@@ -172,15 +170,15 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     a *= -1;
   }
 
-  float centripetal_ax = 0;
-  float centripetal_az = 0;
-  float centripeta_velocity_x = 0;
-  float centripeta_velocity_z = 0;
+  float centripetal_ax = 0.0f;
+  float centripetal_az = 0.0f;
+  float centripeta_velocity_x = 0.0f;
+  float centripeta_velocity_z = 0.0f;
+  bool is_turn = false;
   if (speed() > 0) {
-    bool is_turn = false;
     if (is_key_pressed_hash.at('a')) {
       float rot = 30*TURNRATE/v;
-      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
+      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
       centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
       centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
@@ -191,7 +189,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     }
     if (is_key_pressed_hash.at('d')) {
       float rot = 30*TURNRATE/v;
-      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
+      glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
       centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
       centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
@@ -201,9 +199,9 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
       set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
       is_turn = true;
     }
-    if (!is_turn)
-      centri_speed_ = 0;
   }
+  if (!is_turn)
+    centri_speed_ = 0.0f;
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x += delta_time * acceleration_x;
@@ -211,7 +209,8 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   // CALCULATE SPEED
   if (velocity_x * direction_x < 0 && velocity_z * direction_z < 0) {
-    speed_ = 0;
+    speed_ = 0.0f;
+    centri_speed_ = 0.0f;
   } else {
     speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
     centripeta_velocity_x += delta_time * centripetal_ax;
