@@ -131,12 +131,14 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   set_rotation(glm::vec3(pitch, rotation().y, 0));
 
   // CALCULATE WHEEL SPINS
-  if (force_x > 0 && force_z > 0) {
+  if (is_key_pressed_hash.at('w')) {
     float force_combined = sqrt(force_x * force_x + force_z * force_z);
     if (force_combined > weight_rear * 4.0) {
       // TODO SPIN ANIMATION AND SOUND
       //
-      printf("SPIN SPIN WHEELS SPIN");
+      if (is_debugging_) {
+        printf("SPIN SPIN WHEELS SPIN");
+      }
 
       // CALCULATE NON-SPINNING ACCELERATION
       force_x = weight_rear * 4.0 * direction_x;
@@ -223,7 +225,10 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     velocity_x += centripeta_velocity_x;
     velocity_z += centripeta_velocity_z;
   }
-  printf("speed = %f\n", speed_);
+  if (is_debugging_) {
+    printf("speed = %f\n", speed_);
+  }
+    printf("speed = %f\n", speed_);
   // convert speed to game world speed
   // TODO put into separate constants class
   velocity_x /= SPEEDSCALE;

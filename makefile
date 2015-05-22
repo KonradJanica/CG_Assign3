@@ -27,7 +27,7 @@ ifneq (, $(findstring MINGW, $(PLATFORM)))
 	DEFS = -DWIN32
 endif
 
-CC = g++ -std=c++0x -Wno-switch-enum
+CC = g++ -Wno-switch-enum
 LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
 

@@ -5,7 +5,6 @@
 #include <string>
 #include <cassert>
 #include <queue>
-#include <unordered_map>
 
 #include "model_data.h"
 #include "model.h"
@@ -26,6 +25,10 @@
 
 class Terrain {
   public:
+    // These are used for collisions and it's helper functions
+    typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
+    typedef std::vector<boundary_pair> colisn_vec;
+
     // Construct with width and height specified
     Terrain(const GLuint &program_id, const GLuint &water_id, const int &width = 32, const int &height = 32);
 
@@ -66,7 +69,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
+    inline std::queue<colisn_vec> collision_queue_hash() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
@@ -109,12 +112,13 @@ class Terrain {
     circular_vector<unsigned int> terrain_vao_handle_;
     // The VAO handle for the road
     circular_vector<unsigned int> road_vao_handle_;
-    // A queue representing each road tile for collision checking
+    // A circular_vector representing each road tile for collision checking
+    //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //   Each key in the map represents a Z scanline
     //   Each pair of values of the key represents it's min X and max X
     //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
-    std::queue<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
+    std::queue<colisn_vec> collision_queue_hash_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -155,6 +159,10 @@ class Terrain {
     //   These should only be generated once as x_lengths and z_lengths are the
     //   same between tiles.
     std::vector<int> indices_road_;
+    // Current road tile end rotation
+    //   The rotation of the entire next tile from positive z
+    //   Positive degrees rotate leftwards (anti cw from spidermans facing)
+    float rotation_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();
@@ -285,7 +293,7 @@ inline int Terrain::road_indice_count() const {
 //   Each pair of values of the key represents it's min X and max X
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::queue<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
+inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Pops the first collision map 
