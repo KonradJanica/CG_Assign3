@@ -6,7 +6,8 @@
 //   @warn assert will end program prematurely
 Controller::Controller(const Renderer * r, const bool &debug_flag) 
   : renderer_(r), light_pos_(glm::vec4(0,0,0,0)), delta_time_(0), last_frame_(0), is_debugging_(debug_flag) {
-  camera_ = new Camera;
+  camera_ = new Camera();
+  light_controller_ = new LightController();
   is_key_pressed_hash_.reserve(256);
   is_key_pressed_hash_.resize(256);
 
@@ -62,57 +63,49 @@ void Controller::PositionLights() {
   glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
-  DirectionalLight dirLight = directional_light_;
-  dirLight.Direction = norm_matrix * dirLight.Direction;
+  DirectionalLight dirLight;
+  dirLight.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  dirLight.Direction = norm_matrix * glm::vec3(0.3f, -1.0f, -0.3f);
 
-  // TODO: Refactor creation of light. Split creation from re-positioning
-  SpotLight spotLight[1];
-  spotLight[0].AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  spotLight[0].DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-  spotLight[0].SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-
-  glm::mat4 spotLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.45f));
-  glm::mat3 spotLightNormMatx0 = glm::mat3(car_mv_matrix);
-
-  spotLight[0].Position = glm::vec3(car_mv_matrix * spotLightTranslation0 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  spotLight[0].Direction = spotLightNormMatx0 * glm::vec3(0.0f, -0.3f, 1.0f);
-  spotLight[0].CosineCutoff = cos(DEG2RAD(20.0f));
-  spotLight[0].Attenuation.Constant = 0.5f;
-  spotLight[0].Attenuation.Linear = 0.1f;
-  spotLight[0].Attenuation.Exp = 0.01f;
-
-  PointLight pointLights[2];
+  // Point lights
+  std::vector<PointLight> pointLights;
+  // Main car brake lights
   for (unsigned int i = 0; i < 2; i++) {
-    pointLights[i].DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.5f, -3.0f));
 
-    glm::mat4 pointLightTranslation0 = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.5f, -3.0f));
-    pointLights[i].Position = glm::vec3(car_mv_matrix * pointLightTranslation0 * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    pointLights[i].Attenuation.Constant = 0.01f;
-    pointLights[i].Attenuation.Linear = 3.0f;
-    pointLights[i].Attenuation.Exp = 5.0f;
+    PointLight brakeLight;
+    brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
+    brakeLight.Position = glm::vec3(car_mv_matrix * brakeLightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    brakeLight.Attenuation.Constant = 0.01f;
+    brakeLight.Attenuation.Linear = 3.0f;
+    brakeLight.Attenuation.Exp = 5.0f;
+
+    pointLights.push_back(brakeLight);
+  }
+
+  // Spot lights
+  std::vector<SpotLight> spotLights;
+  // Main car headlights
+  for (unsigned int i = 0; i < 1; i++) {
+    glm::mat4 headlightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 1.45f));
+    glm::mat3 headlightNormMatrix = glm::mat3(car_mv_matrix);
+
+    SpotLight headlight;
+    headlight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+    headlight.SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+    headlight.Position = glm::vec3(car_mv_matrix * headlightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    headlight.Direction = headlightNormMatrix * glm::vec3(0.0f, -0.3f, 1.0f);
+    headlight.CosineCutoff = cos(DEG2RAD(20.0f));
+    headlight.Attenuation.Constant = 0.5f;
+    headlight.Attenuation.Linear = 0.1f;
+    headlight.Attenuation.Exp = 0.01f;
+
+    spotLights.push_back(headlight);
   }
 
   light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
-  light_controller_->SetSpotLights(car_->program_id(), 1, spotLight);
-  light_controller_->SetPointLights(car_->program_id(), 2, pointLights);
-}
-
-// Setup Light Components into Uniform Variables for Shader
-void Controller::SetupLighting(const GLuint &program_id) {
-  light_controller_ = new LightController();
-
-  // Send directional light
-  directional_light_.AmbientIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  directional_light_.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
-  // directional_light_.DiffuseIntensity = glm::vec3(0.4f, 0.4f, 0.7f);
-  directional_light_.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-  // directional_light_.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
-  directional_light_.Direction = glm::vec3(0.3f, -1.0f, -0.3f);
-
-
-  
-
-  // light_controller_->SetDirectionalLight(dirLight);
+  light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);
+  light_controller_->SetSpotLights(car_->program_id(), spotLights.size(), &spotLights[0]);
 }
 
 // Creates the Terrain object for RenderTerrain()
