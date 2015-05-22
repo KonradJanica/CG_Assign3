@@ -27,6 +27,10 @@
 
 class Terrain {
   public:
+    // These are used for collisions and it's helper functions
+    typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
+    typedef std::vector<boundary_pair> colisn_vec;
+
     // Construct with width and height specified
     Terrain(const GLuint &program_id, const GLuint &water_id, const int &width = 32, const int &height = 32);
 
@@ -116,7 +120,7 @@ class Terrain {
     //   Each pair of values of the key represents it's min X and max X
     //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
-    std::queue<std::vector<std::pair<glm::vec3,glm::vec3>>> collision_queue_hash_;
+    std::queue<colisn_vec> collision_queue_hash_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -291,7 +295,7 @@ inline int Terrain::road_indice_count() const {
 //   Each pair of values of the key represents it's min X and max X
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::queue<std::vector<std::pair<glm::vec3,glm::vec3>>> Terrain::collision_queue_hash() const {
+inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Pops the first collision map 

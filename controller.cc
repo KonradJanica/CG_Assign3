@@ -141,21 +141,18 @@ void Controller::UpdateCamera() {
 }
 
 // The double area of a triangle 
+//   For finding in values lie inside a bounding box
 float AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
   return (c.x*b.z - b.x*c.z) - (c.x*a.z - a.x*c.z) + (b.x*a.z - a.x*b.z);
 }
-
-// These are used for collisions and it's helper functions
-typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
-typedef std::vector<boundary_pair> col_vec;
 
 // Checks whether car is between boundary pair
 //   Creates 4 triangles out of the 4 points of the given square and returns 
 //   true if area is positive
 //   @warn input must be square for accurate results
-bool operator==(const glm::vec3 &car, std::pair<boundary_pair,boundary_pair> &bp) {
-  boundary_pair curr = bp.first;
-  boundary_pair next = bp.second;
+bool operator==(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
+  Terrain::boundary_pair curr = bp.first;
+  Terrain::boundary_pair next = bp.second;
   glm::vec3 a = curr.first;
   glm::vec3 b = curr.second;
   glm::vec3 c = next.second;
@@ -176,15 +173,15 @@ void Controller::UpdatePhysics() {
   car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
 
   ///////////////// COLLISION TESTING TODO TODO
-  const std::queue<col_vec> &col = terrain_->collision_queue_hash();
+  const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
   // printf("car_z = %f\n", car_z);
-  const col_vec head = col.front();
-  col_vec::const_iterator it = head.begin();
+  const Terrain::colisn_vec head = col.front();
+  Terrain::colisn_vec::const_iterator it = head.begin();
 
-  boundary_pair closest_pair;
+  Terrain::boundary_pair closest_pair;
   float dis = FLT_MAX;
-  col_vec::const_iterator closest_it = head.begin();
+  Terrain::colisn_vec::const_iterator closest_it = head.begin();
 
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
@@ -207,11 +204,12 @@ void Controller::UpdatePhysics() {
     // TODO obviously this needs to be done further back from view space
     terrain_->ProceedTiles();
   } else {
-    boundary_pair next_pair = *closest_it;
+    Terrain::boundary_pair next_pair = *closest_it;
     closest_it--;
     closest_it--;
-    boundary_pair previous_pair = *closest_it;
-    std::pair<boundary_pair,boundary_pair> bounding_box(previous_pair, next_pair);
+    Terrain::boundary_pair previous_pair = *closest_it;
+    // Make boundary box the neighbours of current pair
+    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
     // Check if car is in range
     if (car == bounding_box) {
       //inside bounds
