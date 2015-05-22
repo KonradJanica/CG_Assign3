@@ -154,8 +154,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   if (v < 45) {
     v = 45;
   }
-  TURNRATE = 0.2; //radians per tick
-  // printf("t = %f\n",TURNRATE);
+  TURNRATE = 100 * delta_time;
   float dt = delta_time; //milisecond per tick
   dt = 1/delta_time; //tick per milisecond
   dt /= 1000; //tick per second
@@ -180,7 +179,6 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     bool is_turn = false;
     if (is_key_pressed_hash.at('a')) {
       float rot = 10.5/v;
-      // rot = TURNRATE;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
       centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
@@ -192,7 +190,6 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     }
     if (is_key_pressed_hash.at('d')) {
       float rot = 10.5/v;
-      // rot = TURNRATE;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0,direction_z),glm::vec3(0,1,0));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
       centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
