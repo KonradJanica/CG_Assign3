@@ -67,7 +67,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::list<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash() const;
+    inline std::list<std::map<float,std::pair<float,float>>> collision_queue_hash() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
@@ -116,7 +116,7 @@ class Terrain {
     //   Each pair of values of the key represents it's min X and max X
     //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
-    std::list<std::unordered_map<float,std::pair<float,float>>> collision_queue_hash_;
+    std::list<std::map<float,std::pair<float,float>>> collision_queue_hash_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -291,7 +291,7 @@ inline int Terrain::road_indice_count() const {
 //   Each pair of values of the key represents it's min X and max X
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::list<std::unordered_map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
+inline std::list<std::map<float,std::pair<float,float>>> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Pops the first collision map 

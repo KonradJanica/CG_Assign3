@@ -149,22 +149,22 @@ void Controller::UpdatePhysics() {
   car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
 
   ///////////////// COLLISION TESTING TODO TODO
-  typedef std::unordered_map<float,std::pair<float,float>>  col_map;
+  typedef std::map<float,std::pair<float,float>>  col_map;
   const std::list<col_map> &col = terrain_->collision_queue_hash();
   const glm::vec3 &new_translation = car_->translation();
   float car_z = new_translation.z;
-  car_z = round(car_z);
+  // car_z = round(car_z);
   // printf("car_z = %f\n", car_z);
   const col_map &road_tile1  = col.front();
-  col_map::const_iterator got = road_tile1.find(car_z);
+  col_map::const_iterator got = road_tile1.lower_bound(car_z);
   if (got == road_tile1.end()) {
     printf("possible collision on Z, check next tile\n");
     std::list<col_map>::const_iterator it = col.begin();
     it++;
     const col_map &road_tile2 = *(it);
-    got = road_tile2.find(car_z);
-    if (got == road_tile2.end()) {
-      printf("collision on x!\n");
+    col_map::const_iterator got2 = road_tile2.lower_bound(car_z);
+    if (got2 == road_tile2.end()) {
+      printf("collision on z!\n");
     } else {
       printf("assuming end of tile reached, pop!\n");
       // TODO fix check end of tile...
@@ -173,6 +173,15 @@ void Controller::UpdatePhysics() {
       terrain_->ProceedTiles();
     }
   } else {
+    if (got != road_tile1.begin()) {
+      // find closest vertice
+      float diff_z_ = abs(got->first - car_z);
+      got--;
+      float diff_smaller_z_ = abs(got->first - car_z);
+      if (diff_z_ < diff_smaller_z_) {
+        got++;
+      }
+    }
     // Check if x is in range
     float min_x = got->second.first;
     float max_x = got->second.second;

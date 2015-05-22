@@ -555,15 +555,15 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadCollisionMap() {
-  std::unordered_map<float,std::pair<float,float>> tile_map;
-  tile_map.reserve(z_length_);
+  std::map<float,std::pair<float,float>> tile_map;
+  // tile_map.reserve(z_length_);
   std::pair<float,float> min_max_x_pair;
   std::pair<float,std::pair<float,float>> next_scanline;
   unsigned int x_new_row_size = 22*x_length_/36 - 17*x_length_/36;
 
   for (unsigned int z = 0; z < z_length_; ++z){
     float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
-    z_key = round(z_key); // round value so key can be found
+    // z_key = round(z_key); // round value so key can be found
     min_max_x_pair.first = vertices_road_.at(0 + z).x; // min x
     min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).x; // max x
     // vertices_road_.at(0+z).y = 10000; //minx visualization
