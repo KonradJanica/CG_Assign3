@@ -11,6 +11,7 @@
 #include "object.h"
 #include "renderer.h"
 #include "light_controller.h"
+#include "Skybox.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -45,6 +46,8 @@ class Controller {
 
     // Construct with verbose debugging mode
     Controller(const Renderer * r, const bool &debug_flag = false);
+
+    void AddSkybox(const GLuint &program_id);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car = false);
@@ -92,6 +95,8 @@ class Controller {
     Camera * camera_;
     // The terrain object
     Terrain * terrain_;
+    // The skybox object
+    Skybox * skybox_;
 
     // INTERNAL TICKS
     // The controllers camera update tick
