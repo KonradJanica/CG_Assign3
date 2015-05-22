@@ -39,18 +39,19 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
+  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
   // Spider-man
-  //renderer_->Render(objects_.at(0), camera_);
+  renderer_->Render(objects_.at(0), camera_);
   // Car with physics
-  //renderer_->Render(car_, camera_);
+  renderer_->Render(car_, camera_);
   // Terrain
-  //renderer_->Render(terrain_, camera_);
+  renderer_->Render(terrain_, camera_);
 
-  //renderer_->RenderWater(terrain_, camera_, light_pos_);
+  renderer_->RenderWater(terrain_, camera_, light_pos_);
   // Axis
   // TODO Toggle
-  //renderer_->RenderAxis(camera_);
+  renderer_->RenderAxis(camera_);
 
   
 }
