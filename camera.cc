@@ -31,16 +31,16 @@ void Camera::CycleState() {
 //   @warn relies on member function KeyPressed(int) and KeyReleased(int)
 void Camera::Movement(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
     GLfloat cameraSpeed = 0.005f * delta_time;
-    if (is_key_pressed_hash.at(GLUT_KEY_LEFT)) {
+    if (is_key_pressed_hash.at('j')) {
       cam_pos_ -= glm::normalize(glm::cross(cam_front_, cam_up_)) * cameraSpeed;
     }
-    if (is_key_pressed_hash.at(GLUT_KEY_RIGHT)) {
+    if (is_key_pressed_hash.at('l')) {
       cam_pos_ += glm::normalize(glm::cross(cam_front_, cam_up_)) * cameraSpeed;
     }
-    if (is_key_pressed_hash.at(GLUT_KEY_UP)) {
+    if (is_key_pressed_hash.at('i')) {
       cam_pos_ += cameraSpeed * cam_front_;
     }
-    if (is_key_pressed_hash.at(GLUT_KEY_DOWN)) {
+    if (is_key_pressed_hash.at('k')) {
       cam_pos_ -= cameraSpeed * cam_front_;
     }
 }
@@ -111,6 +111,7 @@ void Camera::UpdateCarTick(const Object * car) {
       break;
     }
     case kFirstPerson:
+    {
       glm::vec3 direction;
       float y = car->rotation().y;
       direction.x = sin(DEG2RAD(y));
@@ -119,6 +120,10 @@ void Camera::UpdateCarTick(const Object * car) {
       cam_front_ = direction;
       cam_pos_ = car->translation();
       cam_pos_.y += 0.12f;
+      break;
+    }
+    case kFreeView:
+      //do nothing
       break;
   }
 }
