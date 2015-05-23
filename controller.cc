@@ -35,7 +35,10 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
                      glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
                      0, false); // starting speed and debugging mode
   } else {
-    Object * object = new Model(program_id, model_filename, glm::vec3(0,0,0));
+    Object * object = new Model(program_id, model_filename, 
+                                glm::vec3(0.0f, 0.0f, 0.0f), // Translation
+                                glm::vec3(0.0f, 0.0f, 0.0f), // Rotation
+                                glm::vec3(0.6f, 0.6f, 0.6f)); // Scale
     objects_.push_back(object);
   }
 }
@@ -49,6 +52,8 @@ void Controller::Draw() {
   renderer_->RenderSkybox(skybox_, camera_);
   // Spider-man
   renderer_->Render(objects_.at(0), camera_);
+  // Aventador
+  renderer_->Render(objects_.at(1), camera_);
   // Car with physics
   renderer_->Render(car_, camera_);
   // Terrain

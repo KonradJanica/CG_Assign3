@@ -8,8 +8,6 @@ ModelData::ModelData(const std::string& inputfile) : max_x_(0), max_y_(0), max_z
 
 void ModelData::AddData(const std::string& inputfile) {
 
-  // std::string inputfile = "models/cube-simple.obj";
-
   std::string subdir = inputfile.substr(0, inputfile.find_last_of('/') + 1);
 
   std::vector<tinyobj::shape_t> shapes;
@@ -111,7 +109,8 @@ void ModelData::AddData(const std::string& inputfile) {
 
     model_data_.shapes.push_back(new_shape);
   }
-  for (size_t i = 0; i < shapes.size(); ++i) {
+
+  for (size_t i = 0; i < materials.size(); ++i) {
       // printf("material[%ld].name = %s\n", i, materials[i].name.c_str());
       // printf("  material.Ka = (%f, %f ,%f)\n", materials[i].ambient[0], materials[i].ambient[1], materials[i].ambient[2]);
       // printf("  material.Kd = (%f, %f ,%f)\n", materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2]);
@@ -186,7 +185,7 @@ RawModelData::Shape* ModelData::shape_at(unsigned int index) const {
 //  @param unsigned int index of vector
 //  @return material* at index, null otherwise
 RawModelData::Material* ModelData::material_at(unsigned int index) const {
-  if (index > model_data_.shapes.size() - 1)
+  if (index > model_data_.materials.size() - 1)
     return NULL;
   
   return model_data_.materials.at(index);
