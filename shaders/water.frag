@@ -1,6 +1,6 @@
 #version 130
 
-
+in vec4 a_vertex_mv;
 
 out vec4 fragColour;
 

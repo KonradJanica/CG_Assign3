@@ -16,7 +16,7 @@
 Water::Water(const GLuint &program_id)
 {
   water_shader_ = program_id;
-
+  glUseProgram(water_shader_);
 
   // Create the mesh for the 'water', stored into the 
   // class vectors indices_ and vertices_
@@ -24,6 +24,50 @@ Water::Water(const GLuint &program_id)
 
   // Create the VAO based on the index and vertex data 
   water_vao_ = CreateVao();
+
+  // SEND OUR WAVE DATA
+
+  // Send number of waves
+  int wavesHandle = glGetUniformLocation(water_shader_ , "numWaves");
+  int heightHandle = glGetUniformLocation(water_shader_ , "waterHeight");
+
+  if(wavesHandle == -1 || heightHandle == -1)
+  {
+    printf("Could not get uniforms for waves \n");
+  }
+  
+  //glUniform1f(timeHandle, time+1); 
+  std::random_device rd; 
+  std::mt19937 eng(rd()); // seed the generator
+  std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
+
+  for (int i = 0; i < 4; ++i) {
+    // Still need to actually SEND the uniforms
+
+    char uniformName[256];
+    memset(uniformName, 0, sizeof(uniformName));
+
+    float amplitude = 0.5f / (i + 1);
+    snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
+    int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
+    glUniform1f(amplitudeHandle, amplitude);
+
+    float wavelength = 8 * M_PI / (i + 1);
+    snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
+    int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
+    glUniform1f(wavelengthHandle, wavelength);   
+
+    float speed = 1.0f + 2*i;
+    snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
+    int speedHandle = glGetUniformLocation(water_shader_, uniformName);
+    glUniform1f(speedHandle, speed);
+  
+    float angle = distr(eng);
+    snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
+    int directionHandle = glGetUniformLocation(water_shader_, uniformName);
+    glUniform2f(directionHandle, cos(angle), sin(angle));
+    
+  }
 
 
 }
