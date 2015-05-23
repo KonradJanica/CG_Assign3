@@ -15,7 +15,6 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 
 void Controller::AddWater(const GLuint &program_id)
 {
-  printf("We added a water shader with ID %d \n", program_id);
   water_ = new Water(program_id);
 }
 

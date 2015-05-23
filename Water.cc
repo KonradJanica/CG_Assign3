@@ -16,7 +16,7 @@
 Water::Water(const GLuint &program_id)
 {
   water_shader_ = program_id;
-  printf("The Water shader ID is (inside of the Water constructor) %d \n", water_shader_);
+
 
   // Create the mesh for the 'water', stored into the 
   // class vectors indices_ and vertices_
@@ -25,12 +25,12 @@ Water::Water(const GLuint &program_id)
   // Create the VAO based on the index and vertex data 
   water_vao_ = CreateVao();
 
-  printf("Made it to end of water constructor\n");
+
 }
 
 unsigned int Water::CreateVao()
 {
-  printf("The Water shader ID is (inside of the Water VAO) %d \n", water_shader_);
+
   glUseProgram(water_shader_);
 
 

@@ -322,8 +322,6 @@ int main(int argc, char **argv) {
   if (g_program_id[3] == 0)
     return 1;
 
-  printf("The Water shader ID is %d \n", g_program_id[3]);
-
   g_program_id[4] = LoadShaders("shaders/sky.vert", "shaders/sky.frag");
   if (g_program_id[4] == 0)
     return 1;
