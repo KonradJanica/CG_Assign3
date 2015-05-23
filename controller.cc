@@ -13,6 +13,12 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
 
 }
 
+void Controller::AddWater(const GLuint &program_id)
+{
+  printf("We added a water shader with ID %d \n", program_id);
+  water_ = new Water(program_id);
+}
+
 void Controller::AddSkybox(const GLuint &program_id)
 {
   skybox_ = new Skybox(program_id);
@@ -47,9 +53,10 @@ void Controller::Draw() {
   // Car with physics
   renderer_->Render(car_, camera_);
   // Terrain
-  renderer_->Render(terrain_, camera_);
+  //renderer_->Render(terrain_, camera_);
 
-  renderer_->RenderWater(terrain_, camera_, light_pos_);
+  //renderer_->RenderWater(terrain_, camera_, light_pos_);
+  renderer_->RenderWater2(water_, camera_);
   // Axis
   // TODO Toggle
   renderer_->RenderAxis(camera_);

@@ -10,6 +10,7 @@
 #include "terrain.h"
 #include "object.h"
 #include "Skybox.h"
+#include "Water.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -46,6 +47,9 @@ class Renderer {
     // Render the terrain VAO from the terrain object
     //   @warn requires EnableTerrain()
     void RenderWater(const Terrain * terrain, const Camera * camera, const glm::vec4 &light_pos) const;
+
+    void RenderWater2(const Water * water, const Camera * camera) const;
+
     void RenderTerrain();
 
     void RenderSkybox(const Skybox * Sky, const Camera * camera) const;

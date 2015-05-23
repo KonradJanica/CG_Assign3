@@ -12,6 +12,7 @@
 #include "renderer.h"
 #include "light_controller.h"
 #include "Skybox.h"
+#include "Water.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -48,6 +49,8 @@ class Controller {
     Controller(const Renderer * r, const bool &debug_flag = false);
 
     void AddSkybox(const GLuint &program_id);
+
+    void AddWater(const GLuint &program_id);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car = false);
@@ -95,6 +98,8 @@ class Controller {
     Terrain * terrain_;
     // The skybox object
     Skybox * skybox_;
+    // The water object
+    Water * water_;
 
     // INTERNAL TICKS
     // The controllers camera update tick

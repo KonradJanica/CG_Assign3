@@ -8,6 +8,40 @@ Renderer::Renderer(const bool &debug_flag)
   : coord_vao_handle(0), is_debugging_(debug_flag) {
 }
 
+//   Renders the passed in water to the scene
+//   Should be called in the controller
+//   @param Water * water, the skybox to render
+//   @param Camera * camera, to get the camera matrix and correctly position world
+//   @warn this function is not responsible for NULL PTRs
+void Renderer::RenderWater2(const Water * water, const Camera * camera) const
+{
+  glUseProgram(water->watershader());
+
+  //printf("The Water shader ID is (inside of renderwater2) %d \n", water->watershader());
+  int mvHandle = glGetUniformLocation(water->watershader(), "modelview_matrix");
+  if (mvHandle == -1) {
+    if (is_debugging_) {
+      assert(0 && "Error: can't find matrix uniforms\n");
+    }
+  }
+
+  
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  
+  // Create and send view matrix with translation stripped in order for skybox
+  // to always be in thr right location
+  glm::mat4 view_matrix = camera->view_matrix();
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
+
+  
+
+  // Render the Skybox
+  glBindVertexArray(water->watervao());
+  glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
+
+}
+
 //   Renders the passed in skybox to the scene
 //   Should be called in the controller
 //   @param Skybox * sky, the skybox to render
