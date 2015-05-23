@@ -10,14 +10,14 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
     // New Seed
     srand(time(NULL));
     // Setup Vars
-    heights_.resize(x_length_ * z_length_, 0.0f); // Magic number needs to be the same as inside the functions
+    heights_.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
+    vertices.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
     next_tile_start_ = glm::vec2(-10,-10);
     prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from min_position
 
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");
     road_texture_ = LoadTexture("textures/road.jpg");
-
 
     // Setup Indices and UV Coordinates
     //   These never change unless the x_length_ and/or z_length_ of the heightmap change
@@ -255,6 +255,16 @@ void Terrain::HelperMakeHeights() {
 // @warn  No changes can be made to vertices_ member until the Road Helpers complete
 void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     float min_position, float position_range) {
+  unsigned int z_smooth_max = 5;
+  // Store the connecting row to smooth
+  std::vector<glm::vec3> temp_last_row_vertices;
+  for (unsigned int z = 0; z < z_smooth_max; ++z) {
+    for (unsigned int x = vertices.size()-1; x > vertices.size()-1-x_length_; --x) {
+      temp_last_row_vertices.push_back(vertices.at(x - z*x_length_));
+    }
+  }
+
+  // Zero vertice vector
   vertices.assign(x_length_ * z_length_, glm::vec3());
 
   int offset;
@@ -300,7 +310,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     }
   }
   // special point for finding pivot translation
-  glm::vec3 &pivot = vertices.at(20*x_length_/36 );
+  glm::vec3 &pivot = vertices.at(22*x_length_/36 );
   // pivot.y = 1000000;
   // normals_road_.push_back(normals.at(x + z*x_length_));
   glm::vec3 foo = glm::rotateY(pivot, rotation_);
@@ -323,32 +333,17 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       //     zPosition + next_tile_start_.y);
       vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
           zPosition + next_tile_start_.y);
-
-      // Calculate next_tile_start_ position
-      //   Z always moves backwards
-      if (zPosition + next_tile_start_.y > max_z)
-        max_z = zPosition + next_tile_start_.y;
-      // Calulate next_tile_start_x position
-      //   X moves left and right
-      if (xPosition > max_x)
-        // max_x = xPosition + next_tile_start_.x;
-        max_x = xPosition;
     }
   }
   // Water or Terrain
   switch(tile_type) {
     case kTerrain:
-      const glm::vec3 &pivot_end = vertices.at(20*x_length_/36 + (z_length_-2)*x_length_);
+      const glm::vec3 &pivot_end = vertices.at(22*x_length_/36 + (z_length_-1)*x_length_);
       // Set next z position
-      next_tile_start_.y = max_z;
       next_tile_start_.y = pivot_end.z;
 
-      // max_x = pivot.x;
       // Calculate next_tile_start_.x position (next X tile position)
-      float displacement_x = max_x - prev_max_x_;
-      prev_max_x_ = max_x - displacement_x;
-
-      displacement_x = pivot_end.x - pivot.x;
+      float displacement_x = pivot_end.x - pivot.x;
       next_tile_start_.x += displacement_x;
       // next_tile_start_.x = position_range/2 - pivot.x;
       break;
@@ -358,6 +353,19 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       rotation_ += 20;
       // rotation_ = 0;
       break;
+  }
+  // SMOOTH CONNECTIONS
+  // TODO someone try fighting with this if you dare...
+  //   Something goes wrong with the normals at the connection
+  // Compare connection rows to eachother and smooth new one
+  printf("size=%d\n", temp_last_row_vertices.size());
+  for (int z = 0; z < z_smooth_max; ++z) {
+    for (int x = 0; x < x_length_; ++x) {
+      // heights_.at(x) = 0.0f;
+      // float new_height = temp_last_row_heights_.at(x_length_-x-1) - heights_.at(x);
+      // heights_.at(x) = new_height + heights_.at(x);
+      vertices.at(x+z*x_length_) = temp_last_row_vertices.at((x_length_-x-1)+(z_smooth_max-z-1)*x_length_);
+    }
   }
 }
 
@@ -479,7 +487,7 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 5*x_length_/36; ++x) {
+  for (unsigned int x = 0; x < 6*x_length_/36; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
