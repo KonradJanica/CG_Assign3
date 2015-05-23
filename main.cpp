@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
   g_camera = g_controller->camera();
 
   // Setup terrain
-  g_controller->EnableTerrain(g_program_id[2], g_program_id[3]);
+  g_controller->EnableTerrain(g_program_id[2]);
 
   // Setup skybox
   g_controller->AddSkybox(g_program_id[4]);

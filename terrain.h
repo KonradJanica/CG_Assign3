@@ -31,20 +31,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const GLuint &water_id, const int &width = 32, const int &height = 32);
-
-    // // Render the scene (all member models)
-    // void Render();
-
-    // THe texture for water
-    GLuint water_texture_;
-
-    GLuint terrain_water_id_;
-
-    // The VAO Handle for the water
-    unsigned int water_vao_handle_;
-
-    unsigned int indice_count_water_;
+    Terrain(const GLuint &program_id, const int &width = 32, const int &height = 32);
     
     // Accessor for the VAO
     // TODO comment
@@ -85,7 +72,6 @@ class Terrain {
     // CONSTANTS
     enum TileType {
       kTerrain = 0,
-      kWater = 1,
       kRoad = 2,
     };
     enum RoadType {
@@ -136,8 +122,7 @@ class Terrain {
     std::vector<int> indices;
     // This vector is used to build heights and smooths previous tile connections
     std::vector<float> heights_; 
-    // This vector is used only for water heightmap generation
-    std::vector<float> water_heights_;
+
     // The current X,Z displacement from zero
     //   Used for joining tiles
     glm::vec2 next_tile_start_;
@@ -179,12 +164,7 @@ class Terrain {
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     //   @warn pushes next road collision map into member queue
     void GenerateTerrainTurn();
-    // Water height map
-    //   Mutates all the input parameters for CreateVAO
-    //   @warn creates and pushes back a water VAO
-    //   @warn uses the indices and UV coordinates from terrain generation
-    //         hence must be called after GenerateTerrain()
-    void GenerateWater();
+
 
     // TERRAIN GENERATION HELPERS
     // Model the heights using an X^3 mathematical functions, then randomize heights

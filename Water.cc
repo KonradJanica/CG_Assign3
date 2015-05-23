@@ -73,13 +73,13 @@ unsigned int Water::CreateVao()
 void Water::GenerateMesh()
 {
   // This Number will define how detailed the mesh will be
-  unsigned int N = 20;
+  unsigned int N = 3;
 
   // Define vertex data
-  int plane_width = N; // amount of columns
-  int plane_height = N; // amount of rows
-  int total_vertices = (N + 1) * (N + 1);
-  vertices_ = new float[ (N + 1)*(N + 1)* 3];
+  int plane_width = 20; // amount of columns
+  int plane_height = 20; // amount of rows
+  int total_vertices = (plane_width + 1) * (plane_height + 1);
+  vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
   
   // define indices
@@ -89,12 +89,14 @@ void Water::GenerateMesh()
   indices_ = new unsigned int[numIndices];
   water_num_indices_ = numIndices;
   
-  int width = N + 1;
-  int height = N + 1;
+  int width = plane_width+1;
+  int height = plane_height+1;
   // set up mesh points
   int idxFlag = 0;
   for (int y=0;y < height;y++){
       for (int x=0;x < width;x++){
+        // Fiddle with this to stretch (the y*0.1 part)
+        //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
           vertices_[idxFlag++] = (float)y/height;
           vertices_[idxFlag++] = 0.0f;
           vertices_[idxFlag++] = (float)x/width;

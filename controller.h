@@ -60,7 +60,7 @@ class Controller {
     // Creates the Terrain object for RenderTerrain()
     //   Creates Terrain VAOs
     //   @warn terrain_ on heap, must be deleted after
-    void EnableTerrain(const GLuint &program_id, const GLuint &water_id);
+    void EnableTerrain(const GLuint &program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
     // Accessor for largest vertex in indexed model

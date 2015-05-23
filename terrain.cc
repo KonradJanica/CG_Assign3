@@ -2,10 +2,10 @@
 
 #include "glm/gtx/rotate_vector.hpp"
 
-Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &width, const int &height)
+Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height),
   indice_count_(0), road_indice_count_(0),
-  terrain_program_id_(program_id), terrain_water_id_(water_id),
+  terrain_program_id_(program_id),
   rotation_(0) {
     // New Seed
     srand(time(NULL));
@@ -17,13 +17,13 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");
     road_texture_ = LoadTexture("textures/road.jpg");
-    water_texture_ = LoadTexture("textures/water01.jpg");
+
 
     // Setup Indices and UV Coordinates
     //   These never change unless the x_length_ and/or z_length_ of the heightmap change
     HelperMakeIndicesAndUV();
     indice_count_ = indices.size();
-    indice_count_water_ = indices.size();
+
     HelperMakeRoadIndicesAndUV(); // BEWARD FULL OF MAGIC NUMBERS
     road_indice_count_ = indices_road_.size();
 
@@ -32,9 +32,7 @@ Terrain::Terrain(const GLuint &program_id, const GLuint &water_id, const int &wi
     // Always start with 2 straight pieces so car is on 2nd tile road
     //   and so can't see first tile being popped off
     GenerateTerrain();
-    // Water needs indices and UV coordinates from Terrain generation.
-    //   i.e. needs to be called succeeding an initial Terrain.
-    GenerateWater();
+
     // Pop off first collision map which is already behind car
     col_pop();
     GenerateTerrain();
@@ -130,63 +128,7 @@ void Terrain::GenerateTerrainTurn() {
 
 }
 
-// Water height map
-//   Mutates all the input parameters for CreateVAO
-//   @warn creates and pushes back a water VAO
-//   @warn uses the indices and UV coordinates from terrain generation
-//         hence must be called after GenerateTerrain()
-// TODO if this becomes another dynamic tile then dont regenerate height vector (its expensive)
-void Terrain::GenerateWater() {
-  // Setup Vars
-  // float min_position = -10.0f;
-  float min_position = 0.0f;
-  float position_range = 50.0f;
 
-  // (COMMENTED OUT) I don't think this entire block actually does anything?
-  //
-  // water_heights_.clear();
-  // water_heights_.resize(x_length_*z_length_, 0.0f);
-  //
-  // // MAKE FLAT WATER HEIGHTMAP
-  // int x_position = 0, z_position = 0;
-  // for (unsigned int i = 0; i < 10000; ++i) {
-  //   int v = rand() % 4 + 1;
-  //   switch(v) {
-  //     case 1: x_position++;
-  //             break;
-  //     case 2: x_position--;
-  //             break;
-  //     case 3: z_position++;
-  //             break;
-  //     case 4: z_position--;
-  //             break;
-  //   }
-  //   if (x_position < 0) {
-  //     x_position = x_length_-1;
-  //     continue;
-  //   } else if (x_position > x_length_-1) {
-  //     x_position = 0;
-  //     continue;
-  //   }
-  //   if (z_position < 0) {
-  //     z_position = z_length_-1;
-  //     continue;
-  //   } else if (z_position > z_length_-1) {
-  //     z_position = 0;
-  //     continue;
-  //   }
-  //   water_heights_.at(x_position + z_position*x_length_) += 0.100f;
-  // }
-
-  water_heights_.assign(x_length_*z_length_, 0.0f);
-
-  HelperMakeVertices(kStraight, kWater, min_position, position_range);
-  // TODO normal recalculation?
-  //   This Helper will only create them for a flat surface
-  HelperMakeNormals();
-  unsigned int water_vao = CreateVao(kWater);
-  water_vao_handle_ = water_vao;
-}
 
 // Model the heights using an X^3 mathematical functions, then randomize heights
 // for all vertices in heightmap
@@ -338,9 +280,6 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       switch(tile_type) {
         case kTerrain:
           yPosition = heights_.at(offset);
-          break;
-        case kWater:
-          yPosition = water_heights_.at(offset);
           break;
         case kRoad:
           assert(0 && "improper use of function");
@@ -644,10 +583,6 @@ unsigned int Terrain::CreateVao(TileType tile_type) {
   switch(tile_type) {
     case kTerrain: //and kRoad
       vao = CreateVao(terrain_program_id(), vertices, normals, texture_coordinates_uv, indices);
-      break;
-    case kWater:
-      // TODO fix this nonconst direct member access
-      vao = CreateVao(terrain_water_id_, vertices, normals, texture_coordinates_uv, indices);
       break;
     case kRoad:
       vao = CreateVao(terrain_program_id(), vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
