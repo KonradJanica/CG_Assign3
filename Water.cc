@@ -50,21 +50,40 @@ Water::Water(const GLuint &program_id)
     float amplitude = 0.5f / (i + 1);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
     int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(amplitudeHandle == -1 )
+    {
+      printf("couldnt get amplitude[%d]\n", i);
+    }
     glUniform1f(amplitudeHandle, amplitude);
 
     float wavelength = 8 * M_PI / (i + 1);
+    printf("wavelength[%d] = %f \n", i, wavelength);
     snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
     int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(wavelengthHandle == -1)
+    {
+      printf("couldnt get wavelength[%d]\n", i);
+    }
     glUniform1f(wavelengthHandle, wavelength);   
 
     float speed = 1.0f + 2*i;
+    printf("speed[%d] = %f \n", i, speed);
     snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
     int speedHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(speedHandle == -1)
+    {
+      printf("couldnt get speed[%d]\n", i);
+    }
     glUniform1f(speedHandle, speed);
   
     float angle = distr(eng);
+    printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
     snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
     int directionHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(directionHandle == -1)
+    {
+      printf("couldnt get direction[%d]\n", i);
+    }
     glUniform2f(directionHandle, cos(angle), sin(angle));
     
   }
