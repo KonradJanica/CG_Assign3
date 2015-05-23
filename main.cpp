@@ -335,6 +335,7 @@ int main(int argc, char **argv) {
 
   // Texture Shader
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
+  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj"); 
   g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
 
   // Setup camera global

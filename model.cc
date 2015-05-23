@@ -38,11 +38,9 @@ void Model::ConstructShadedModel() {
   unsigned int material_index = 0;
   while (next_material != NULL) {
     material_container.push_back(next_material);
-
     material_index++;
     next_material = model_data_->material_at(material_index);
   }
-
   // Add VAO for every shape
   RawModelData::Shape* next_shape = model_data_->shape_at(0);
   assert(next_shape != NULL && "There are no shapes");  
@@ -158,20 +156,32 @@ GLuint Model::CreateTextures( const RawModelData::Material *material ) {
     texture_count++;
   //assert(texture_count <= 1 && "More than 1 texture found in material");
   glGenTextures( 1, &new_texture );
+  glBindTexture( GL_TEXTURE_2D, new_texture );
 
   // load an image from file as texture 1
   int x, y, n;
   unsigned char *data;
   if (texture_count == 0) {
     data = stbi_load(
-        "models/white_for_null.png", /*char* filepath */
-        // "crate.jpg",
+        "textures/default.png", /*char* filepath */
         &x, /*The address to store the width of the image*/
         &y, /*The address to store the height of the image*/
-        &n  /*Number of channels in the image*/,
+        &n,  /*Number of channels in the image*/
         0   /*Force number of channels if > 0*/
         );
-  } else {
+    assert(data != NULL && "Error loading default texture");
+
+    if (n == 3) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }
+    else if (n == 4) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    } else {
+      fprintf(stderr, "Image pixels are not RGB/RBGA. You will need to change the glTexImage2D command.");
+      exit(0);
+    }
+  } 
+  else {
     std::string filename = subdir_;
     if (ambient_texture.size() > 0) {
       filename += ambient_texture;
@@ -184,22 +194,24 @@ GLuint Model::CreateTextures( const RawModelData::Material *material ) {
     }
     data = stbi_load(
         filename.c_str(), /*char* filepath */
-        // "crate.jpg",
         &x, /*The address to store the width of the image*/
         &y, /*The address to store the height of the image*/
-        &n  /*Number of channels in the image*/,
+        &n,  /*Number of channels in the image*/
         0   /*Force number of channels if > 0*/
         );
+    assert(data != NULL && "Error loading texture");
+
+    if (n == 3) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }
+    else if (n == 4) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    } else {
+      fprintf(stderr, "Image pixels are not RGB/RBGA. You will need to change the glTexImage2D command.");
+      exit(0);
+    }
   }
 
-  glBindTexture( GL_TEXTURE_2D, new_texture );
-  if (n == 3) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-  }
-  else {
-    fprintf(stderr, "Image pixels are not RGB. You will need to change the glTexImage2D command.");
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-  }
   stbi_image_free(data);
 
   glGenerateMipmap(GL_TEXTURE_2D); 
