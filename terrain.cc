@@ -310,7 +310,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     }
   }
   // special point for finding pivot translation
-  glm::vec3 &pivot = vertices.at(22*x_length_/36 );
+  glm::vec3 &pivot = vertices.at(19);
   // pivot.y = 1000000;
   // normals_road_.push_back(normals.at(x + z*x_length_));
   glm::vec3 foo = glm::rotateY(pivot, rotation_);
@@ -338,7 +338,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   // Water or Terrain
   switch(tile_type) {
     case kTerrain:
-      const glm::vec3 &pivot_end = vertices.at(22*x_length_/36 + (z_length_-1)*x_length_);
+      const glm::vec3 &pivot_end = vertices.at(19 + (z_length_-1)*x_length_);
       // Set next z position
       next_tile_start_.y = pivot_end.z;
 
@@ -440,11 +440,11 @@ void Terrain::HelperMakeNormals() {
 // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadVertices() {
   vertices_road_.clear();
-  for (unsigned int x = 17*x_length_/36; x < 22*x_length_/36; ++x) {
+  for (unsigned int x = 15; x < 19; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       vertices_road_.push_back(vertices.at(x + z*x_length_));
       // Lift road a bit above terrain to make it visible
-      vertices_road_.back().y += 0.01f;
+      vertices_road_.back().y += 0.01f + 0.02*rotation_;
     }
   }
 }
@@ -455,7 +455,7 @@ void Terrain::HelperMakeRoadVertices() {
 // @warn  for optimzation this should only be called once because road normals don't change
 void Terrain::HelperMakeRoadNormals() {
   normals_road_.clear();
-  for (unsigned int x = 17*x_length_/36; x < 22*x_length_/36; ++x) {
+  for (unsigned int x = 15; x < 19; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       normals_road_.push_back(normals.at(x + z*x_length_));
     }
@@ -469,25 +469,25 @@ void Terrain::HelperMakeRoadNormals() {
 void Terrain::HelperMakeRoadIndicesAndUV() {
   // Create Index Data
   indices_road_.clear();
-  for (unsigned int j = 0; j < (4*z_length_/36 - 0); ++j )
+  for (unsigned int j = 0; j < (4 - 1); ++j )
   {
     for (unsigned int i = 0; i < (x_length_ - 1); ++i )
     {
       int vertexIndex = ( j * x_length_ ) + i;
-      // Top triangle (T0)
-      indices_road_.push_back(vertexIndex);                        // V0
-      indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
-      indices_road_.push_back(vertexIndex + 1);                    // V1 visualization
       // Bottom triangle (T1)
       indices_road_.push_back(vertexIndex);                        // V0
       indices_road_.push_back(vertexIndex + x_length_);            // V2
       indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
+      // Top triangle (T0)
+      indices_road_.push_back(vertexIndex);                        // V0
+      indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
+      indices_road_.push_back(vertexIndex + 1);                    // V1 visualization
     }
   }
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 6*x_length_/36; ++x) {
+  for (unsigned int x = 15; x < 19; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
@@ -505,7 +505,7 @@ void Terrain::HelperMakeRoadCollisionMap() {
   colisn_vec tile_map;
   tile_map.reserve(z_length_);
   std::pair<glm::vec3,glm::vec3> min_max_x_pair;
-  unsigned int x_new_row_size = 22*x_length_/36 - 17*x_length_/36;
+  unsigned int x_new_row_size = 19 - 15;
 
   for (unsigned int z = 0; z < z_length_; ++z){
     float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
