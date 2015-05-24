@@ -26,6 +26,9 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
 
     HelperMakeRoadIndicesAndUV(); // BEWARD FULL OF MAGIC NUMBERS
     road_indice_count_ = indices_road_.size();
+    //  Road Normals only have to be generated once
+    //    because the surface is relatively flat
+    HelperMakeRoadNormals();
 
     // Generate Starting Terrain
     // This is the amount of tiles that will be in the circular_vector at all times
@@ -54,8 +57,8 @@ void Terrain::ProceedTiles() {
 
   // Generates a random terrain piece and pushes it back
   // into circular_vector VAO buffer
-      RandomizeGeneration();
-      // GenerateTerrain();
+  RandomizeGeneration();
+  // GenerateTerrain();
 }
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
@@ -86,11 +89,7 @@ void Terrain::GenerateTerrain() {
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
   HelperMakeRoadVertices();
-  //  Road Normals only have to be generated once
-  //    because the surface is relatively flat
-  if (normals_road_.size() == 0)
-    HelperMakeRoadNormals();
-  
+
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
 
