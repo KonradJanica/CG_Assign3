@@ -6,7 +6,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height),
   indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
-  rotation_(0), z_smooth_max_(7) {
+  rotation_(0), z_smooth_max_(4) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -309,7 +309,8 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     }
   }
   // special point for finding pivot translation
-  glm::vec3 &pivot = vertices.at(19);
+  unsigned int pivot_x = 18; // relative tile x position of pivot
+  const glm::vec3 &pivot = vertices.at(pivot_x);
   // pivot.y = 1000000;
   // normals_road_.push_back(normals.at(x + z*x_length_));
   glm::vec3 foo = glm::rotateY(pivot, rotation_);
@@ -337,7 +338,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   // Water or Terrain
   switch(tile_type) {
     case kTerrain:
-      const glm::vec3 &pivot_end = vertices.at(19 + (z_length_-1)*x_length_);
+      const glm::vec3 &pivot_end = vertices.at(pivot_x + (z_length_-1)*x_length_);
       // Set next z position
       next_tile_start_.y = pivot_end.z;
 
@@ -349,7 +350,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
   switch(road_type) {
     case kTurnLeft:
-      rotation_ += 20;
+      rotation_ += 26;
       // rotation_ = 0;
       break;
   }
