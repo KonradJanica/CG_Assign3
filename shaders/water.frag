@@ -136,7 +136,7 @@ void main(void) {
   //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
   colour.a = 1.0;
 
-  //fragColour = texture(skybox, R);
-  fragColour = colour;
+  fragColour = texture(skybox, R) * litColour;
+
   //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }
