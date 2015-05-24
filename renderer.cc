@@ -335,6 +335,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   //////////////////////////
   // ROADS
   int amount = terrain->road_indice_count();

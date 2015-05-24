@@ -6,6 +6,7 @@
 #include <cassert>
 #include <queue>
 #include <ctime>
+#include <algorithm>
 
 #include "model_data.h"
 #include "model.h"
@@ -149,22 +150,19 @@ class Terrain {
     //   The rotation of the entire next tile from positive z
     //   Positive degrees rotate leftwards (anti cw from spidermans facing)
     float rotation_;
+    // The amount of (tile relative) Z rows from the back to smooth
+    //   Is needed to connect rotated rows
+    unsigned int z_smooth_max_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();
-    // Straight Terrain Piece
+    // Generate Terrain tile piece with road
     //   Mutates the input members, (e.g. vertices, indicies etc.) and then
     //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     //   @warn pushes next road collision map into member queue
-    void GenerateTerrain();
-    // Turning Terrain Piece
-    //   Mutates the input members, (e.g. vertices, indicies etc.) and then
-    //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
-    //   @warn creates and pushes back a road VAO based on the terrain middle section
-    //   @warn pushes next road collision map into member queue
-    void GenerateTerrainTurn();
-
+    void GenerateTerrain(RoadType road_type);
 
     // TERRAIN GENERATION HELPERS
     // Model the heights using an X^3 mathematical functions, then randomize heights
@@ -194,6 +192,9 @@ class Terrain {
     // these in the vertices_road_ vector
     // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
     void HelperMakeRoadVertices();
+    // Fixes the UV caused by a changing z_smooth_max_
+    //   @warn changes UV for both terrain and road
+    void HelperFixUV();
     // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
     // these in the normals_road_ vector
     // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
