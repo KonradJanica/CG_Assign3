@@ -47,7 +47,8 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
   }
   
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+  glEnable(GL_BLEND);
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
   glm::mat4 view_matrix = camera->view_matrix();
@@ -57,8 +58,8 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
   normMatrix = glm::mat3(view_matrix);
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
-  view_matrix = glm::translate(view_matrix, glm::vec3(-10.0f,0.0f, 0.0f));
-  view_matrix = glm::scale(view_matrix ,glm::vec3(20.0f));
+  view_matrix = glm::translate(view_matrix, glm::vec3(-5.0f,1.0f, 0.0f));
+  view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Send the cubemap (for reflections)
@@ -70,7 +71,7 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
 
   // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
   glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
-
+  glDisable(GL_BLEND);
 }
 
 //   Renders the passed in skybox to the scene
