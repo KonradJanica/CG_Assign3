@@ -2,9 +2,11 @@
 
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
+uniform mat3 normal_matrix;
 
 in vec3 a_vertex;
 out vec4 a_vertex_mv;
+out vec3 a_normal_mv;
 out vec4 colour;
 
 
@@ -20,10 +22,6 @@ uniform float wavelength[8];
 uniform float speed[8];
 uniform vec2 direction[8];
 
-float rand(vec2 n)
-{
-    return 0.5 + 0.5 * fract(sin(n.x*12.9898 + n.y*78.233)* 43758.5453);
-}
 
 float wave(int i, float x, float y) {
     float frequency = 2*pi/wavelength[i];
@@ -70,17 +68,17 @@ vec3 waveNormal(float x, float y) {
 
 void main()
 {
-	
+	// Z for more random waves, Y for more rolling waves
 	float h = a_vertex.y + 0.25 * ( waveHeight(a_vertex.x, a_vertex.z) );// + (0.5 * waveHeight(a_vertex.x, a_vertex.z));
+	
 
-	if(waveHeight(a_vertex.x, a_vertex.y) == 0.0)
-	{
-		colour = vec4(1.0, 0.0, 0.0, 1.0);
-	}
-	else
-	{
-		colour = vec4(0.0, 0.0, 1.0, 1.0);
-	}
+	colour = vec4(0.0, 0.0, 1.0, 1.0);
+
+
+	// Create the MV normals, normals need to be generated in this shader
+	vec3 normals = waveNormal(a_vertex.x, a_vertex.z);
+	a_normal_mv = normalize(normal_matrix * vec3(0.0,1.0,0.0));
+
 	a_vertex_mv = modelview_matrix * vec4(a_vertex.x, h, a_vertex.z, 1.0);
 	// Apply full MVP transformation
 	gl_Position = projection_matrix * a_vertex_mv;

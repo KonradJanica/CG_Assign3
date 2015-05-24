@@ -54,7 +54,7 @@ void Controller::Draw() {
   // Terrain
   renderer_->Render(terrain_, camera_);
 
-  renderer_->RenderWater(water_, camera_);
+  renderer_->RenderWater(water_, camera_, skybox_);
   // Axis
   // TODO Toggle
   renderer_->RenderAxis(camera_);

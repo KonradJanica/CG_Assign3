@@ -25,21 +25,42 @@ Water::Water(const GLuint &program_id)
   // Create the VAO based on the index and vertex data 
   water_vao_ = CreateVao();
 
+  // SEND WAVE PROPERTIES
+  int mtlambientHandle = glGetUniformLocation(water_shader_, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(water_shader_, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(water_shader_, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(water_shader_, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+      printf("Couldnt get handles for water material properties\n");
+  }
+
+  float mtlambient[3] = { 0.5, 0.5, 0.5 };  // ambient material
+  float mtldiffuse[3] = { 0.5, 0.5, 0.5};  // diffuse material
+  float mtlspecular[3] = { 0.5, 0.5, 0.5 };  // specular material
+  glUniform3fv(mtlambientHandle, 1, mtlambient);
+  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+  float mtlshininess = 0.8f; 
+  glUniform1fv(shininessHandle, 1, &mtlshininess);
+
   // SEND OUR WAVE DATA
 
   // Send number of waves
   int wavesHandle = glGetUniformLocation(water_shader_ , "numWaves");
-  int heightHandle = glGetUniformLocation(water_shader_ , "waterHeight");
 
-  if(wavesHandle == -1 || heightHandle == -1)
+
+  if(wavesHandle == -1 )
   {
     printf("Could not get uniforms for waves \n");
   }
   glUniform1f(wavesHandle,4);
-  glUniform1f(heightHandle,-1.0);
+
 
   
-  //glUniform1f(timeHandle, time+1); 
+   
   std::random_device rd; 
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
@@ -164,9 +185,9 @@ void Water::GenerateMesh()
       for (int x=0;x < width;x++){
         // Fiddle with this to stretch (the y*0.1 part)
         //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
-          vertices_[idxFlag++] = (float)y + (y*0.1)/height;
+          vertices_[idxFlag++] = (float)y /height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x + (x * 0.1) /width;
+          vertices_[idxFlag++] = (float)x  /width;
       }
   }
 
