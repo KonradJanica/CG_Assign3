@@ -6,6 +6,7 @@
 #include <cassert>
 #include <queue>
 #include <ctime>
+#include <algorithm>
 
 #include "model_data.h"
 #include "model.h"
@@ -149,6 +150,9 @@ class Terrain {
     //   The rotation of the entire next tile from positive z
     //   Positive degrees rotate leftwards (anti cw from spidermans facing)
     float rotation_;
+    // The amount of (tile relative) Z rows from the back to smooth
+    //   Is needed to connect rotated rows
+    unsigned int z_smooth_max_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();

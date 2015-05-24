@@ -6,7 +6,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height),
   indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
-  rotation_(0) {
+  rotation_(0), z_smooth_max_(7) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -255,10 +255,10 @@ void Terrain::HelperMakeHeights() {
 // @warn  No changes can be made to vertices_ member until the Road Helpers complete
 void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     float min_position, float position_range) {
-  unsigned int z_smooth_max = 5;
+  // unsigned int z_smooth_max_ = 7; // this is now member
   // Store the connecting row to smooth
   std::vector<glm::vec3> temp_last_row_vertices;
-  for (unsigned int z = 0; z < z_smooth_max; ++z) {
+  for (unsigned int z = 0; z < z_smooth_max_; ++z) {
     for (unsigned int x = vertices.size()-1; x > vertices.size()-1-x_length_; --x) {
       temp_last_row_vertices.push_back(vertices.at(x - z*x_length_));
     }
@@ -359,12 +359,12 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   //   Something goes wrong with the normals at the connection
   // Compare connection rows to eachother and smooth new one
   printf("size=%d\n", temp_last_row_vertices.size());
-  for (int z = 0; z < z_smooth_max; ++z) {
+  for (int z = 0; z < z_smooth_max_; ++z) {
     for (int x = 0; x < x_length_; ++x) {
       // heights_.at(x) = 0.0f;
       // float new_height = temp_last_row_heights_.at(x_length_-x-1) - heights_.at(x);
       // heights_.at(x) = new_height + heights_.at(x);
-      vertices.at(x+z*x_length_) = temp_last_row_vertices.at((x_length_-x-1)+(z_smooth_max-z-1)*x_length_);
+      vertices.at(x+z*x_length_) = temp_last_row_vertices.at((x_length_-x-1)+(z_smooth_max_-z-1)*x_length_);
     }
   }
 }
@@ -409,7 +409,12 @@ void Terrain::HelperMakeIndicesAndUV() {
       // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
-      texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.1f, yRatio*float(z_length_)*0.1f);
+      // Textures need to be more frequent in smoothing spots
+      if (y < z_smooth_max_) {
+        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.15f);
+      } else {
+        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.10f);
+      }
     }
   }
 }
@@ -418,16 +423,21 @@ void Terrain::HelperMakeIndicesAndUV() {
 // @warn  No changes can be made to normals_ member until the Road Helpers complete
 void Terrain::HelperMakeNormals() {
   normals.assign(x_length_*z_length_, glm::vec3());
-  for ( unsigned int i = 0; i < indices.size(); i += 3 )  {
+  for ( unsigned int i = 0; i < indices.size()-2; i += 3 )  {
     glm::vec3 v0 = vertices[ indices[i + 0] ];
     glm::vec3 v1 = vertices[ indices[i + 1] ];
     glm::vec3 v2 = vertices[ indices[i + 2] ];
 
     glm::vec3 normal = glm::normalize( glm::cross( v1 - v0, v2 - v0 ) );
 
-    normals[ indices[i + 0] ] += normal;
-    normals[ indices[i + 1] ] += normal;
-    normals[ indices[i + 2] ] += normal;
+    // Remove NaN normals
+    if (normal.x != normal.x) {
+      // printf("Overlapping vertices being crossed\n");
+    } else {
+      normals[ indices[i + 0] ] += normal;
+      normals[ indices[i + 1] ] += normal;
+      normals[ indices[i + 2] ] += normal;
+    }
   }
 
   for ( unsigned int i = 0; i < normals.size(); ++i ) {
@@ -444,7 +454,8 @@ void Terrain::HelperMakeRoadVertices() {
     for (unsigned int z = 0; z < z_length_; ++z){
       vertices_road_.push_back(vertices.at(x + z*x_length_));
       // Lift road a bit above terrain to make it visible
-      vertices_road_.back().y += 0.01f + 0.02*rotation_;
+      vertices_road_.back().y += 0.01f;
+      // vertices_road_.back().y += 0.01f + 0.02*rotation_;
     }
   }
 }
@@ -454,12 +465,13 @@ void Terrain::HelperMakeRoadVertices() {
 // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
 // @warn  for optimzation this should only be called once because road normals don't change
 void Terrain::HelperMakeRoadNormals() {
-  normals_road_.clear();
-  for (unsigned int x = 15; x < 19; ++x) {
-    for (unsigned int z = 0; z < z_length_; ++z){
-      normals_road_.push_back(normals.at(x + z*x_length_));
-    }
-  }
+  // normals_road_.clear();
+  // for (unsigned int x = 15; x < 19; ++x) {
+  //   for (unsigned int z = 0; z < z_length_; ++z){
+  //     normals_road_.push_back(normals.at(x + z*x_length_));
+  //   }
+  // }
+  normals_road_.assign(4*z_length_, glm::vec3(0,1,0));
 }
 
 // Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
@@ -468,26 +480,12 @@ void Terrain::HelperMakeRoadNormals() {
 // @warn  for optimzation this should only be called once because road indices and UV don't change
 void Terrain::HelperMakeRoadIndicesAndUV() {
   // Create Index Data
-  indices_road_.clear();
-  for (unsigned int j = 0; j < (4 - 1); ++j )
-  {
-    for (unsigned int i = 0; i < (x_length_ - 1); ++i )
-    {
-      int vertexIndex = ( j * x_length_ ) + i;
-      // Bottom triangle (T1)
-      indices_road_.push_back(vertexIndex);                        // V0
-      indices_road_.push_back(vertexIndex + x_length_);            // V2
-      indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
-      // Top triangle (T0)
-      indices_road_.push_back(vertexIndex);                        // V0
-      indices_road_.push_back(vertexIndex + x_length_ + 1);        // V3
-      indices_road_.push_back(vertexIndex + 1);                    // V1 visualization
-    }
-  }
+  // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
+  indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 15; x < 19; ++x) {
+  for (unsigned int x = 0; x < 5; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
@@ -495,6 +493,7 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
             texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
+
 }
 
 // Generates a collision coordinate mapping
