@@ -16,7 +16,7 @@
 Water::Water(const GLuint &program_id)
 {
   water_shader_ = program_id;
-
+  glUseProgram(water_shader_);
 
   // Create the mesh for the 'water', stored into the 
   // class vectors indices_ and vertices_
@@ -24,6 +24,94 @@ Water::Water(const GLuint &program_id)
 
   // Create the VAO based on the index and vertex data 
   water_vao_ = CreateVao();
+
+  // SEND WAVE PROPERTIES
+  int mtlambientHandle = glGetUniformLocation(water_shader_, "mtl_ambient");
+  int mtldiffuseHandle = glGetUniformLocation(water_shader_, "mtl_diffuse");
+  int mtlspecularHandle = glGetUniformLocation(water_shader_, "mtl_specular");
+  int shininessHandle = glGetUniformLocation(water_shader_, "shininess");
+  if ( mtlambientHandle == -1 ||
+      mtldiffuseHandle == -1 ||
+      mtlspecularHandle == -1 ||
+      shininessHandle == -1) {
+      printf("Couldnt get handles for water material properties\n");
+  }
+
+  float mtlambient[3] = { 0.5, 0.5, 0.5 };  // ambient material
+  float mtldiffuse[3] = { 0.5, 0.5, 0.5};  // diffuse material
+  float mtlspecular[3] = { 0.5, 0.5, 0.5 };  // specular material
+  glUniform3fv(mtlambientHandle, 1, mtlambient);
+  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+  float mtlshininess = 0.8f; 
+  glUniform1fv(shininessHandle, 1, &mtlshininess);
+
+  // SEND OUR WAVE DATA
+
+  // Send number of waves
+  int wavesHandle = glGetUniformLocation(water_shader_ , "numWaves");
+
+
+  if(wavesHandle == -1 )
+  {
+    printf("Could not get uniforms for waves \n");
+  }
+  glUniform1f(wavesHandle,4);
+
+
+  
+   
+  std::random_device rd; 
+  std::mt19937 eng(rd()); // seed the generator
+  std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
+
+  for (int i = 0; i < 4; ++i) {
+    // Still need to actually SEND the uniforms
+
+    char uniformName[256];
+    memset(uniformName, 0, sizeof(uniformName));
+
+    float amplitude = 0.5f / (i + 1);
+    printf("amplitude[%d] = %f \n", i, amplitude);
+    snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
+    int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(amplitudeHandle == -1 )
+    {
+      printf("couldnt get amplitude[%d]\n", i);
+    }
+    glUniform1f(amplitudeHandle, amplitude);
+
+    float wavelength = 8 * M_PI / (i + 1);
+    printf("wavelength[%d] = %f \n", i, wavelength);
+    snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
+    int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(wavelengthHandle == -1)
+    {
+      printf("couldnt get wavelength[%d]\n", i);
+    }
+    glUniform1f(wavelengthHandle, wavelength/10.0);   
+
+    float speed = 1.0f + 2*i;
+    printf("speed[%d] = %f \n", i, speed);
+    snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
+    int speedHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(speedHandle == -1)
+    {
+      printf("couldnt get speed[%d]\n", i);
+    }
+    glUniform1f(speedHandle, speed);
+  
+    float angle = distr(eng);
+    printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
+    snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
+    int directionHandle = glGetUniformLocation(water_shader_, uniformName);
+    if(directionHandle == -1)
+    {
+      printf("couldnt get direction[%d]\n", i);
+    }
+    glUniform2f(directionHandle, cos(angle), sin(angle));
+    
+  }
 
 
 }
@@ -76,8 +164,8 @@ void Water::GenerateMesh()
   unsigned int N = 3;
 
   // Define vertex data
-  int plane_width = 20; // amount of columns
-  int plane_height = 20; // amount of rows
+  int plane_width = 200; // amount of columns
+  int plane_height = 200; // amount of rows
   int total_vertices = (plane_width + 1) * (plane_height + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
@@ -97,9 +185,9 @@ void Water::GenerateMesh()
       for (int x=0;x < width;x++){
         // Fiddle with this to stretch (the y*0.1 part)
         //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
-          vertices_[idxFlag++] = (float)y/height;
+          vertices_[idxFlag++] = (float)y /height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x/width;
+          vertices_[idxFlag++] = (float)x  /width;
       }
   }
 

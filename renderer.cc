@@ -13,7 +13,7 @@ Renderer::Renderer(const bool &debug_flag)
 //   @param Water * water, the skybox to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Camera * camera) const
+void Renderer::RenderWater(const Water * water, const Camera * camera, const Skybox * Sky) const
 {
   glUseProgram(water->watershader());
 
@@ -25,23 +25,53 @@ void Renderer::RenderWater(const Water * water, const Camera * camera) const
     }
   }
 
-  
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  int camPosHandle = glGetUniformLocation(water->watershader(), "cameraPos");
+  if (camPosHandle == -1) {
+    printf("Couldnt get the campos for water reflections\n");
+  }
+  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
 
+  int texHandle = glGetUniformLocation(water->watershader(), "skybox");
+  if (texHandle == -1) {
+    
+      fprintf(stderr, "Could not find uniform variables (WATER - SKYCUBE)\n");
+   
+  }
+
+  int normHandle = glGetUniformLocation(water->watershader(), "normal_matrix");
+  if (normHandle == -1) {
+    if (is_debugging_) {
+      fprintf(stderr, "Could not find uniform variables\n");
+      exit(1);
+    }
+  }
   
-  // Create and send view matrix with translation stripped in order for skybox
-  // to always be in thr right location
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_BLEND);
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+
   glm::mat4 view_matrix = camera->view_matrix();
-  view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f,0.0f, 0.0f));
+
+  // Create and send normal matrix
+  glm::mat3 normMatrix;
+  normMatrix = glm::mat3(view_matrix);
+  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+
+  view_matrix = glm::translate(view_matrix, glm::vec3(-5.0f,1.0f, 0.0f));
   view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
-  
+  // Send the cubemap (for reflections)
+  glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
+  glUniform1i(texHandle, 0);
 
   // Render the Skybox
   glBindVertexArray(water->watervao());
-  glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
 
+  // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
+  glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
+  glDisable(GL_BLEND);
 }
 
 //   Renders the passed in skybox to the scene
