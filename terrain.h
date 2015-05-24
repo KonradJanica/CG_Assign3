@@ -50,6 +50,8 @@ class Terrain {
     inline int width() const;
     // Accessor for the height (Amount of Grid boxes height-wise)
     inline int height() const;
+    // Accessor for the rotation of the cars current road tile
+    inline float rotation() const;
     // Accessor for the amount of indices
     //   Used in render to efficiently draw triangles
     inline int indice_count() const;
@@ -108,6 +110,9 @@ class Terrain {
     //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
     std::queue<colisn_vec> collision_queue_hash_;
+    // A queue of rotations corresponding to each collision tile
+    //   Used to reset car to current orientation on road after crash
+    std::queue<float> rotation_queue_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -260,6 +265,10 @@ inline int Terrain::width() const {
 inline int Terrain::height() const {
   return z_length_;
 }
+// Accessor for the rotation of the cars current road tile
+inline float Terrain::rotation() const {
+  return rotation_queue_.front();
+}
 // Accessor for the amount of indices
 //   Used in render to efficiently draw triangles
 inline int Terrain::indice_count() const {
@@ -281,10 +290,12 @@ inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
 }
 // Pops the first collision map 
 //   To be used after car has passed road tile
+//   Also pops the current rotation queue for car repositioning
 //   TODO remove and replace in circular buffer instead
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
   collision_queue_hash_.pop();
+  rotation_queue_.pop();
 }
 
 #endif

@@ -239,6 +239,7 @@ void Controller::UpdateCollisions() {
   //   but make sure it isn't the last pair overwise pop
   it = closest_it;
   it++;
+  it++; // pop 1 vertce early
   if (it == head.end()) {
     printf("assuming end of tile reached, pop!\n");
     // TODO fix check end of tile...
@@ -270,9 +271,10 @@ void Controller::UpdateCollisions() {
     midpoint.y = car_->translation().y;
     car_->set_translation(midpoint);
     // Reset facing in road direction
-    glm::vec3 pair_vec = ((*closest_it).first-(*closest_it).second);
-    glm::vec3 road_dir = glm::cross(pair_vec, glm::vec3(0,1,0));
-    float y_rot = atan(road_dir.z/road_dir.x);
+    // glm::vec3 pair_vec = ((*closest_it).first+(*closest_it).second);
+    // glm::vec3 road_dir = glm::cross(midpoint, glm::vec3(0,1,0));
+    // float y_rot = RAD2DEG(atan(road_dir.z/road_dir.x));
+    float y_rot = terrain_->rotation();
     car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
     // Zero speed
     car_->ResetPhysics();
