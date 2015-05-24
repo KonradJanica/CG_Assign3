@@ -35,6 +35,9 @@ Water::Water(const GLuint &program_id)
   {
     printf("Could not get uniforms for waves \n");
   }
+  glUniform1f(wavesHandle,4);
+  glUniform1f(heightHandle,-1.0);
+
   
   //glUniform1f(timeHandle, time+1); 
   std::random_device rd; 
@@ -48,6 +51,7 @@ Water::Water(const GLuint &program_id)
     memset(uniformName, 0, sizeof(uniformName));
 
     float amplitude = 0.5f / (i + 1);
+    printf("amplitude[%d] = %f \n", i, amplitude);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
     int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
     if(amplitudeHandle == -1 )
@@ -64,7 +68,7 @@ Water::Water(const GLuint &program_id)
     {
       printf("couldnt get wavelength[%d]\n", i);
     }
-    glUniform1f(wavelengthHandle, wavelength);   
+    glUniform1f(wavelengthHandle, wavelength/10.0);   
 
     float speed = 1.0f + 2*i;
     printf("speed[%d] = %f \n", i, speed);
@@ -139,8 +143,8 @@ void Water::GenerateMesh()
   unsigned int N = 3;
 
   // Define vertex data
-  int plane_width = 20; // amount of columns
-  int plane_height = 20; // amount of rows
+  int plane_width = 100; // amount of columns
+  int plane_height = 100; // amount of rows
   int total_vertices = (plane_width + 1) * (plane_height + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;

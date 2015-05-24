@@ -33,13 +33,15 @@ void Renderer::RenderWater(const Water * water, const Camera * camera) const
   // to always be in thr right location
   glm::mat4 view_matrix = camera->view_matrix();
   view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f,0.0f, 0.0f));
-  view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
+  view_matrix = glm::scale(view_matrix ,glm::vec3(50.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   
 
   // Render the Skybox
   glBindVertexArray(water->watervao());
+
+  // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
   glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
 
 }
