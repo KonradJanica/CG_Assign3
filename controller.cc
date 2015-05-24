@@ -151,9 +151,9 @@ void Controller::UpdateCamera() {
   camera_->UpdateCamera();
 }
 
-// The double area of a triangle 
+// The double area of a triangle
 //   For finding in values lie inside a bounding box
-float AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
+float Controller::AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
   return (c.x*b.z - b.x*c.z) - (c.x*a.z - a.x*c.z) + (b.x*a.z - a.x*b.z);
 }
 
@@ -161,7 +161,7 @@ float AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
 //   Creates 4 triangles out of the 4 points of the given square and returns 
 //   true if area is positive
 //   @warn input must be square for accurate results
-bool operator==(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
+bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
   Terrain::boundary_pair curr = bp.first;
   Terrain::boundary_pair next = bp.second;
   glm::vec3 a = curr.first;
@@ -222,7 +222,7 @@ void Controller::UpdatePhysics() {
     // Make boundary box the neighbours of current pair
     std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
     // Check if car is in range
-    if (car == bounding_box) {
+    if (IsInside(car, bounding_box)) {
       //inside bounds
     } else {
       printf("collision on x!\n");

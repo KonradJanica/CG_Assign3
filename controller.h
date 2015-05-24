@@ -109,8 +109,17 @@ class Controller {
     void UpdateCamera();
     // The controllers physics update tick
     //   Checks keypresses and calculates acceleration
-    //   TODO not sure if this belongs in public, can be used for lighting too etc.
     void UpdatePhysics();
+
+    // COLLISION HELPERS
+    // The double area of a triangle
+    //   For finding in values lie inside a bounding box
+    float AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c);
+    // Checks whether car is between boundary pair
+    //   Creates 4 triangles out of the 4 points of the given square and returns 
+    //   true if area is positive
+    //   @warn input must be square for accurate results
+    bool IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
 
     // The light controller
     LightController * light_controller_;
