@@ -26,13 +26,13 @@ void Renderer::RenderWater(const Water * water, const Camera * camera) const
   }
 
   
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
   glm::mat4 view_matrix = camera->view_matrix();
-  view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f,0.0f, 0.0f));
+  view_matrix = glm::translate(view_matrix, glm::vec3(-20.0f,-6.0f, 0.0f));
   view_matrix = glm::scale(view_matrix ,glm::vec3(50.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 

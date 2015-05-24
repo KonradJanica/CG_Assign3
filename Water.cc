@@ -143,8 +143,8 @@ void Water::GenerateMesh()
   unsigned int N = 3;
 
   // Define vertex data
-  int plane_width = 100; // amount of columns
-  int plane_height = 100; // amount of rows
+  int plane_width = 200; // amount of columns
+  int plane_height = 200; // amount of rows
   int total_vertices = (plane_width + 1) * (plane_height + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
@@ -164,9 +164,9 @@ void Water::GenerateMesh()
       for (int x=0;x < width;x++){
         // Fiddle with this to stretch (the y*0.1 part)
         //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
-          vertices_[idxFlag++] = (float)y/height;
+          vertices_[idxFlag++] = (float)y + (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x/width;
+          vertices_[idxFlag++] = (float)x + (x * 0.1) /width;
       }
   }
 
