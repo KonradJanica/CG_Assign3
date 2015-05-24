@@ -63,13 +63,16 @@ void Terrain::ProceedTiles() {
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration() {
-  int v = rand() % 2;
+  int v = rand() % 3;
   switch(v) {
     case 0:
       GenerateTerrain(kStraight);
       break;
     case 1:
       GenerateTerrain(kTurnLeft);
+      break;
+    case 2:
+      GenerateTerrain(kTurnRight);
       break;
   }
 }
@@ -274,9 +277,17 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
         // case 0: straight road => do nothing
         // case 1: x^2 turnning road
         case kTurnLeft:
+          {
           float zSquare = zPosition * zPosition; //x^2
           xPosition = zSquare/(position_range*5.5) + xPosition;
           break;
+          }
+        case kTurnRight:
+          {
+          float zSquare = zPosition * zPosition; //x^2
+          xPosition = -zSquare/(position_range*5.5) + xPosition;
+          break;
+          }
       }
 
       vertices.at(offset) = glm::vec3(xPosition, yPosition, zPosition);
@@ -324,11 +335,20 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   }
   switch(road_type) {
     case kTurnLeft:
+      {
       // generate random number between 18.00 and 24.99
       float random = rand() % 700 / 100.0f + 18;
       rotation_ += random;
       // rotation_ += 18.0f;
       break;
+      }
+    case kTurnRight:
+      {
+      // generate random number between 18.00 and 24.99
+      float random = rand() % 700 / 100.0f + 18;
+      rotation_ -= random;
+      break;
+      }
   }
   // SMOOTH CONNECTIONS
   // TODO someone try fighting with this if you dare...

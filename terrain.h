@@ -73,11 +73,12 @@ class Terrain {
     // CONSTANTS
     enum TileType {
       kTerrain = 0,
-      kRoad = 2,
+      kRoad = 1,
     };
     enum RoadType {
       kStraight = 0,
       kTurnLeft = 1,
+      kTurnRight = 2,
     };
     // Width of the heightmap
     int x_length_;
