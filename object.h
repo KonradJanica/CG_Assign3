@@ -71,6 +71,8 @@ class Object {
     // Accessor for the current speed of the object
     //   @return speed_, the current speed of the object
     inline float speed() const;
+    // Reset speed and acceleration to 0
+    inline void ResetPhysics();
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -195,6 +197,11 @@ inline void Object::set_rotation(glm::vec3 new_rotation) {
 // Sets the displacement
 inline void Object::set_displacement(glm::vec3 new_displacement) {
   displacement_ = new_displacement;
+}
+// Reset speed and acceleration to 0
+inline void Object::ResetPhysics() {
+  speed_ = 0;
+  centri_speed_ = 0;
 }
 
 #endif

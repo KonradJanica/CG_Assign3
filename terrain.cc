@@ -255,7 +255,6 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
-      // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
       float xPosition = min_position + (xRatio * position_range);
@@ -297,25 +296,21 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   unsigned int pivot_x = 18; // relative tile x position of pivot
   const glm::vec3 &pivot = vertices.at(pivot_x);
   // pivot.y = 1000000;
-  // normals_road_.push_back(normals.at(x + z*x_length_));
-  glm::vec3 foo = glm::rotateY(pivot, rotation_);
-  float translate_x = pivot.x - foo.x;
-  float translate_z = pivot.z - foo.z;
+  // Rotate the point using glm function
+  glm::vec3 rotated = glm::rotateY(pivot, rotation_);
+  float translate_x = pivot.x - rotated.x;
+  float translate_z = pivot.z - rotated.z;
   for (int y = 0; y < z_length_; y++) {
     for (int x = 0; x < x_length_; x++) {
       offset = (y*x_length_)+x;
 
-      glm::vec3 foo = vertices.at(offset);
-      // foo = glm::rotate(foo, 30.0f, glm::vec3(next_tile_start_.x,1,next_tile_start_.y));
-      foo = glm::rotateY(foo, rotation_);
-      // foo = foo - ( glm::vec3(next_tile_start_.x, 0, next_tile_start_.y));
-      float xPosition = foo.x + translate_x;
-      float zPosition = foo.z + translate_z;
-      // xPosition = foo.x + position_range/2;
-      float yPosition = foo.y;
+      glm::vec3 rotated = vertices.at(offset);
+      rotated = glm::rotateY(rotated, rotation_);
+      float xPosition = rotated.x + translate_x;
+      float zPosition = rotated.z + translate_z;
+      // xPosition = rotated.x + position_range/2;
+      float yPosition = rotated.y;
 
-      // vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
-      //     zPosition + next_tile_start_.y);
       vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
           zPosition + next_tile_start_.y);
     }
@@ -330,7 +325,6 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       // Calculate next_tile_start_.x position (next X tile position)
       float displacement_x = pivot_end.x - pivot.x;
       next_tile_start_.x += displacement_x;
-      // next_tile_start_.x = position_range/2 - pivot.x;
       break;
   }
   switch(road_type) {
@@ -376,7 +370,6 @@ void Terrain::HelperFixUV() {
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
-      // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
       // Textures need to be more frequent in smoothing spots
@@ -529,34 +522,41 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadCollisionMap() {
+  unsigned int x_new_row_size = 19 - 15;
+  std::vector<glm::vec3> left_side, right_side;
+  left_side.reserve(z_length_);
+  right_side.reserve(z_length_);
+  // Make both sides
+  for (unsigned int z = 0; z < z_length_; ++z){
+    float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
+    glm::vec3 left = glm::vec3(vertices_road_.at(0 + z));
+    glm::vec3 right = glm::vec3(vertices_road_.at(z + z_length_ * (x_new_row_size - 1)));
+    left_side.push_back(left); // left? side vertices
+    right_side.push_back(right); // other side vertices
+  }
+
   colisn_vec tile_map;
   tile_map.reserve(z_length_);
   std::pair<glm::vec3,glm::vec3> min_max_x_pair;
-  unsigned int x_new_row_size = 19 - 15;
-
-  for (unsigned int z = 0; z < z_length_; ++z){
-    float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
-    // z_key = round(z_key); // round value so key can be found
-    min_max_x_pair.first = vertices_road_.at(0 + z); // left? side vertices
-    min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)); // other side vertices
-
-    // vertices_road_.at(0+z).y = 10000; //minx visualization
-    // vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).y = 10000; //maxx visualization
+  // Pair left side to it's closest point on opposite side
+  for (unsigned int z = 0; z < z_length_; ++z) {
+    const glm::vec3 &left = left_side.at(z);
+    min_max_x_pair.first = left;
+    float smallest_diff = glm::distance(left_side.at(z), right_side.front());
+    glm::vec3 closest_point = right_side.front();
+    for (unsigned int x = 1; x < z_length_; ++x) {
+      float curr_diff = glm::distance(left_side.at(z), right_side.at(x));
+      if (curr_diff < smallest_diff) {
+        smallest_diff = curr_diff;
+        closest_point = right_side.at(x);
+      }
+    }
+    min_max_x_pair.second = closest_point;
 
     tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
-    // tile_map[z_key] = min_max_x_pair; // overrides duplicates
-
-
-    // MAPPING DEBUGS
-    // // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
-    // printf("z = %f\n", z_key);
-    // printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
   }
 
   collision_queue_hash_.push(tile_map);
-  // for (auto& x: collision_queue_hash_.front()) {
-  //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
-  // }
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer

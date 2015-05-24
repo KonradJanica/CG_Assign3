@@ -161,6 +161,23 @@ float Controller::AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm
 //   Creates 4 triangles out of the 4 points of the given square and returns 
 //   true if area is positive
 //   @warn input must be square for accurate results
+// bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
+//   Terrain::boundary_pair curr = bp.first;
+//   Terrain::boundary_pair next = bp.second;
+//   glm::vec3 a = curr.first;
+//   glm::vec3 b = curr.second;
+//   glm::vec3 c = next.second;
+//   glm::vec3 d = next.first;
+//
+//   if (AreaTriangle(a,b,car) > 0 || AreaTriangle(b,c,car) > 0 || 
+//       AreaTriangle(c,d,car) > 0 || AreaTriangle(d,a,car) > 0)
+//     return false;
+//   return true;
+// }
+
+// Checks whether car is between the biggest rectangle than can be formed
+// @return  true  if can is inside corner of rectangle
+// @warn input must be square for accurate results
 bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
   Terrain::boundary_pair curr = bp.first;
   Terrain::boundary_pair next = bp.second;
@@ -168,21 +185,30 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
   glm::vec3 b = curr.second;
   glm::vec3 c = next.second;
   glm::vec3 d = next.first;
+  glm::vec3 arr[] = {b,c,d};
 
-  if (AreaTriangle(a,b,car) > 0 || AreaTriangle(b,c,car) > 0 || 
-      AreaTriangle(c,d,car) > 0 || AreaTriangle(d,a,car) > 0)
-    return false;
-  return true;
+  float min_x = a.x, max_x = a.x;
+  float min_z = a.z, max_z = a.z;
+  for (int i = 0; i < 3; ++i) {
+  // Find max x bounding box
+  if (arr[i].x > max_x)
+    max_x = arr[i].x;
+  // Find min x bounding box
+  if (arr[i].x < min_x)
+    min_x = arr[i].x;
+  // Find max z bounding box
+  if (arr[i].z > max_z)
+    max_z = arr[i].z;
+  // Find min x bounding box
+  if (arr[i].z < min_z)
+    min_z = arr[i].z;
+  }
+
+  return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
 }
 
-// The controllers physics update tick
-//   Checks keypresses and calculates acceleration
-void Controller::UpdatePhysics() {
-
-  // Sets variables required for camera
-  //  i.e. camera has access to car in UpdateCarTick(car_)
-  car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
-
+// TODO comment
+void Controller::UpdateCollisions() {
   ///////////////// COLLISION TESTING TODO TODO
   const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
@@ -205,28 +231,61 @@ void Controller::UpdatePhysics() {
     }
     it++;
   }
+  // If closest is the first then something went wrong
+  if (closest_it == head.begin()) {
+    printf("ERROR IN COLLISION CHECK! - CLOSEST POINT IS BEGIN()\n");
+  }
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
-  closest_it++;
-  if (closest_it == head.end()) {
+  it = closest_it;
+  it++;
+  if (it == head.end()) {
     printf("assuming end of tile reached, pop!\n");
     // TODO fix check end of tile...
     terrain_->col_pop();
     // TODO obviously this needs to be done further back from view space
     terrain_->ProceedTiles();
-  } else {
-    Terrain::boundary_pair next_pair = *closest_it;
-    closest_it--;
-    closest_it--;
-    Terrain::boundary_pair previous_pair = *closest_it;
-    // Make boundary box the neighbours of current pair
-    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
-    // Check if car is in range
-    if (IsInside(car, bounding_box)) {
-      //inside bounds
-    } else {
-      printf("collision on x!\n");
-    }
+
+    // Check collision for next tile
+    UpdateCollisions();
+    return;
   }
 
+  // If conditions flow through then make box with neighbours of the closest pair
+  //   and check if car is inside the box
+  Terrain::boundary_pair next_pair = *it;
+  it = closest_it;
+  it--;
+  Terrain::boundary_pair previous_pair = *it;
+  // Make boundary box the neighbours of current pair
+  std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
+  // Check if car is in range
+  if (IsInside(car, bounding_box)) {
+    //inside bounds
+  } else {
+    printf("collision on x!\n");
+    // Reset car to middle of road
+    glm::vec3 midpoint = ((*closest_it).first+(*closest_it).second);
+    midpoint /= 2;
+    midpoint.y = car_->translation().y;
+    car_->set_translation(midpoint);
+    // Reset facing in road direction
+    glm::vec3 pair_vec = ((*closest_it).first-(*closest_it).second);
+    glm::vec3 road_dir = glm::cross(pair_vec, glm::vec3(0,1,0));
+    float y_rot = atan(road_dir.z/road_dir.x);
+    car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
+    // Zero speed
+    car_->ResetPhysics();
+  }
+}
+
+// The controllers physics update tick
+//   Checks keypresses and calculates acceleration
+void Controller::UpdatePhysics() {
+
+  // Sets variables required for camera
+  //  i.e. camera has access to car in UpdateCarTick(car_)
+  car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
+
+  UpdateCollisions();
 }

@@ -111,6 +111,8 @@ class Controller {
     //   Checks keypresses and calculates acceleration
     void UpdatePhysics();
 
+    // TODO comment
+    void UpdateCollisions();
     // COLLISION HELPERS
     // The double area of a triangle
     //   For finding in values lie inside a bounding box
