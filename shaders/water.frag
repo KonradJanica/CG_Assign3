@@ -125,15 +125,16 @@ vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
 
 void main(void) {
 
+  float ratio = 1.00 / 1.33;
   vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
-  vec3 R = reflect(I, normalize(a_normal_mv));
+  vec3 R = refract(I, normalize(a_normal_mv), ratio);
 
   vec4 litColour = calcDirectionalLight(a_normal_mv);
   //fragColour = litColour;
-  vec4 colour = litColour * texture(skybox, R);
+  vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
   
-  colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
-  colour.a = 0.4;
+  //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
+  colour.a = 1.0;
 
   //fragColour = texture(skybox, R);
   fragColour = colour;
