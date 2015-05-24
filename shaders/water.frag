@@ -129,6 +129,6 @@ void main(void) {
   vec3 R = reflect(I, normalize(a_normal_mv));
   
 
-  //fragColour = texture(skybox, R);
-  fragColour = vec4(1.0, 1.0, 1.0, 1.0);
+  fragColour = texture(skybox, R);
+  //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }
