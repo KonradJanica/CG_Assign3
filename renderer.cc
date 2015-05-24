@@ -58,7 +58,7 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
   normMatrix = glm::mat3(view_matrix);
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
-  view_matrix = glm::translate(view_matrix, glm::vec3(-5.0f,1.0f, 0.0f));
+  view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f,-3.0f, 0.0f));
   view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 

@@ -34,7 +34,7 @@ Skybox::Skybox(const GLuint &program_id)
   faces.push_back("textures/morose_right.jpg"); // Left side of Cube
   faces.push_back("textures/morose_left.jpg");	// Right side of Cube
   faces.push_back("textures/morose_top.jpg");	// Top of cube
-  faces.push_back("textures/rock02.jpg"); 		// Bottom of cube
+  faces.push_back("textures/bottom.jpg"); 		// Bottom of cube
   faces.push_back("textures/morose_front.jpg"); // Front (side furthest from camera)
   faces.push_back("textures/morose_back.jpg"); 	// Back (side closest to camera)
 
