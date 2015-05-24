@@ -127,6 +127,9 @@ void main(void) {
 
   vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
   vec3 R = reflect(I, normalize(a_normal_mv));
+
+  //vec4 litColour = calcDirectionalLight(a_normal_mv);
+  //fragColour = litColour;
   
 
   fragColour = texture(skybox, R);

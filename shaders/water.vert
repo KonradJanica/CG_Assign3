@@ -42,7 +42,7 @@ float dWavedx(int i, float x, float y) {
     float phase = speed[i] * frequency;
     float theta = dot(direction[i], vec2(x, y));
     float A = (amplitude[i]/2.0) * direction[i].x * frequency;
-    return A * cos(theta * frequency + time * phase);
+    return A * cos(theta * frequency + (time/20000.0) * phase);
 }
 
 float dWavedy(int i, float x, float y) {
@@ -50,7 +50,7 @@ float dWavedy(int i, float x, float y) {
     float phase = speed[i] * frequency;
     float theta = dot(direction[i], vec2(x, y));
     float A = (amplitude[i]/2.0) * direction[i].y * frequency;
-    return A * cos(theta * frequency + time * phase);
+    return A * cos(theta * frequency + (time/20000.0) * phase);
 }
 
 vec3 waveNormal(float x, float y) {
@@ -69,6 +69,7 @@ vec3 waveNormal(float x, float y) {
 void main()
 {
 	// Z for more random waves, Y for more rolling waves
+
 	float h = a_vertex.y + 0.25 * ( waveHeight(a_vertex.x, a_vertex.z) );// + (0.5 * waveHeight(a_vertex.x, a_vertex.z));
 	
 
@@ -77,7 +78,7 @@ void main()
 
 	// Create the MV normals, normals need to be generated in this shader
 	vec3 normals = waveNormal(a_vertex.x, a_vertex.z);
-	a_normal_mv = normalize(normal_matrix * vec3(0.0,1.0,0.0));
+	a_normal_mv = normal_matrix * normalize(normals);
 
 	a_vertex_mv = modelview_matrix * vec4(a_vertex.x, h, a_vertex.z, 1.0);
 	// Apply full MVP transformation
