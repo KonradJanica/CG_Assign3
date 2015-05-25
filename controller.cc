@@ -264,7 +264,7 @@ void Controller::UpdateCollisions() {
   if (IsInside(car, bounding_box)) {
     //inside bounds
   } else {
-    printf("collision on x!\n");
+    printf("collision on edge of road!\n");
     // Reset car to middle of road
     glm::vec3 midpoint = ((*closest_it).first+(*closest_it).second);
     midpoint /= 2;
@@ -274,7 +274,7 @@ void Controller::UpdateCollisions() {
     glm::vec3 first_point = previous_pair.first;
     glm::vec3 next_point = next_pair.first;
     glm::vec3 direction = next_point - first_point;
-    float y_rot = RAD2DEG(atan(direction.x/direction.z));
+    float y_rot = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
     car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
     // Zero speed
     car_->ResetPhysics();
