@@ -31,10 +31,16 @@ void Controller::AddSkybox(const GLuint &program_id)
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename,
-        glm::vec3(0.0f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
+        glm::vec3(0.8f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
         glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
         glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
         60, false); // starting speed and debugging mode
+    // This block fixes car being moved to the wrong spot initially
+    UpdateCollisions();
+    prev_left_lane_midpoint_ = left_lane_midpoint_;
+    GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
+    delta_time_ = current_frame - last_frame_;
+    last_frame_ = current_frame;
   } else {
     Object * object = new Model(program_id, model_filename,
         glm::vec3(0.0f, 0.0f, 0.0f), // Translation
@@ -151,30 +157,6 @@ void Controller::UpdateCamera() {
   // Update camera lookAt
   camera_->UpdateCamera();
 }
-
-// The double area of a triangle
-//   For finding in values lie inside a bounding box
-float Controller::AreaTriangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
-  return (c.x*b.z - b.x*c.z) - (c.x*a.z - a.x*c.z) + (b.x*a.z - a.x*b.z);
-}
-
-// Checks whether car is between boundary pair
-//   Creates 4 triangles out of the 4 points of the given square and returns 
-//   true if area is positive
-//   @warn input must be square for accurate results
-// bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
-//   Terrain::boundary_pair curr = bp.first;
-//   Terrain::boundary_pair next = bp.second;
-//   glm::vec3 a = curr.first;
-//   glm::vec3 b = curr.second;
-//   glm::vec3 c = next.second;
-//   glm::vec3 d = next.first;
-//
-//   if (AreaTriangle(a,b,car) > 0 || AreaTriangle(b,c,car) > 0 || 
-//       AreaTriangle(c,d,car) > 0 || AreaTriangle(d,a,car) > 0)
-//     return false;
-//   return true;
-// }
 
 // Checks whether car is between the biggest rectangle than can be formed
 // @return  true  if can is inside corner of rectangle
@@ -315,16 +297,24 @@ void Controller::UpdatePhysics() {
   if (game_state_ == kAutoDrive) {
     car_->set_rotation(glm::vec3(car_->rotation().x,road_y_rotation_,car_->rotation().z));
     if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
-      float x_pos = car_->translation().x + road_direction_.x * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      // These position updates are from object movement tick
+      //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
+      // TODO put constants somewhere
+      float dt = delta_time_ / 1000;
+      float x_pos = car_->translation().x + road_direction_.x * car_->default_speed()/10.0f*dt;
       float y_pos = car_->translation().y;
-      float z_pos = car_->translation().z + road_direction_.z * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      float z_pos = car_->translation().z + road_direction_.z * car_->default_speed()/10.0f*dt;
       car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     } else {
       glm::vec3 next_pt_dir = left_lane_midpoint_ - car_->translation();
-      // next_pt_dir = glm::normalize(next_pt_dir);
-      float x_pos = car_->translation().x + next_pt_dir.x * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      next_pt_dir = glm::normalize(next_pt_dir);
+      // These position updates are from object movement tick
+      //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
+      // TODO put constants somewhere
+      float dt = delta_time_ / 1000;
+      float x_pos = car_->translation().x + next_pt_dir.x * car_->default_speed()/10.0f*dt;
       float y_pos = car_->translation().y;
-      float z_pos = car_->translation().z + next_pt_dir.z * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      float z_pos = car_->translation().z + next_pt_dir.z * car_->default_speed()/10.0f*dt;
       car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     }
     prev_left_lane_midpoint_ = left_lane_midpoint_;

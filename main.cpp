@@ -333,11 +333,6 @@ int main(int argc, char **argv) {
 
   g_controller = new Controller(g_renderer);
 
-  // Texture Shader
-  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
-  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj"); 
-  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
-
   // Setup camera global
   g_camera = g_controller->camera();
 
@@ -349,6 +344,11 @@ int main(int argc, char **argv) {
 
   // Setup Water
   g_controller->AddWater(g_program_id[3]);
+
+  // Add starting models
+  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
+  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj"); 
+  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
