@@ -209,13 +209,13 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
 
 // TODO comment
 void Controller::UpdateCollisions() {
-  ///////////////// COLLISION TESTING TODO TODO
+  // Setup vars
   const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
-  // printf("car_z = %f\n", car_z);
   const Terrain::colisn_vec head = col.front();
   Terrain::colisn_vec::const_iterator it = head.begin();
 
+  // Find closest edge point
   Terrain::boundary_pair closest_pair;
   float dis = FLT_MAX;
   Terrain::colisn_vec::const_iterator closest_it = head.begin();

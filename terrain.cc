@@ -518,9 +518,10 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 }
 
 // Generates a collision coordinate mapping
-//   Using the vertices_road_ vector, maps all rounded Z coordinates to their corresponding min X
-//   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
+//   Finds all edge vertices of road in order then pairs them with the closest vertices
+//   on the opposite side of the road
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
+// @warn  this is O(n^2) with n = 36  TODO improve complexity
 void Terrain::HelperMakeRoadCollisionMap() {
   unsigned int x_new_row_size = 19 - 15;
   std::vector<glm::vec3> left_side, right_side;
