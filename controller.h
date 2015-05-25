@@ -112,6 +112,8 @@ class Controller {
 
     // The current game state
     State game_state_;
+    // The users camera state (for animations)
+    Camera::State camera_state_;
     // The state of the previous collision tick
     bool is_collision_;
     // The midpoint of the road where the car is

@@ -479,6 +479,16 @@ void Terrain::HelperMakeRoadVertices() {
       // vertices_road_.back().y += 0.01f + 0.02*rotation_;
     }
   }
+
+  // Store water vertices
+  std::vector<glm::vec3> water_side;
+  water_side.reserve((x_length_-15)*z_length_);
+  for (unsigned int x = 0; x < 15; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z) {
+      water_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
+    }
+  }
+  colisn_lst_water_.push_back(water_side);
 }
 
 // Rip the road parts of the terrain normals vector using calulcated magic numbers and store

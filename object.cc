@@ -260,7 +260,7 @@ void Object::UpdateModelMatrix() {
 //   @warn the roll (z rotation) is not calculated
 glm::vec3 Object::direction() const {
   float direction_x = sin(DEG2RAD(rotation().y));
-  float direction_y = sin(DEG2RAD(rotation().x));
+  float direction_y = -sin(DEG2RAD(rotation().x));
   float direction_z = cos(DEG2RAD(rotation().y));
   return glm::vec3(direction_x, direction_y, direction_z);
 }

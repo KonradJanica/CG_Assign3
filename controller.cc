@@ -141,16 +141,12 @@ void Controller::UpdateGame() {
   last_frame_ = current_frame;
 
   UpdateCamera();
-  UpdatePhysics();
+  if (!is_collision_)
+    UpdatePhysics();
 
   if (game_state_ == kCrashingFall) {
+    // delta_time_ /= 5; //slowmo
     CrashAnimation();
-    return;
-  }
-
-  if (is_collision_) {
-    // TODO replace to kGameOver
-    game_state_ = kAutoDrive;
     return;
   }
 
@@ -175,20 +171,84 @@ void Controller::UpdateCamera() {
 }
 
 void Controller::CrashAnimation() {
-  // colisn_anim_ticks_;
+  // Lock camera state
+  camera_->ChangeState(Camera::kFreeView);
   // Rotate car
-  float x_rot = car_->rotation().x + 0.3f;
-  float z_rot = car_->rotation().z + 0.3f;
-  car_->set_rotation(glm::vec3(x_rot, car_->rotation().y, z_rot));
+  float x_rot = car_->rotation().x + car_->speed() * 0.0004f * delta_time_;
+  // printf("dt = %f\n",delta_time_);
+  float z_rot = car_->rotation().z + car_->speed() * 0.0004f * delta_time_;
 
   // Move car in direction
   // TODO make member in object for this
   glm::vec3 dir = car_->direction();
   float dt = delta_time_ / 1000;
   float x_pos = car_->translation().x + dir.x * car_->speed()/10.0f*dt;
-  float y_pos = car_->translation().y - dir.y * car_->speed()/10.0f*dt;
+  float y_pos = car_->translation().y + dir.y * car_->speed()/10.0f*dt;
   float z_pos = car_->translation().z + dir.z * car_->speed()/10.0f*dt;
-  car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+
+  typedef std::vector<glm::vec3> w_vec;
+  typedef std::list<w_vec> w_list;
+  const w_list &water = terrain_->colisn_lst_water();
+  float dis = FLT_MAX;
+  glm::vec3 closest_vertice;
+  glm::vec3 snd_clst_vertice = glm::vec3(0,0,0); // just incase not found
+
+  w_list::const_iterator it = water.begin();
+  for (unsigned int i = 0; i < 2; ++i) {
+
+    const w_vec &vertices = *it;
+    for (w_vec::const_iterator x = vertices.begin(); 
+        x != vertices.end(); ++x) {
+
+      const glm::vec2 cur_vec = glm::vec2(x->x,x->z); // current vector 
+      float cur_dis = glm::distance(cur_vec, glm::vec2(x_pos, z_pos));
+      if (cur_dis < dis) {
+        dis = cur_dis;
+        snd_clst_vertice = closest_vertice;
+        closest_vertice = *x;
+      }
+    }
+    it++;
+  }
+  // printf("yp = %f, cv = %f\n",y_pos, closest_vertice.y);
+  if (y_pos > closest_vertice.y) {
+    car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+    car_->set_rotation(glm::vec3(x_rot, car_->rotation().y, z_rot));
+  } else {
+    // Calc crude rebound angle
+    glm::vec3 vec_a = closest_vertice - snd_clst_vertice;
+    x_rot = -asin(vec_a.x/dir.x);
+    if (x_rot != x_rot) { // NaN catch
+      x_rot = -0.3f;
+    }
+    z_rot += 0.3f;
+    car_->set_rotation(glm::vec3(x_rot, car_->rotation().y, z_rot));
+    // Calc crude bounce
+    x_pos = car_->translation().x;
+    y_pos = car_->translation().y + car_->speed() / 220;
+    z_pos = car_->translation().z;
+    car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+    // Reduce speed due to bounce
+    car_->ReduceSpeed(car_->speed() * 0.5f);
+  }
+  if (colisn_anim_ticks_ > 400) {
+    if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
+        || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
+        || colisn_anim_ticks_ > 2000) {
+    // Reset car
+    // TODO constant for y translation
+    car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+    car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
+    car_->ResetPhysics();
+    // Reset game state
+    game_state_ = kAutoDrive;
+    is_collision_ = false;
+    camera_->ChangeState(camera_state_); // users previous camera
+    return;
+    }
+  }
+  colisn_anim_ticks_ += delta_time_ / 5;
+  // printf("tm = %f\n", colisn_anim_ticks_);
 }
 
 // Checks whether car is between the biggest rectangle than can be formed
@@ -239,9 +299,7 @@ void Controller::UpdateCollisions() {
 
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
-    // TODO change to glm distance func
-    const glm::vec3 dv = cur_vec - car;   // distance vector
-    float cur_dis = sqrt(dv.x*dv.x + dv.y*dv.y + dv.z*dv.z);
+    float cur_dis = glm::distance(cur_vec, car);
     if (cur_dis < dis) {
       dis = cur_dis;
       closest_pair = *it;
@@ -286,26 +344,14 @@ void Controller::UpdateCollisions() {
     printf("collision on edge of road!\n");
     is_collision_ = true;
     game_state_ = kCrashingFall;
-    colisn_anim_ticks_ = 100;
-    // Reset car to middle of road
-    glm::vec3 midpoint = ((*closest_it).first+(*closest_it).second);
-    midpoint /= 2;
-    // Find lane midpoint
-    midpoint = midpoint + (*closest_it).second;
-    midpoint /= 2;
-    midpoint.y = car_->translation().y;
-    // car_->set_translation(midpoint);
-    // Reset facing in road direction
-    glm::vec3 first_point = previous_pair.first;
-    glm::vec3 next_point = next_pair.first;
-    glm::vec3 direction = next_point - first_point;
-    float y_rot = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
-    // car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
-    // Zero speed
-    // car_->ResetPhysics();
+    colisn_anim_ticks_ = 0;
+    // Camera effect
+    camera_state_ = camera_->state();
+    camera_->ChangeState(Camera::kFirstPerson);
+    UpdateCamera(); // Camera needs to be updated to change position
   }
   // Calculate middle of road in autodrive mode
-  if (game_state_ == kAutoDrive) {
+  if (game_state_ == kAutoDrive || is_collision_) {
     // Get the next points to smooth it
     closest_it++;
     closest_it++;

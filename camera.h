@@ -44,6 +44,9 @@ class Camera {
     // Changes the current state of the camera, hence changes the viewing
     // mode and orientation
     void CycleState();
+    // Changes the current state of the camera to the specified state
+    //   @param State, the mode and orientation state of the camera
+    inline void ChangeState(State state);
     // Better method using is_key_pressed_hash for multiple inputs
     void Movement(float delta_time, const std::vector<bool> &is_key_pressed_hash);
     // Changes Direction by X and Y mouse inputs
@@ -122,9 +125,14 @@ class Camera {
     // Right Button Status
     bool is_right_button_;
 };
-
+// Changes the current state of the camera to the specified state
+//   @param State, the mode and orientation state of the camera
+inline void Camera::ChangeState(State state) {
+  state_ = state;
+}
 // Mutates the cameras position
 //   @warn Used to setup default camera, not tested for other use
+//   @warn probably shouldn't be inline but compiler will handle it..
 inline void Camera::ResetPosition(const glm::vec3 &camera_position) {
   cam_pos_ = camera_position;
   cam_front_.x = 0.0f;

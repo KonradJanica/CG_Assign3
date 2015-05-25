@@ -7,6 +7,7 @@
 #include <queue>
 #include <ctime>
 #include <algorithm>
+#include <list>
 
 #include "model_data.h"
 #include "model.h"
@@ -59,6 +60,8 @@ class Terrain {
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
     inline std::queue<colisn_vec> collision_queue_hash() const;
+    // Accessor for the water collision checking data structure
+    inline std::list<std::vector<glm::vec3> > colisn_lst_water() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
@@ -103,14 +106,10 @@ class Terrain {
     circular_vector<unsigned int> road_vao_handle_;
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
-    //   Each key in the map represents a Z scanline
-    //   Each pair of values of the key represents it's min X and max X
-    //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
     std::queue<colisn_vec> collision_queue_hash_;
-    // A queue of rotations corresponding to each collision tile
-    //   Used to reset car to current orientation on road after crash
-    std::queue<float> rotation_queue_;
+    // The collisions for the right (water) side
+    std::list<std::vector<glm::vec3> > colisn_lst_water_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -283,12 +282,17 @@ inline int Terrain::road_indice_count() const {
 inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
+// Accessor for the water collision checking data structure
+inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_water() const {
+  return colisn_lst_water_;
+}
 // Pops the first collision map 
 //   To be used after car has passed road tile
 //   TODO remove and replace in circular buffer instead
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
   collision_queue_hash_.pop();
+  colisn_lst_water_.pop_front();
 }
 
 #endif

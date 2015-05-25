@@ -78,6 +78,10 @@ class Object {
     inline float default_speed() const;
     // Reset speed and acceleration to 0
     inline void ResetPhysics();
+    // Reduce speed by amount
+    //   Corrects speed < 0 to 0
+    //   @param the amount to decrease the speed by
+    inline void ReduceSpeed(float amount);
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -217,6 +221,15 @@ inline void Object::set_displacement(glm::vec3 new_displacement) {
 inline void Object::ResetPhysics() {
   speed_ = default_speed();
   centri_speed_ = 0;
+}
+// Reduce speed by amount
+//   Corrects speed < 0 to 0
+//   @param the amount to decrease the speed by
+inline void Object::ReduceSpeed(float amount) {
+  speed_ -= amount;
+  if (speed() < 0) {
+    speed_ = 0;
+  }
 }
 
 #endif
