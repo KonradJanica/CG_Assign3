@@ -31,9 +31,9 @@ void Controller::AddSkybox(const GLuint &program_id)
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename,
-        glm::vec3(0.8f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
-        glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
+        glm::vec3(1.12f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
+        glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
+        glm::vec3(0.3f,  0.3f, 0.3f),  // Scale
         60, false); // starting speed and debugging mode
     // This block fixes car being moved to the wrong spot initially
     UpdateCollisions();
@@ -319,6 +319,7 @@ void Controller::UpdatePhysics() {
     }
     prev_left_lane_midpoint_ = left_lane_midpoint_;
     // Set speed to default speed
+    // TODO only need to call this once when change state
     car_->ResetPhysics();
   }
 }
