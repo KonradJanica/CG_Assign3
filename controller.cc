@@ -271,10 +271,10 @@ void Controller::UpdateCollisions() {
     midpoint.y = car_->translation().y;
     car_->set_translation(midpoint);
     // Reset facing in road direction
-    // glm::vec3 pair_vec = ((*closest_it).first+(*closest_it).second);
-    // glm::vec3 road_dir = glm::cross(midpoint, glm::vec3(0,1,0));
-    // float y_rot = RAD2DEG(atan(road_dir.z/road_dir.x));
-    float y_rot = terrain_->rotation();
+    glm::vec3 first_point = previous_pair.first;
+    glm::vec3 next_point = next_pair.first;
+    glm::vec3 direction = next_point - first_point;
+    float y_rot = RAD2DEG(atan(direction.x/direction.z));
     car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
     // Zero speed
     car_->ResetPhysics();
