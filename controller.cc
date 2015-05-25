@@ -5,13 +5,14 @@
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely
 Controller::Controller(const Renderer * r, const bool &debug_flag) 
-  : renderer_(r), light_pos_(glm::vec4(0,0,0,0)), delta_time_(0), last_frame_(0), is_debugging_(debug_flag) {
-  camera_ = new Camera();
-  light_controller_ = new LightController();
-  is_key_pressed_hash_.reserve(256);
-  is_key_pressed_hash_.resize(256);
+  : renderer_(r), game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
+  delta_time_(0), last_frame_(0), is_debugging_(debug_flag) {
+    camera_ = new Camera();
+    light_controller_ = new LightController();
+    is_key_pressed_hash_.reserve(256);
+    is_key_pressed_hash_.resize(256);
 
-}
+  }
 
 void Controller::AddWater(const GLuint &program_id)
 {
@@ -29,16 +30,16 @@ void Controller::AddSkybox(const GLuint &program_id)
 //   TODO split Car into it's own
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
-    car_ = new Model(program_id, model_filename, 
-                     glm::vec3(0.0f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
-                     glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
-                     glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
-                     0, false); // starting speed and debugging mode
+    car_ = new Model(program_id, model_filename,
+        glm::vec3(0.0f, 0.3f, 15.0f), // Translation  move behind first tile (i.e. start on 2nd tile)
+        glm::vec3(0.0f, 0.0f, 0.0f),  // Rotation
+        glm::vec3(0.3f, 0.3f, 0.3f),  // Scale
+        60, false); // starting speed and debugging mode
   } else {
-    Object * object = new Model(program_id, model_filename, 
-                                glm::vec3(0.0f, 0.0f, 0.0f), // Translation
-                                glm::vec3(0.0f, 0.0f, 0.0f), // Rotation
-                                glm::vec3(0.6f, 0.6f, 0.6f)); // Scale
+    Object * object = new Model(program_id, model_filename,
+        glm::vec3(0.0f, 0.0f, 0.0f), // Translation
+        glm::vec3(0.0f, 0.0f, 0.0f), // Rotation
+        glm::vec3(0.6f, 0.6f, 0.6f)); // Scale
     objects_.push_back(object);
   }
 }
@@ -64,7 +65,7 @@ void Controller::Draw() {
   // TODO Toggle
   renderer_->RenderAxis(camera_);
 
-  
+  car_->UpdateModelMatrix();
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties
@@ -190,24 +191,25 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
   float min_x = a.x, max_x = a.x;
   float min_z = a.z, max_z = a.z;
   for (int i = 0; i < 3; ++i) {
-  // Find max x bounding box
-  if (arr[i].x > max_x)
-    max_x = arr[i].x;
-  // Find min x bounding box
-  if (arr[i].x < min_x)
-    min_x = arr[i].x;
-  // Find max z bounding box
-  if (arr[i].z > max_z)
-    max_z = arr[i].z;
-  // Find min x bounding box
-  if (arr[i].z < min_z)
-    min_z = arr[i].z;
+    // Find max x bounding box
+    if (arr[i].x > max_x)
+      max_x = arr[i].x;
+    // Find min x bounding box
+    if (arr[i].x < min_x)
+      min_x = arr[i].x;
+    // Find max z bounding box
+    if (arr[i].z > max_z)
+      max_z = arr[i].z;
+    // Find min x bounding box
+    if (arr[i].z < min_z)
+      min_z = arr[i].z;
   }
 
   return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
 }
 
 // TODO comment
+//   Also calculates the middle of the road and it's direction if game state is autodrive
 void Controller::UpdateCollisions() {
   // Setup vars
   const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
@@ -222,6 +224,7 @@ void Controller::UpdateCollisions() {
 
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
+    // TODO change to glm distance func
     const glm::vec3 dv = cur_vec - car;   // distance vector
     float cur_dis = sqrt(dv.x*dv.x + dv.y*dv.y + dv.z*dv.z);
     if (cur_dis < dis) {
@@ -239,7 +242,7 @@ void Controller::UpdateCollisions() {
   //   but make sure it isn't the last pair overwise pop
   it = closest_it;
   it++;
-  it++; // pop 1 vertce early
+  it++; // pop 1 vertex early
   if (it == head.end()) {
     printf("assuming end of tile reached, pop!\n");
     // TODO fix check end of tile...
@@ -248,7 +251,7 @@ void Controller::UpdateCollisions() {
     terrain_->ProceedTiles();
 
     // Check collision for next tile
-    UpdateCollisions();
+    // UpdateCollisions();
     return;
   }
 
@@ -279,15 +282,53 @@ void Controller::UpdateCollisions() {
     // Zero speed
     car_->ResetPhysics();
   }
+  // Calculate middle of road in autodrive mode
+  if (game_state_ == kAutoDrive) {
+    // Find midpoint
+    glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
+    road_midpoint /= 2;
+    road_midpoint.y = car_->translation().y;
+    // Find lane midpoints
+    left_lane_midpoint_ = road_midpoint + (*closest_it).second;
+    left_lane_midpoint_ /= 2;
+    // Find road direction
+    glm::vec3 first_point = previous_pair.first;
+    glm::vec3 next_point = next_pair.first;
+    glm::vec3 direction = next_point - first_point;
+    road_direction_ = glm::normalize(direction);
+    road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+  }
 }
 
 // The controllers physics update tick
 //   Checks keypresses and calculates acceleration
 void Controller::UpdatePhysics() {
 
-  // Sets variables required for camera
-  //  i.e. camera has access to car in UpdateCarTick(car_)
-  car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
+  if (game_state_ == kStart) {
+    // Sets variables required for camera
+    //  i.e. camera has access to car in UpdateCarTick(car_)
+    car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
+  }
 
   UpdateCollisions();
+
+  if (game_state_ == kAutoDrive) {
+    car_->set_rotation(glm::vec3(car_->rotation().x,road_y_rotation_,car_->rotation().z));
+    if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
+      float x_pos = car_->translation().x + road_direction_.x * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      float y_pos = car_->translation().y;
+      float z_pos = car_->translation().z + road_direction_.z * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+    } else {
+      glm::vec3 next_pt_dir = left_lane_midpoint_ - car_->translation();
+      // next_pt_dir = glm::normalize(next_pt_dir);
+      float x_pos = car_->translation().x + next_pt_dir.x * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      float y_pos = car_->translation().y;
+      float z_pos = car_->translation().z + next_pt_dir.z * 0.01f * delta_time_;//car_->default_speed()/10*delta_time_;
+      car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+    }
+    prev_left_lane_midpoint_ = left_lane_midpoint_;
+    // Set speed to default speed
+    car_->ResetPhysics();
+  }
 }

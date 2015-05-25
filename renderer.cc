@@ -99,9 +99,8 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
-//   @warn object not const because it is possibly changed with UpdateModelMatrix()
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(Object * object, const Camera * camera) const {
+void Renderer::Render(const Object * object, const Camera * camera) const {
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -174,13 +173,6 @@ void Renderer::Render(Object * object, const Camera * camera) const {
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
 
-  // Update Physics
-  // This optimization doesnt allow braking animation
-  // the compiler might do this for us
-  // if (object->speed()) {
-  //   object->UpdateModelMatrix();
-  // }
-  object->UpdateModelMatrix();
 }
 
 // Render Coordinate Axis 

@@ -37,7 +37,6 @@ class Object {
            bool debugging_on = false);
 
     // Updates the model matrix using glLookAt
-    //  Includes physics calulations and movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateModelMatrix();
 
@@ -71,6 +70,9 @@ class Object {
     // Accessor for the current speed of the object
     //   @return speed_, the current speed of the object
     inline float speed() const;
+    // Accessor for the constant default speed of the object
+    //   @return default_speed_, the default speed of the object
+    inline float default_speed() const;
     // Reset speed and acceleration to 0
     inline void ResetPhysics();
 
@@ -140,6 +142,8 @@ class Object {
 
     // The speed of the object in the direction it is facing
     float speed_;
+    // The default speed of the object
+    const float default_speed_;
     // The speed of the object at 90 degrees towards turning center
     float centri_speed_;
 
@@ -182,6 +186,11 @@ inline glm::vec3 Object::displacement() const {
 inline float Object::speed() const {
   return speed_;
 }
+// Accessor for the constant default speed of the object
+//   @return default_speed_, the default speed of the object
+inline float Object::default_speed() const {
+  return default_speed_;
+}
 
 // MUTATORS:
 // Sets the position
@@ -200,7 +209,7 @@ inline void Object::set_displacement(glm::vec3 new_displacement) {
 }
 // Reset speed and acceleration to 0
 inline void Object::ResetPhysics() {
-  speed_ = 0;
+  speed_ = default_speed();
   centri_speed_ = 0;
 }
 

@@ -36,14 +36,23 @@ class Controller {
     //   used in GetMax
     enum CoordEnum {
       kX = 0,
-      kY = 1, 
+      kY = 1,
       kZ = 2,
-      kx = 0, 
-      ky = 1, 
+      kx = 0,
+      ky = 1,
       kz = 2,
       kMin = 3,
       kMax = 3,
-    };  
+    };
+    // Enum for game states
+    enum State {
+      kStart = 0,
+      kPause = 1,
+      kResume = 2,
+      kAutoDrive = 3,
+      kCrashing = 4,
+      kGameOver = 5,
+    };
 
     // Construct with verbose debugging mode
     Controller(const Renderer * r, const bool &debug_flag = false);
@@ -90,7 +99,7 @@ class Controller {
     // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
     // The moving car
-    //   An object with the physics extension enabled
+    //   An object with physics
     Object * car_;
     // The camera object
     Camera * camera_;
@@ -100,6 +109,17 @@ class Controller {
     Skybox * skybox_;
     // The water object
     Water * water_;
+
+    // The current game state
+    State game_state_;
+    // The midpoint of the road where the car is
+    glm::vec3 left_lane_midpoint_;
+    // The previous midpoint, updated during autodrive
+    glm::vec3 prev_left_lane_midpoint_;
+    // The direction vector of the road where the car is
+    glm::vec3 road_direction_;
+    // The rotation of the road where the car is
+    float road_y_rotation_;
 
     // INTERNAL TICKS
     // The controllers camera update tick

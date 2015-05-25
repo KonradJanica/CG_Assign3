@@ -7,7 +7,7 @@ Object::Object(const glm::vec3 &translation,
     float default_speed,
     bool debugging_on)
   : translation_(translation), rotation_(rotation), scale_(scale),
-  displacement_(0), speed_(default_speed), centri_speed_(0.0f),
+  displacement_(0), speed_(default_speed), default_speed_(default_speed), centri_speed_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
   }
@@ -238,7 +238,6 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 }
 
 // Updates the transform matrix using glLookAt
-//  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateModelMatrix() {
 
