@@ -50,7 +50,7 @@ class Controller {
       kPause = 1,
       kResume = 2,
       kAutoDrive = 3,
-      kCrashing = 4,
+      kCrashingFall = 4,
       kGameOver = 5,
     };
 
@@ -112,6 +112,8 @@ class Controller {
 
     // The current game state
     State game_state_;
+    // The state of the previous collision tick
+    bool is_collision_;
     // The midpoint of the road where the car is
     glm::vec3 left_lane_midpoint_;
     // The previous midpoint, updated during autodrive
@@ -139,6 +141,9 @@ class Controller {
     //   true if area is positive
     //   @warn input must be square for accurate results
     bool IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
+
+    float colisn_anim_ticks_;
+    void CrashAnimation();
 
     // The light controller
     LightController * light_controller_;

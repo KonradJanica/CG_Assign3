@@ -39,6 +39,9 @@ class Object {
     // Updates the model matrix using glLookAt
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateModelMatrix();
+    // Calculate the direction vector
+    //   @warn the roll (z rotation) is not calculated
+    glm::vec3 direction() const;
 
     // ACCESSORS:
     // Accessor for the current model matrix
@@ -132,6 +135,9 @@ class Object {
     glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
+    // The direction of the object
+    //   @warn roll is not calculated
+    glm::vec3 direction_;
 
     // glm::scale transformation
     //   The scale of the object

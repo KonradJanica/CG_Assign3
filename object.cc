@@ -68,12 +68,10 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   float force_x = 0;
   float force_z = 0;
   // The current velocity vector
-  float direction_x = sin(DEG2RAD(rotation().y));
-  float direction_z = cos(DEG2RAD(rotation().y));
+  float direction_x = direction().x;
+  float direction_z = direction().z;
   float velocity_x = speed_ * direction_x;
   float velocity_z = speed_ * direction_z;
-
-
 
   if (is_key_pressed_hash.at('w')) {
     // simulated gear shifting
@@ -256,4 +254,13 @@ void Object::UpdateModelMatrix() {
       glm::vec3(translation_.x, translation_.y, translation_.z));
 
   model_matrix_ = translate * rotate * scale;
+}
+
+// Accessor for the direction vector
+//   @warn the roll (z rotation) is not calculated
+glm::vec3 Object::direction() const {
+  float direction_x = sin(DEG2RAD(rotation().y));
+  float direction_y = sin(DEG2RAD(rotation().x));
+  float direction_z = cos(DEG2RAD(rotation().y));
+  return glm::vec3(direction_x, direction_y, direction_z);
 }

@@ -142,6 +142,22 @@ void Controller::UpdateGame() {
 
   UpdateCamera();
   UpdatePhysics();
+
+  if (game_state_ == kCrashingFall) {
+    CrashAnimation();
+    return;
+  }
+
+  if (is_collision_) {
+    // TODO replace to kGameOver
+    game_state_ = kAutoDrive;
+    return;
+  }
+
+  if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
+      || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')) {
+    game_state_ = kStart;
+  }
 }
 
 // The controllers camera update tick
@@ -156,6 +172,23 @@ void Controller::UpdateCamera() {
   camera_->UpdateCarTick(car_);
   // Update camera lookAt
   camera_->UpdateCamera();
+}
+
+void Controller::CrashAnimation() {
+  // colisn_anim_ticks_;
+  // Rotate car
+  float x_rot = car_->rotation().x + 0.3f;
+  float z_rot = car_->rotation().z + 0.3f;
+  car_->set_rotation(glm::vec3(x_rot, car_->rotation().y, z_rot));
+
+  // Move car in direction
+  // TODO make member in object for this
+  glm::vec3 dir = car_->direction();
+  float dt = delta_time_ / 1000;
+  float x_pos = car_->translation().x + dir.x * car_->speed()/10.0f*dt;
+  float y_pos = car_->translation().y - dir.y * car_->speed()/10.0f*dt;
+  float z_pos = car_->translation().z + dir.z * car_->speed()/10.0f*dt;
+  car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
 }
 
 // Checks whether car is between the biggest rectangle than can be formed
@@ -233,7 +266,7 @@ void Controller::UpdateCollisions() {
     terrain_->ProceedTiles();
 
     // Check collision for next tile
-    // UpdateCollisions();
+    UpdateCollisions();
     return;
   }
 
@@ -248,24 +281,34 @@ void Controller::UpdateCollisions() {
   // Check if car is in range
   if (IsInside(car, bounding_box)) {
     //inside bounds
+    is_collision_ = false;
   } else {
     printf("collision on edge of road!\n");
+    is_collision_ = true;
+    game_state_ = kCrashingFall;
+    colisn_anim_ticks_ = 100;
     // Reset car to middle of road
     glm::vec3 midpoint = ((*closest_it).first+(*closest_it).second);
     midpoint /= 2;
+    // Find lane midpoint
+    midpoint = midpoint + (*closest_it).second;
+    midpoint /= 2;
     midpoint.y = car_->translation().y;
-    car_->set_translation(midpoint);
+    // car_->set_translation(midpoint);
     // Reset facing in road direction
     glm::vec3 first_point = previous_pair.first;
     glm::vec3 next_point = next_pair.first;
     glm::vec3 direction = next_point - first_point;
     float y_rot = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
-    car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
+    // car_->set_rotation(glm::vec3(car_->rotation().x,y_rot,car_->rotation().z));
     // Zero speed
-    car_->ResetPhysics();
+    // car_->ResetPhysics();
   }
   // Calculate middle of road in autodrive mode
   if (game_state_ == kAutoDrive) {
+    // Get the next points to smooth it
+    closest_it++;
+    closest_it++;
     // Find midpoint
     glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
     road_midpoint /= 2;
