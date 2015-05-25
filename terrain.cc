@@ -344,7 +344,6 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       break;
       }
   }
-  rotation_queue_.push(rotation_);
   // SMOOTH CONNECTIONS
   // TODO someone try fighting with this if you dare...
   //   Something goes wrong with the normals at the connection
