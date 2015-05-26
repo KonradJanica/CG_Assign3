@@ -492,8 +492,8 @@ void Terrain::HelperMakeRoadVertices() {
 
   // Store cliff vertices (only 1 row)
   std::vector<glm::vec3> cliff_side;
-  water_side.reserve(1*z_length_);
-  for (unsigned int x = 20; x < 21; ++x) {
+  cliff_side.reserve(1*z_length_);
+  for (unsigned int x = 19; x < 20; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
       cliff_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
     }

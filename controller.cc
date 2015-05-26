@@ -140,9 +140,13 @@ void Controller::UpdateGame() {
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
+  // printf("mid = (%f,%f,%f)\n",left_lane_midpoint_.x,left_lane_midpoint_.y,left_lane_midpoint_.z);
+  // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   UpdateCamera();
-  if (!is_collision_)
+  if (!is_collision_) {
     UpdatePhysics();
+    UpdateCollisions();
+  }
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo
@@ -184,91 +188,167 @@ void Controller::UpdateCamera() {
 void Controller::CrashAnimationCliff() {
   // Lock camera state
   // camera_->ChangeState(Camera::kFreeView);
+  const glm::vec3 &car_pos = car_->translation();
 
-  typedef std::vector<glm::vec3> w_vec;
-  typedef std::list<w_vec> w_list;
-  const w_list &cliff = terrain_->colisn_lst_cliff();
-  float dis = FLT_MAX;
-  glm::vec3 closest_vertice;
-  glm::vec3 snd_clst_vertice = glm::vec3(0,0,0);
+  // Calc next movement (avoid going through)
+  glm::vec3 dir = car_->direction();
+  float dt = delta_time_ / 1000;
+  float scale = 10.0f;
+  // Move car in its direction
+  float vel_x = dir.x * car_->speed();
+  vel_x += car_->centripeta_velocity_x();
+  vel_x /= scale;
+  float x_pos = car_pos.x;
+  x_pos += vel_x * dt;
+  float vel_z = dir.z * car_->speed();
+  vel_z += car_->centripeta_velocity_z();
+  vel_z /= scale;
+  float z_pos = car_pos.z;
+  z_pos += vel_z * dt;
+  float y_pos = car_pos.y + dir.y * car_->speed()/10.0f*dt;
+  if (y_pos < 0.3f)
+    y_pos = 0.3f;
 
-  w_list::const_iterator it = cliff.begin();
-  for (unsigned int i = 0; i < 2; ++i) {
+  float dis = 0.0f;
 
-    const w_vec &vertices = *it;
-    for (w_vec::const_iterator x = vertices.begin(); 
-        x != vertices.end(); ++x) {
+  // Check for collision
+  if (!is_cliff_hit_) {
+    typedef std::vector<glm::vec3> w_vec;
+    typedef std::list<w_vec> w_list;
+    const w_list &cliff = terrain_->colisn_lst_cliff();
+    glm::vec3 closest_vertice = cliff.begin()->at(0);
+    glm::vec3 snd_clst_vertice = cliff.begin()->at(1);
+    dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos,z_pos));
+    float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos,z_pos));
 
-      const glm::vec2 cur_vec = glm::vec2(x->x,x->z); // current vector 
-      float cur_dis = glm::distance(cur_vec, glm::vec2(car_->translation().x, car_->translation().z));
-      if (cur_dis < dis) {
-        dis = cur_dis;
-        snd_clst_vertice = closest_vertice;
-        closest_vertice = *x;
+    w_list::const_iterator it = cliff.begin();
+    for (unsigned int i = 0; i < 2; ++i) {
+
+      const w_vec &vertices = *it;
+      for (w_vec::const_iterator x = vertices.begin()+2; 
+          x != vertices.end(); ++x) {
+
+        const glm::vec2 cur_vec = glm::vec2(x->x,x->z); // current vector 
+        float cur_dis = glm::distance(cur_vec, glm::vec2(x_pos, z_pos));
+        if (cur_dis < dis) {
+          snd_dis = dis;
+          dis = cur_dis;
+          snd_clst_vertice = closest_vertice;
+          closest_vertice = *x;
+        } else if (cur_dis < snd_dis && *x != closest_vertice) {
+          snd_dis = cur_dis;
+          snd_clst_vertice = *x;
+        }
       }
+      it++;
     }
-    it++;
-  }
-  printf("dis=%f\n",dis);
-  if (car_->speed() > 20.0f) {
-    glm::vec3 dir = car_->direction();
-    // Get direction of cliff
-    glm::vec3 cliff_dir = closest_vertice - snd_clst_vertice;
-    if (snd_clst_vertice == glm::vec3(0,0,0)) {
-      cliff_dir = road_direction_;
-    }
-    glm::vec2 r_dir = glm::vec2(cliff_dir.x, cliff_dir.z);
-    glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
-    float angle = -glm::orientedAngle(r_dir, road_dir);
-    printf("ang = %f\n",angle);
-    // Rotate car
-    float x_rot = car_->rotation().x;
-    float y_rot = car_->rotation().y;
-    float z_rot = car_->rotation().z;
-    if (dis < 0.9f) {
-      // Move car in roads direction
-      float dt = delta_time_ / 1000;
-      float velocity_x = road_direction_.x * car_->speed()/10.0f*dt;
-      float velocity_z = road_direction_.z * car_->speed()/10.0f*dt;
-      velocity_x = cliff_dir.x * car_->speed()/10.0f*dt;
-      velocity_z = cliff_dir.z * car_->speed()/10.0f*dt;
-      float x_pos = car_->translation().x + velocity_x;
-      float y_pos = car_->translation().y - dir.y * car_->speed()/30.0f*dt;
-      float z_pos = car_->translation().z + velocity_z;
-      car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
-      car_->ReduceSpeed(car_->speed() * car_->speed()/10.0f*dt);
-      car_->ReduceCentriVelocity(0); //0 side speed
-      // Rotation
-      if (car_->speed() > 60) {
-        float viol = car_->speed() / 600; //violence factor
-        x_rot = car_->speed() * viol;
-        z_rot = car_->speed() * viol;
-      }
-    } else {
-      // Move car in its direction
-      float dt = delta_time_ / 1000;
-      float scale = 10.0f;
-      float vel_x = dir.x * car_->speed();
-      vel_x += car_->centripeta_velocity_x();
-      vel_x /= scale;
-      float x_pos = car_->translation().x;
-      x_pos += vel_x * dt;
-      float vel_z = dir.z * car_->speed();
-      vel_z += car_->centripeta_velocity_z();
-      vel_z /= scale;
-      float z_pos = car_->translation().z;
-      z_pos += vel_z * dt;
-      float y_pos = car_->translation().y + dir.y * car_->speed()/10.0f*dt;
-      if (y_pos < 0.3f)
-        y_pos = 0.3f;
-      car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
-      car_->ReduceSpeed(car_->speed() * car_->speed()/100.0f*dt);
-    }
+    // printf("dis=%f\n",dis);
 
-    car_->set_rotation(glm::vec3(x_rot, y_rot, z_rot));
+    // Check for collision on closest 2 points
+    glm::vec3 a, b;
+    a = closest_vertice;
+    b = snd_clst_vertice;
+    float road_det = (b.x-a.x)*(left_lane_midpoint_.z-a.z)-(b.z-a.z)*(left_lane_midpoint_.x-a.x);
+    bool road_sign = true; //true for positive or 0
+    if (road_det < 0)
+      road_sign = false;
+    // printf("road det = %f\n", road_det);
+    float det = (b.x-a.x)*(z_pos-a.z)-(b.z-a.z)*(x_pos-a.x);
+    if (det == 0) {
+      // printf("a = (%f,%f,%f)\n",a.x,a.y,a.z);
+      // printf("b = (%f,%f,%f)\n",b.x,b.y,b.z);
+      is_cliff_hit_ = true;
+    }
+    float det_sign = true;
+    if (det < 0)
+      det_sign = false;
+    if (det_sign != road_sign) {
+      is_cliff_hit_ = true;
+    }
+    // printf("car det = %f\n", det);
+    // printf("mp = (%f,%f)\n", left_lane_midpoint_.x, left_lane_midpoint_.z);
   }
 
-  if (colisn_anim_ticks_ > 400) {
+  // printf("dis = %f\n", dis);
+  // Give second chance
+  if (is_cliff_hit_ && dis > 0.3f) {
+    printf("CRUDE RECOVERY (IE BUGGY 2ND CHANCE)\n");
+    // Reset game state
+    game_state_ = kStart;
+    is_collision_ = false;
+    camera_->ChangeState(camera_state_); // users previous camera
+    return;
+  }
+
+
+  if (!is_cliff_hit_) {
+    // No collision yet => move car towards cliff
+    car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+    // car_->ReduceSpeed(car_->speed() * car_->speed()/100.0f*dt);
+    // car_->ReduceCentriVelocity(50);
+  } else {
+    // Collided stop
+  }
+  // if (0)
+  //   if (car_->speed() > 20.0f) {
+  //     glm::vec3 dir = car_->direction();
+  //     // Get direction of cliff
+  //     glm::vec3 cliff_dir = closest_vertice - snd_clst_vertice;
+  //     if (snd_clst_vertice == glm::vec3(0,0,0)) {
+  //       cliff_dir = road_direction_;
+  //     }
+  //     glm::vec2 r_dir = glm::vec2(cliff_dir.x, cliff_dir.z);
+  //     glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+  //     float angle = -glm::orientedAngle(r_dir, road_dir);
+  //     printf("ang = %f\n",angle);
+  //     // Rotate car
+  //     float x_rot = car_->rotation().x;
+  //     float y_rot = car_->rotation().y;
+  //     float z_rot = car_->rotation().z;
+  //     if (dis < 0.9f) {
+  //       // Move car in roads direction
+  //       float dt = delta_time_ / 1000;
+  //       float velocity_x = road_direction_.x * car_->speed()/10.0f*dt;
+  //       float velocity_z = road_direction_.z * car_->speed()/10.0f*dt;
+  //       velocity_x = cliff_dir.x * car_->speed()/10.0f*dt;
+  //       velocity_z = cliff_dir.z * car_->speed()/10.0f*dt;
+  //       float x_pos = car_->translation().x + velocity_x;
+  //       float y_pos = car_->translation().y - dir.y * car_->speed()/30.0f*dt;
+  //       float z_pos = car_->translation().z + velocity_z;
+  //       car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+  //       car_->ReduceSpeed(car_->speed() * car_->speed()/10.0f*dt);
+  //       car_->ReduceCentriVelocity(0); //0 side speed
+  //       // Rotation
+  //       if (car_->speed() > 60) {
+  //         float viol = car_->speed() / 600; //violence factor
+  //         x_rot = car_->speed() * viol;
+  //         z_rot = car_->speed() * viol;
+  //       }
+  //     } else {
+  //       // Move car in its direction
+  //       float dt = delta_time_ / 1000;
+  //       float scale = 10.0f;
+  //       float vel_x = dir.x * car_->speed();
+  //       vel_x += car_->centripeta_velocity_x();
+  //       vel_x /= scale;
+  //       float x_pos = car_->translation().x;
+  //       x_pos += vel_x * dt;
+  //       float vel_z = dir.z * car_->speed();
+  //       vel_z += car_->centripeta_velocity_z();
+  //       vel_z /= scale;
+  //       float z_pos = car_->translation().z;
+  //       z_pos += vel_z * dt;
+  //       float y_pos = car_->translation().y + dir.y * car_->speed()/10.0f*dt;
+  //       if (y_pos < 0.3f)
+  //         y_pos = 0.3f;
+  //       car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+  //       car_->ReduceSpeed(car_->speed() * car_->speed()/100.0f*dt);
+  //     }
+  //
+  //     car_->set_rotation(glm::vec3(x_rot, y_rot, z_rot));
+  //   }
+
+  if (colisn_anim_ticks_ > 400 && is_cliff_hit_) {
     if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
@@ -322,23 +402,29 @@ void Controller::CrashAnimationFall() {
   typedef std::vector<glm::vec3> w_vec;
   typedef std::list<w_vec> w_list;
   const w_list &water = terrain_->colisn_lst_water();
-  float dis = FLT_MAX;
-  glm::vec3 closest_vertice;
-  glm::vec3 snd_clst_vertice = glm::vec3(0,0,0); // just incase not found
+  const w_list &cliff = terrain_->colisn_lst_cliff();
+  glm::vec3 closest_vertice = cliff.begin()->at(0);
+  glm::vec3 snd_clst_vertice = cliff.begin()->at(1);
+  float dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos,z_pos));
+  float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos,z_pos));
 
   w_list::const_iterator it = water.begin();
   for (unsigned int i = 0; i < 2; ++i) {
 
     const w_vec &vertices = *it;
-    for (w_vec::const_iterator x = vertices.begin(); 
+    for (w_vec::const_iterator x = vertices.begin()+2;
         x != vertices.end(); ++x) {
 
       const glm::vec2 cur_vec = glm::vec2(x->x,x->z); // current vector 
       float cur_dis = glm::distance(cur_vec, glm::vec2(x_pos, z_pos));
       if (cur_dis < dis) {
+        snd_dis = dis;
         dis = cur_dis;
         snd_clst_vertice = closest_vertice;
         closest_vertice = *x;
+      } else if (cur_dis < snd_dis && *x != closest_vertice) {
+        snd_dis = cur_dis;
+        snd_clst_vertice = *x;
       }
     }
     it++;
@@ -349,6 +435,7 @@ void Controller::CrashAnimationFall() {
     car_->set_rotation(glm::vec3(x_rot, car_->rotation().y, z_rot));
   } else {
     // Calc crude rebound angle
+    // TODO this needs fixing I think (x_rot makes no sense)
     glm::vec3 vec_a = closest_vertice - snd_clst_vertice;
     x_rot = -asin(vec_a.x/dir.x);
     if (x_rot != x_rot) { // NaN catch
@@ -447,8 +534,12 @@ void Controller::UpdateCollisions() {
   }
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
+  //   This was causing undefined behaviour before hence checks now in
+  //   place looking for end
   it = closest_it;
+  if (it != head.end())
   it++;
+  if (it != head.end())
   it++; // pop 1 vertex early
   if (it == head.end()) {
     printf("assuming end of tile reached, pop!\n");
@@ -515,7 +606,8 @@ void Controller::UpdateCollisions() {
       camera_->ChangeState(Camera::kFirstPerson);
     } else {
       game_state_ = kCrashingCliff;
-      cliff_dis_ = FLT_MAX;
+      is_cliff_hit_ = false;
+      is_prev_positive_ = true;
     }
     colisn_anim_ticks_ = 0;
     UpdateCamera(); // Camera needs to be updated to change position
@@ -531,8 +623,6 @@ void Controller::UpdatePhysics() {
     //  i.e. camera has access to car in UpdateCarTick(car_)
     car_->ControllerMovementTick(delta_time_, is_key_pressed_hash_);
   }
-
-  UpdateCollisions();
 
   if (game_state_ == kAutoDrive) {
     car_->set_rotation(glm::vec3(car_->rotation().x,road_y_rotation_,car_->rotation().z));
@@ -562,4 +652,5 @@ void Controller::UpdatePhysics() {
     // TODO only need to call this once when change state
     car_->ResetPhysics();
   }
+
 }
