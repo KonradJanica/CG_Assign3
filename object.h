@@ -52,6 +52,10 @@ class Object {
     inline glm::vec3 rotation() const;
     // Accessor for the displacement vector
     inline glm::vec3 displacement() const;
+    // Accessor for the centripetal X velocity
+    inline float centripeta_velocity_x() const;
+    // Accessor for the centripetal Z velocity
+    inline float centripeta_velocity_z() const;
 
     // MUTATORS:
     // Sets the position
@@ -156,6 +160,9 @@ class Object {
     const float default_speed_;
     // The speed of the object at 90 degrees towards turning center
     float centri_speed_;
+    // The centripetal velocitites of the object
+    float centripeta_velocity_x_;
+    float centripeta_velocity_z_;
 
     // Verbose debugging - prints physics variables
     bool is_debugging_;
@@ -200,6 +207,14 @@ inline float Object::speed() const {
 //   @return default_speed_, the default speed of the object
 inline float Object::default_speed() const {
   return default_speed_;
+}
+// Accessor for the centripetal X velocity
+inline float Object::centripeta_velocity_x() const {
+  return centripeta_velocity_x_;
+}
+// Accessor for the centripetal Z velocity
+inline float Object::centripeta_velocity_z() const {
+  return centripeta_velocity_z_;
 }
 
 // MUTATORS:

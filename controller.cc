@@ -146,7 +146,12 @@ void Controller::UpdateGame() {
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo
-    CrashAnimation();
+    CrashAnimationFall();
+    return;
+  }
+  if (game_state_ == kCrashingCliff) {
+    // delta_time_ /= 5; //slowmo
+    CrashAnimationCliff();
     return;
   }
 
@@ -170,7 +175,121 @@ void Controller::UpdateCamera() {
   camera_->UpdateCamera();
 }
 
-void Controller::CrashAnimation() {
+// The animation played when the car falls off the right (water) side
+//   Is calculated using the vertices stored by terrain
+//   Finds the closest vertice to car and doesn't allow it to go below it
+//   Once complete resets the state to kAutoDrive
+// @warn Pretty inefficent way of checking for collisions but it's only
+//       calculated during this state.
+void Controller::CrashAnimationCliff() {
+  // Lock camera state
+  // camera_->ChangeState(Camera::kFreeView);
+
+  typedef std::vector<glm::vec3> w_vec;
+  typedef std::list<w_vec> w_list;
+  const w_list &cliff = terrain_->colisn_lst_cliff();
+  float dis = FLT_MAX;
+  glm::vec3 closest_vertice;
+  glm::vec3 snd_clst_vertice = glm::vec3(0,0,0);
+
+  w_list::const_iterator it = cliff.begin();
+  for (unsigned int i = 0; i < 5; ++i) {
+
+    const w_vec &vertices = *it;
+    for (w_vec::const_iterator x = vertices.begin(); 
+        x != vertices.end(); ++x) {
+
+      const glm::vec2 cur_vec = glm::vec2(x->x,x->z); // current vector 
+      float cur_dis = glm::distance(cur_vec, glm::vec2(car_->translation().x, car_->translation().z));
+      if (cur_dis < dis) {
+        dis = cur_dis;
+        snd_clst_vertice = closest_vertice;
+        closest_vertice = *x;
+      }
+    }
+    it++;
+  }
+  printf("dis=%f\n",dis);
+  if (dis <= cliff_dis_) {
+    if (car_->speed() > 5.0f) {
+      glm::vec3 dir = car_->direction();
+      // Get direction of cliff
+      glm::vec3 cliff_dir = closest_vertice - snd_clst_vertice;
+      if (snd_clst_vertice == glm::vec3(0,0,0)) {
+        cliff_dir = road_direction_;
+      }
+      glm::vec2 r_dir = glm::vec2(cliff_dir.x, cliff_dir.z);
+      glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+      float angle = -glm::orientedAngle(r_dir, road_dir);
+      printf("ang = %f\n",angle);
+      // Rotate car
+      float x_rot = car_->rotation().x;
+      float y_rot = car_->rotation().y;
+      float z_rot = car_->rotation().z;
+      if (dis < 0.9f) {
+        // Move car in roads direction
+        float dt = delta_time_ / 1000;
+        float viol = car_->speed() / 600; //violence factor
+        float velocity_x = road_direction_.x * car_->speed()/10.0f*dt;
+        float velocity_z = road_direction_.z * car_->speed()/10.0f*dt;
+        velocity_x = cliff_dir.x * car_->speed()/10.0f*dt;
+        velocity_z = cliff_dir.z * car_->speed()/10.0f*dt;
+        float x_pos = car_->translation().x + velocity_x;
+        float y_pos = car_->translation().y - dir.y * car_->speed()/30.0f*dt;
+        float z_pos = car_->translation().z + velocity_z;
+        car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+        car_->ReduceSpeed(car_->speed() * car_->speed()/10.0f*dt);
+        // Rotation
+        if (car_->speed() > 60) {
+          x_rot = car_->speed() * viol;
+          z_rot = car_->speed() * viol;
+        }
+      } else {
+        // Move car in its direction
+        float dt = delta_time_ / 1000;
+        float velocity_x = dir.x * car_->speed()/10.0f*dt;
+        float velocity_z = dir.z * car_->speed()/10.0f*dt;
+        float x_pos = car_->translation().x + velocity_x;
+        float y_pos = car_->translation().y + dir.y * car_->speed()/10.0f*dt;
+        if (y_pos < 0.3f)
+          y_pos = 0.3f;
+        float z_pos = car_->translation().z + velocity_z;
+        car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
+        car_->ReduceSpeed(car_->speed() * car_->speed()/100.0f*dt);
+      }
+
+      car_->set_rotation(glm::vec3(x_rot, y_rot, z_rot));
+    }
+  }
+  cliff_dis_ = dis;
+
+  if (colisn_anim_ticks_ > 400) {
+    if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
+        || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
+        || colisn_anim_ticks_ > 2000) {
+      // Reset car
+      // TODO constant for y translation
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
+      car_->ResetPhysics();
+      // Reset game state
+      game_state_ = kAutoDrive;
+      is_collision_ = false;
+      camera_->ChangeState(camera_state_); // users previous camera
+      return;
+    }
+  }
+  colisn_anim_ticks_ += delta_time_ / 5;
+  // printf("tm = %f\n", colisn_anim_ticks_);
+}
+
+// The animation played when the car falls off the right (water) side
+//   Is calculated using the vertices stored by terrain
+//   Finds the closest vertice to car and doesn't allow it to go below it
+//   Once complete resets the state to kAutoDrive
+// @warn Pretty inefficent way of checking for collisions but it's only
+//       calculated during this state.
+void Controller::CrashAnimationFall() {
   // Lock camera state
   camera_->ChangeState(Camera::kFreeView);
   // Rotate car
@@ -235,16 +354,16 @@ void Controller::CrashAnimation() {
     if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
-    // Reset car
-    // TODO constant for y translation
-    car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
-    car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
-    car_->ResetPhysics();
-    // Reset game state
-    game_state_ = kAutoDrive;
-    is_collision_ = false;
-    camera_->ChangeState(camera_state_); // users previous camera
-    return;
+      // Reset car
+      // TODO constant for y translation
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
+      car_->ResetPhysics();
+      // Reset game state
+      game_state_ = kAutoDrive;
+      is_collision_ = false;
+      camera_->ChangeState(camera_state_); // users previous camera
+      return;
     }
   }
   colisn_anim_ticks_ += delta_time_ / 5;
@@ -343,31 +462,45 @@ void Controller::UpdateCollisions() {
   } else {
     printf("collision on edge of road!\n");
     is_collision_ = true;
-    game_state_ = kCrashingFall;
-    colisn_anim_ticks_ = 0;
-    // Camera effect
-    camera_state_ = camera_->state();
-    camera_->ChangeState(Camera::kFirstPerson);
-    UpdateCamera(); // Camera needs to be updated to change position
   }
-  // Calculate middle of road in autodrive mode
-  if (game_state_ == kAutoDrive || is_collision_) {
-    // Get the next points to smooth it
-    closest_it++;
-    closest_it++;
-    // Find midpoint
-    glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
-    road_midpoint /= 2;
-    road_midpoint.y = car_->translation().y;
-    // Find lane midpoints
-    left_lane_midpoint_ = road_midpoint + (*closest_it).second;
-    left_lane_midpoint_ /= 2;
-    // Find road direction
-    glm::vec3 first_point = previous_pair.first;
-    glm::vec3 next_point = next_pair.first;
-    glm::vec3 direction = next_point - first_point;
-    road_direction_ = glm::normalize(direction);
-    road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+  // Calculate middle of road and it's direction
+  // Get the next points to smooth it
+  closest_it++;
+  closest_it++;
+  // Find midpoint
+  glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
+  road_midpoint /= 2;
+  road_midpoint.y = car_->translation().y;
+  // Find lane midpoints
+  left_lane_midpoint_ = road_midpoint + (*closest_it).second;
+  left_lane_midpoint_ /= 2;
+  // Find road direction
+  glm::vec3 first_point = previous_pair.first;
+  glm::vec3 next_point = next_pair.first;
+  glm::vec3 direction = next_point - first_point;
+  road_direction_ = glm::normalize(direction);
+  road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+  // Find angle between car dir and road dir
+  //   Angle is clockwise from direction of road
+  glm::vec2 dir = glm::vec2(car_->direction().x, car_->direction().z);
+  glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+  car_angle_ = -glm::orientedAngle(dir, road_dir);
+  // printf("ang = %f\n",car_angle_);
+
+  // Decide which type of animation to play
+  //   i.e. cliff scrape or water bounce
+  // @warn also sets camera position for the crash
+  if (is_collision_) {
+    camera_state_ = camera_->state();
+    if (car_angle_ > 0) {
+      game_state_ = kCrashingFall;
+      camera_->ChangeState(Camera::kFirstPerson);
+    } else {
+      game_state_ = kCrashingCliff;
+      cliff_dis_ = FLT_MAX;
+    }
+    colisn_anim_ticks_ = 0;
+    UpdateCamera(); // Camera needs to be updated to change position
   }
 }
 

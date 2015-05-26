@@ -19,6 +19,7 @@
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/vector_angle.hpp"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -51,7 +52,8 @@ class Controller {
       kResume = 2,
       kAutoDrive = 3,
       kCrashingFall = 4,
-      kGameOver = 5,
+      kCrashingCliff = 5,
+      kGameOver = 6,
     };
 
     // Construct with verbose debugging mode
@@ -124,6 +126,12 @@ class Controller {
     glm::vec3 road_direction_;
     // The rotation of the road where the car is
     float road_y_rotation_;
+    // The angle of the car and the direction of road
+    //   Angle is clockwise from facing of road
+    float car_angle_;
+    // The previous distance to the closest vertice on cliff 
+    //   Used to left (cliff) collision
+    float cliff_dis_;
 
     // INTERNAL TICKS
     // The controllers camera update tick
@@ -145,7 +153,15 @@ class Controller {
     bool IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
 
     float colisn_anim_ticks_;
-    void CrashAnimation();
+    // The animation played when the car falls off the right (water) side
+    //   Is calculated using the vertices stored by terrain
+    //   Finds the closest vertice to car and doesn't allow it to go below it
+    //   Once complete resets the state to kAutoDrive
+    // @warn Pretty inefficent way of checking for collisions but it's only
+    //       calculated during this state.
+    void CrashAnimationFall();
+    // TODO comment
+    void CrashAnimationCliff();
 
     // The light controller
     LightController * light_controller_;

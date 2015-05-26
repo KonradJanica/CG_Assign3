@@ -170,16 +170,16 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   float centripetal_ax = 0.0f;
   float centripetal_az = 0.0f;
-  float centripeta_velocity_x = 0.0f;
-  float centripeta_velocity_z = 0.0f;
+  centripeta_velocity_x_ = 0.0f;
+  centripeta_velocity_z_ = 0.0f;
   bool is_turn = false;
   if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
       float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
       centripetal_ax = centre_of_circle_vector.x * a;
       centripetal_az = centre_of_circle_vector.z * a;
       set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
@@ -189,8 +189,8 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
       float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
       a *= -1;
       centripetal_ax = centre_of_circle_vector.x * a;
       centripetal_az = centre_of_circle_vector.z * a;
@@ -211,14 +211,14 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     centri_speed_ = 0.0f;
   } else {
     speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
-    centripeta_velocity_x += delta_time * centripetal_ax;
-    centripeta_velocity_z += delta_time * centripetal_az;
+    centripeta_velocity_x_ += delta_time * centripetal_ax;
+    centripeta_velocity_z_ += delta_time * centripetal_az;
     centri_speed_ += delta_time * a;
     if (is_debugging_) {
       printf("centripetal velocity = %f\n", centri_speed_);
     }
-    velocity_x += centripeta_velocity_x;
-    velocity_z += centripeta_velocity_z;
+    velocity_x += centripeta_velocity_x_;
+    velocity_z += centripeta_velocity_z_;
   }
   if (is_debugging_) {
     printf("speed = %f\n", speed_);
