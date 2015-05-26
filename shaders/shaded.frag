@@ -173,9 +173,14 @@ void main(void) {
   // Cannot trust pipeline interpolation to generate normalized normals
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
-
+  if(render > 0)
+  {
   vec3 NN = texture(cliffNorm, a_tex_coord.st).xyz; // normal map
-  normal_mv =  normal_mv + normalize(2.0*NN.xyz-1.0);
+  // IF YOU MULTIPLY THE SECOND HALF OF THIS BY A SCALAR IT SHOULD MAKE LIGHTING WEAKER
+
+  normal_mv =  normal_mv +  normalize(2.0*NN.xyz-1.0);
+  }
+
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
