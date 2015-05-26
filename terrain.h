@@ -69,6 +69,12 @@ class Terrain {
     //   TODO merge col_pop or something
     void ProceedTiles();
 
+    // MITCH
+    inline GLuint cliff_normal() const;
+
+    // MITCH
+    inline GLuint cliff2() const;
+
   private:
     // CONSTANTS
     enum TileType {
@@ -155,6 +161,11 @@ class Terrain {
     //   Is needed to connect rotated rows
     unsigned int z_smooth_max_;
 
+    // MITCH
+    GLuint cliff2_;
+
+    GLuint cliff_normal_;
+
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
     void RandomizeGeneration();
     // Generate Terrain tile piece with road
@@ -224,7 +235,7 @@ class Terrain {
     unsigned int CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
-    GLuint LoadTexture(const std::string &filename);
+    GLuint LoadTexture(const std::string &filename, int textureCode);
 
     // Verbose Debugging mode
     bool is_debugging_;
@@ -247,6 +258,16 @@ inline circular_vector<unsigned int> Terrain::road_vao_handle() const {
 inline GLuint Terrain::road_texture() const {
   return road_texture_;
 }
+
+// MITCH
+inline GLuint Terrain::cliff_normal() const {
+  return cliff_normal_;
+}
+
+inline GLuint Terrain::cliff2() const {
+  return cliff2_;
+}
+
 // Accessor for the loaded texture
 //   @warn requires a texture to be loaded with LoadTexture()
 inline GLuint Terrain::texture() const {

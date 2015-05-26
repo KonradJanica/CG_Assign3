@@ -27,14 +27,14 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
 
   int camPosHandle = glGetUniformLocation(water->watershader(), "cameraPos");
   if (camPosHandle == -1) {
-    printf("Couldnt get the campos for water reflections\n");
+    //printf("Couldnt get the campos for water reflections\n");
   }
   glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
 
   int texHandle = glGetUniformLocation(water->watershader(), "skybox");
   if (texHandle == -1) {
     
-      fprintf(stderr, "Could not find uniform variables (WATER - SKYCUBE)\n");
+      //fprintf(stderr, "Could not find uniform variables (WATER - SKYCUBE)\n");
    
   }
 
@@ -351,6 +351,29 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   float mtlshininess = 0.8f; 
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
+  int texHandle2 = glGetUniformLocation(program_id, "mossMap");
+  if(texHandle2 == -1)
+  {
+    printf("couldnt get mossmap\n");
+  }
+
+  int renderMode = glGetUniformLocation(program_id, "render");
+  if(renderMode == -1)
+  {
+    printf("couldnt get render\n");
+  }
+  glUniform1i(renderMode, 1);
+
+  int texHandle3 = glGetUniformLocation(program_id, "cliffNorm");
+  if(texHandle3 == -1)
+  {
+    printf("couldnt get cliffnorm\n");
+  }
+  glBindTexture(GL_TEXTURE_2D, terrain->cliff_normal());
+  glUniform1i(texHandle3, 2);
+
+  
+
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
@@ -365,9 +388,13 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
+  glBindTexture(GL_TEXTURE_2D, terrain->cliff2());
+  glUniform1i(texHandle2, 1);
+
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   //////////////////////////
   // ROADS
+  glUniform1i(renderMode, 0);
   int amount = terrain->road_indice_count();
   const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {

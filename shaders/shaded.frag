@@ -52,8 +52,13 @@ uniform vec3 mtl_ambient;
 uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
+uniform int render;
+
+
 
 uniform sampler2D texMap;
+uniform sampler2D mossMap;
+uniform sampler2D cliffNorm;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
@@ -169,6 +174,9 @@ void main(void) {
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
 
+  vec3 NN = texture(cliffNorm, a_tex_coord.st).xyz; // normal map
+  normal_mv =  normal_mv + normalize(2.0*NN.xyz-1.0);
+
   vec4 litColour = calcDirectionalLight(normal_mv);
 
   for (int i = 0; i < gNumPointLights; i++)
@@ -183,5 +191,20 @@ void main(void) {
 
 	//fragColour = litColour * texture(texMap, a_tex_coord);
 
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
+  vec4 mossColour = texture(mossMap, a_tex_coord);
+  vec4 rockColour = texture(texMap, a_tex_coord);
+
+  vec4 totalColour;
+  // If rendering cliff
+  if(render > 0 )
+  {
+    totalColour = mix(mossColour, rockColour, 0.8);
+    totalColour = litColour * totalColour;//litColour * totalColour;
+  }
+  else
+  {
+    totalColour = litColour * rockColour;//litColour * totalColour;
+  }
+
+  fragColour = mix(vec4(0.7,0.7,0.7,1.0), totalColour, fogFactor(vertex_mv,15.0,80.0,0.01));
 }
