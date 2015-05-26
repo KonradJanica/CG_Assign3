@@ -70,8 +70,8 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   // The current velocity vector
   float direction_x = direction().x;
   float direction_z = direction().z;
-  float velocity_x = speed_ * direction_x;
-  float velocity_z = speed_ * direction_z;
+  velocity_x_ = speed_ * direction_x;
+  velocity_z_ = speed_ * direction_z;
 
   if (is_key_pressed_hash.at('w')) {
     // simulated gear shifting
@@ -102,11 +102,11 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   }
 
   // Rolling resistance (friction of tires)
-  force_x -= AIRRESSISTANCE * velocity_x * speed_;
-  force_z -= AIRRESSISTANCE * velocity_z * speed_;
+  force_x -= AIRRESSISTANCE * velocity_x_ * speed_;
+  force_z -= AIRRESSISTANCE * velocity_z_ * speed_;
   // Air resistance x
-  force_x -= FRICTION * velocity_x;
-  force_z -= FRICTION * velocity_z;
+  force_x -= FRICTION * velocity_x_;
+  force_z -= FRICTION * velocity_z_;
 
   // CALCULATE ACCELERATION => a = F/M
   float acceleration_x = force_x / MASS;
@@ -146,7 +146,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     }
   }
 
-  float v = sqrt(velocity_x*velocity_x + velocity_z*velocity_z);
+  float v = sqrt(velocity_x_*velocity_x_ + velocity_z_*velocity_z_);
   if (v < 45) {
     v = 45;
   }
@@ -202,37 +202,37 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     centri_speed_ = 0.0f;
 
   // CALCULATE VELOCITY => v = v+dt*a 
-  velocity_x += delta_time * acceleration_x;
-  velocity_z += delta_time * acceleration_z;
+  velocity_x_ += delta_time * acceleration_x;
+  velocity_z_ += delta_time * acceleration_z;
 
   // CALCULATE SPEED
-  if (velocity_x * direction_x < 0 && velocity_z * direction_z < 0) {
+  if (velocity_x_ * direction_x < 0 && velocity_z_ * direction_z < 0) {
     speed_ = 0.0f;
     centri_speed_ = 0.0f;
   } else {
-    speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
+    speed_ = sqrt(velocity_x_ * velocity_x_ + velocity_z_ * velocity_z_);
     centripeta_velocity_x_ += delta_time * centripetal_ax;
     centripeta_velocity_z_ += delta_time * centripetal_az;
     centri_speed_ += delta_time * a;
     if (is_debugging_) {
       printf("centripetal velocity = %f\n", centri_speed_);
     }
-    velocity_x += centripeta_velocity_x_;
-    velocity_z += centripeta_velocity_z_;
+    velocity_x_ += centripeta_velocity_x_;
+    velocity_z_ += centripeta_velocity_z_;
   }
   if (is_debugging_) {
     printf("speed = %f\n", speed_);
   }
   // convert speed to game world speed
   // TODO put into separate constants class
-  velocity_x /= SPEEDSCALE;
-  velocity_z /= SPEEDSCALE;
+  velocity_x_ /= SPEEDSCALE;
+  velocity_z_ /= SPEEDSCALE;
 
   // CALCULATE NEW POSITION => p = p+dt*v
-  translation_.x += delta_time * velocity_x;
-  translation_.z += delta_time * velocity_z;
-  displacement_.x += delta_time * velocity_x;
-  displacement_.z += delta_time * velocity_z;
+  translation_.x += delta_time * velocity_x_;
+  translation_.z += delta_time * velocity_z_;
+  displacement_.x += delta_time * velocity_x_;
+  displacement_.z += delta_time * velocity_z_;
 }
 
 // Updates the transform matrix using glLookAt

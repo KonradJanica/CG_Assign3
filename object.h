@@ -56,6 +56,10 @@ class Object {
     inline float centripeta_velocity_x() const;
     // Accessor for the centripetal Z velocity
     inline float centripeta_velocity_z() const;
+    // Accessor for the total X velocity
+    inline float velocity_x() const;
+    // Accessor for the total Z velocity
+    inline float velocity_z() const;
 
     // MUTATORS:
     // Sets the position
@@ -86,6 +90,10 @@ class Object {
     //   Corrects speed < 0 to 0
     //   @param the amount to decrease the speed by
     inline void ReduceSpeed(float amount);
+    // Reduce centripetal velocity by an amount
+    //   @param percentage amount
+    //   @warn should only be called when car is not in driving mode
+    inline void ReduceCentriVelocity(float percentage);
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -163,6 +171,9 @@ class Object {
     // The centripetal velocitites of the object
     float centripeta_velocity_x_;
     float centripeta_velocity_z_;
+    // The velocities of the object
+    float velocity_x_;
+    float velocity_z_;
 
     // Verbose debugging - prints physics variables
     bool is_debugging_;
@@ -216,6 +227,14 @@ inline float Object::centripeta_velocity_x() const {
 inline float Object::centripeta_velocity_z() const {
   return centripeta_velocity_z_;
 }
+// Accessor for the total X velocity
+inline float Object::velocity_x() const {
+  return velocity_x_;
+}
+// Accessor for the total Z velocity
+inline float Object::velocity_z() const {
+  return velocity_z_;
+}
 
 // MUTATORS:
 // Sets the position
@@ -245,6 +264,14 @@ inline void Object::ReduceSpeed(float amount) {
   if (speed() < 0) {
     speed_ = 0;
   }
+}
+// Reduce centripetal velocity by an amount
+//   @param percentage amount
+//   @warn should only be called when car is not in driving mode
+inline void Object::ReduceCentriVelocity(float percentage) {
+  percentage /= 100;
+  centripeta_velocity_x_ *= percentage;
+  centripeta_velocity_z_ *= percentage;
 }
 
 #endif
