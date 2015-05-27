@@ -163,6 +163,8 @@ class Terrain {
     //   The rotation of the entire next tile from positive z
     //   Positive degrees rotate leftwards (anti cw from spidermans facing)
     float rotation_;
+    // The above used for UV stretch correction;
+    float prev_rotation_;
     // The amount of (tile relative) Z rows from the back to smooth
     //   Is needed to connect rotated rows
     unsigned int z_smooth_max_;

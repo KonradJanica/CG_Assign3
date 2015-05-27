@@ -128,16 +128,15 @@ class Controller {
     float road_y_rotation_;
     // The angle of the car and the direction of road
     //   Angle is clockwise from facing of road
+    //   This includes the cars centripetal direction
     float car_angle_;
-    // The previous distance to the closest vertice on cliff 
-    //   Used to left (cliff) collision
-    //   TODO not used anymore (remove?)
-    float cliff_dis_;
     // Has the car hit the right side cliff yet?
     //   Used in left (cliff) animation
     bool is_cliff_hit_;
-    // TODO
+    // Used in left (cliff) animation for collision detection using determinate
     bool is_prev_positive_;
+    // The impact speed of the car for the left (cliff) side animation
+    float impact_speed_;
 
     // INTERNAL TICKS
     // The controllers camera update tick

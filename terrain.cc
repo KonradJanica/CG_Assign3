@@ -6,7 +6,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
   indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
-  rotation_(0), z_smooth_max_(5 * length_multiplier_) {
+  rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -422,10 +422,14 @@ void Terrain::HelperFixUV() {
       } else if (z_smooth_max_ == 7 * length_multiplier_) {
       stretch_multiplier = 0.25f / length_multiplier_;
       }
+      // float rot = cos(DEG2RAD(prev_rotation_));
       if (y < z_smooth_max_)
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*stretch_multiplier);
+        texture_coordinates_uv.at(offset) = glm::vec2(
+            xRatio*float(z_length_)*0.10f,
+            yRatio*float(z_length_)*stretch_multiplier);
     }
   }
+  // prev_rotation_ = rotation_;
 
   // FIX ROAD UV COORDINATES
   // int index = (5 * length_multiplier_) * (z_length_ - z_smooth_max_ -1);
