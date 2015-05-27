@@ -271,7 +271,8 @@ void Controller::CrashAnimationCliff() {
 
   // printf("dis = %f\n", dis);
   // Give second chance
-  if (is_cliff_hit_ && dis > 0.3f) {
+  if (is_cliff_hit_ && dis > 0.3f
+      || colisn_anim_ticks_ > 10 && dis > 0.05f) {
     printf("CRUDE RECOVERY (IE BUGGY 2ND CHANCE)\n");
     // Reset game state
     game_state_ = kStart;
@@ -279,7 +280,6 @@ void Controller::CrashAnimationCliff() {
     camera_->ChangeState(camera_state_); // users previous camera
     return;
   }
-
 
   if (!is_cliff_hit_) {
     // No collision yet => move car towards cliff
