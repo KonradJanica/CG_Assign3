@@ -499,17 +499,9 @@ void Terrain::HelperMakeIndicesAndUV() {
       float yRatio = (y / (float) (z_length_ - 1));
 
       // Textures need to be more frequent in smoothing spots
-      if (y < z_smooth_max_) {
-        float multiplier = 2000.50f / length_multiplier_;
-        multiplier = FLT_MAX / length_multiplier_;
-        texture_coordinates_uv.at(offset) = glm::vec2(
-            xRatio*float(z_length_)*0.10f,
-            yRatio*float(z_length_)*multiplier);
-      } else {
-        texture_coordinates_uv.at(offset) = glm::vec2(
-            xRatio*float(z_length_)*0.10f,
-            yRatio*float(z_length_)*0.10f / length_multiplier_);
-      }
+      texture_coordinates_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f,
+          yRatio*float(z_length_)*0.10f / length_multiplier_);
     }
   }
 }
