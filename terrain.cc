@@ -64,6 +64,7 @@ void Terrain::ProceedTiles() {
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration() {
   int v = rand() % 3;
+  z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
   switch(v) {
     case 0:
       GenerateTerrain(kStraight);
@@ -111,11 +112,14 @@ void Terrain::GenerateTerrain(RoadType road_type) {
 void Terrain::HelperMakeHeights() {
   // Store the connecting row to smooth
   std::vector<float> temp_last_row_heights_;
-  for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
-    temp_last_row_heights_.push_back(heights_.at(x));
+  for (unsigned int z = 0; z < z_smooth_max_; ++z) {
+    for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
+      temp_last_row_heights_.push_back(heights_.at(x - z*x_length_));
+    }
   }
 
   heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
+  float rand_x3 = rand() % 13 + 3;
   for (int y = 0; y < z_length_; ++y) {
     for (int x = 0; x < x_length_; ++x) {
       // Normalize x between -1 and 1
@@ -124,7 +128,11 @@ void Terrain::HelperMakeHeights() {
       norm_x -= 1.0;
 
       // Height modelled using X^3
+      if (x > x_length_/2) {
+      heights_.at(x+y*x_length_) = rand_x3*(norm_x*norm_x*norm_x);
+      } else {
       heights_.at(x+y*x_length_) = 20*(norm_x*norm_x*norm_x);
+      }
     }
   }
 
@@ -213,10 +221,42 @@ void Terrain::HelperMakeHeights() {
   // TODO someone try fighting with this if you dare...
   //   Something goes wrong with the normals at the connection
   // Compare connection rows to eachother and smooth new one
-  for (int x = 0; x < x_length_; ++x) {
-    // heights_.at(x) = 0.0f;
-    float new_height = temp_last_row_heights_.at(x_length_-x-1) - heights_.at(x);
-    heights_.at(x) = new_height + heights_.at(x);
+  for (int z = 0; z < z_smooth_max_; ++z) {
+    for (int x = 0; x < x_length_; ++x) {
+      // heights_.at(x) = 0.0f;
+      float new_height = temp_last_row_heights_.at((x_length_-x-1)+(z_smooth_max_-z-1)*x_length_) - heights_.at(x+z*x_length_);
+      new_height /= 1+((z_smooth_max_-1-z)/z_smooth_max_);
+      heights_.at(x+z*x_length_) += new_height;
+    }
+  }
+
+  // SMOOTH ENTIRE TERRAIN
+  // for (int i = 0; i < 10000; ++i)
+  for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
+    // for (int x = 1; x < x_length_/2+4*length_multiplier_; ++x) {
+    for (int x = 1; x < x_length_-1; ++x) {
+      // Get all heights around center height
+      //   Orientation is from car start facing
+      float &center = heights_.at(x + z*x_length_);
+      float top = heights_.at(x + (z+1)*x_length_);
+      float bot = heights_.at(x + (z-1)*x_length_);
+      float left = heights_.at(x+1 + z*x_length_);
+      float right = heights_.at(x-1 + z*x_length_);
+
+      float top_left = heights_.at(x+1 + (z+1)*x_length_);
+      float top_right = heights_.at(x-1 + (z+1)*x_length_);
+      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
+      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+
+      float average = (center+top+bot+left+right
+          +top_left+top_right+bot_left+bot_right)/8.0f;
+      center = average;  //pass by reference
+    }
+  }
+
+  // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
+  for (int z = 0; z < z_length_; ++z) {
+    heights_.at(0 + z*x_length_) = -1000000.0f;
   }
 }
 
@@ -231,7 +271,6 @@ void Terrain::HelperMakeHeights() {
 void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     float min_position, float position_range) {
   // unsigned int z_smooth_max_ = 7; // this is now member
-  z_smooth_max_ = rand() % 3 + 5;
   // Store the connecting row to smooth
   std::vector<glm::vec3> temp_last_row_vertices;
   for (unsigned int z = 0; z < z_smooth_max_; ++z) {
@@ -277,15 +316,15 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
         // case 1: x^2 turnning road
         case kTurnLeft:
           {
-          float zSquare = zPosition * zPosition; //x^2
-          xPosition = zSquare/(position_range*5.5) + xPosition;
-          break;
+            float zSquare = zPosition * zPosition; //x^2
+            xPosition = zSquare/(position_range*5.5) + xPosition;
+            break;
           }
         case kTurnRight:
           {
-          float zSquare = zPosition * zPosition; //x^2
-          xPosition = -zSquare/(position_range*5.5) + xPosition;
-          break;
+            float zSquare = zPosition * zPosition; //x^2
+            xPosition = -zSquare/(position_range*5.5) + xPosition;
+            break;
           }
       }
 
@@ -330,18 +369,18 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   switch(road_type) {
     case kTurnLeft:
       {
-      // generate random number between 18.00 and 24.99
-      float random = rand() % 700 / 100.0f + 18;
-      rotation_ += random;
-      // rotation_ += 18.0f;
-      break;
+        // generate random number between 18.00 and 24.99
+        float random = rand() % 700 / 100.0f + 18;
+        rotation_ += random;
+        // rotation_ += 18.0f;
+        break;
       }
     case kTurnRight:
       {
-      // generate random number between 18.00 and 24.99
-      float random = rand() % 700 / 100.0f + 18;
-      rotation_ -= random;
-      break;
+        // generate random number between 18.00 and 24.99
+        float random = rand() % 700 / 100.0f + 18;
+        rotation_ -= random;
+        break;
       }
   }
   // SMOOTH CONNECTIONS

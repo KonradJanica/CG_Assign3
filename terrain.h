@@ -33,7 +33,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width = 128, const int &height = 128);
+    Terrain(const GLuint &program_id, const int &width = 96, const int &height = 96);
     
     // Accessor for the VAO
     // TODO comment
