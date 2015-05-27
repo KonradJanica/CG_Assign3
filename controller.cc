@@ -537,10 +537,13 @@ void Controller::UpdateCollisions() {
   //   This was causing undefined behaviour before hence checks now in
   //   place looking for end
   it = closest_it;
+  while (*it == *closest_it && it != head.end()) {
+    it++;
+  }
   if (it != head.end())
-  it++;
+    it++; // pop 2 vertices early
   if (it != head.end())
-  it++; // pop 1 vertex early
+    it++;
   if (it == head.end()) {
     printf("assuming end of tile reached, pop!\n");
     // TODO fix check end of tile...

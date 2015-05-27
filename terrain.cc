@@ -6,7 +6,7 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
   indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
-  rotation_(0), z_smooth_max_(5) {
+  rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -65,6 +65,7 @@ void Terrain::ProceedTiles() {
 void Terrain::RandomizeGeneration() {
   int v = rand() % 3;
   z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
+  z_smooth_max_ = 5*length_multiplier_;
   switch(v) {
     case 0:
       GenerateTerrain(kStraight);
@@ -88,8 +89,6 @@ void Terrain::GenerateTerrain(RoadType road_type) {
   HelperMakeHeights();
   HelperMakeVertices(road_type);
   HelperMakeNormals();
-  unsigned int terrain_vao = CreateVao(kTerrain);
-  terrain_vao_handle_.push_back(terrain_vao);
 
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
@@ -101,6 +100,9 @@ void Terrain::GenerateTerrain(RoadType road_type) {
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
 
+  // Make VAOs
+  unsigned int terrain_vao = CreateVao(kTerrain);
+  terrain_vao_handle_.push_back(terrain_vao);
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
@@ -334,7 +336,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   // special point for finding pivot translation
   unsigned int pivot_x = 18 * length_multiplier_; // relative tile x position of pivot
   const glm::vec3 &pivot = vertices.at(pivot_x);
-  // pivot.y = 1000000;
+  // pivot.y = 10000.0f;
   // Rotate the point using glm function
   glm::vec3 rotated = glm::rotateY(pivot, rotation_);
   float translate_x = pivot.x - rotated.x;
@@ -471,9 +473,15 @@ void Terrain::HelperMakeIndicesAndUV() {
 
       // Textures need to be more frequent in smoothing spots
       if (y < z_smooth_max_) {
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.15f);
+        float multiplier = 2000.50f / length_multiplier_;
+        multiplier = FLT_MAX / length_multiplier_;
+        texture_coordinates_uv.at(offset) = glm::vec2(
+            xRatio*float(z_length_)*0.10f,
+            yRatio*float(z_length_)*multiplier);
       } else {
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.10f);
+        texture_coordinates_uv.at(offset) = glm::vec2(
+            xRatio*float(z_length_)*0.10f,
+            yRatio*float(z_length_)*0.10f / length_multiplier_);
       }
     }
   }
@@ -521,7 +529,7 @@ void Terrain::HelperMakeRoadVertices() {
 
   // Store water vertices
   std::vector<glm::vec3> water_side;
-  water_side.reserve((x_length_-15 * length_multiplier_)*z_length_);
+  water_side.reserve((x_length_ - (15 * length_multiplier_))*z_length_);
   for (unsigned int x = 0; x < 15 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
       water_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
@@ -532,7 +540,8 @@ void Terrain::HelperMakeRoadVertices() {
   // Store cliff vertices (only 1 row)
   std::vector<glm::vec3> cliff_side;
   cliff_side.reserve(1*z_length_);
-  for (unsigned int x = 19 * length_multiplier_; x < 20 * length_multiplier_; ++x) {
+  // NOTE the +1 in below loop is a tweak for 96x96 terrain
+  for (unsigned int x = 19 * length_multiplier_+1; x < 20 * length_multiplier_+1; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
       cliff_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
     }
@@ -584,15 +593,14 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 // @warn  this is O(n^2) with n = 36  TODO improve complexity
 void Terrain::HelperMakeRoadCollisionMap() {
-  unsigned int x_new_row_size = 19 * length_multiplier_ - 15 * length_multiplier_;
+  unsigned int x_new_row_size = 18 * length_multiplier_ - 15 * length_multiplier_;
   std::vector<glm::vec3> left_side, right_side;
   left_side.reserve(z_length_);
   right_side.reserve(z_length_);
   // Make both sides
   for (unsigned int z = 0; z < z_length_; ++z){
-    float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
-    glm::vec3 left = glm::vec3(vertices_road_.at(0 + z));
-    glm::vec3 right = glm::vec3(vertices_road_.at(z + z_length_ * (x_new_row_size - 1)));
+    const glm::vec3 &left = vertices_road_.at(0 + z);
+    const glm::vec3 &right = vertices_road_.at(z + z_length_ * (x_new_row_size));
     left_side.push_back(left); // left? side vertices
     right_side.push_back(right); // other side vertices
   }
