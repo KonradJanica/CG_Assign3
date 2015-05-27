@@ -3,7 +3,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
-  : x_length_(width), z_length_(height),
+  : x_length_(width), z_length_(height), length_multiplier_(width / 32),
   indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
   rotation_(0), z_smooth_max_(5) {
@@ -132,7 +132,7 @@ void Terrain::HelperMakeHeights() {
   int center_left_x = x_length_/2 - x_length_/4;
   int center_z = z_length_ - z_length_/2;
   int x_position = center_left_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000; ++i) {
+  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
       case 1: x_position++;
@@ -145,10 +145,10 @@ void Terrain::HelperMakeHeights() {
               break;
     }
     if (x_position < 0) {
-      x_position = x_length_/2-2;
+      x_position = x_length_/2-2 * length_multiplier_;
       // x_position = rand() % x_length_/2;
       continue;
-    } else if (x_position > x_length_/2-2) {
+    } else if (x_position > x_length_/2-2 * length_multiplier_) {
       // x_position = x_length_/2;
       // x_position = rand() % x_length_/2;
       x_position = 0;
@@ -172,7 +172,7 @@ void Terrain::HelperMakeHeights() {
   // x_position = x_length_/2, z_position = z_length_-1;
   int center_right_x = x_length_ - x_length_/2;
   x_position = center_right_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000; ++i) {
+  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
       case 1: x_position++;
@@ -184,7 +184,7 @@ void Terrain::HelperMakeHeights() {
       case 4: z_position--;
               break;
     }
-    if (x_position < x_length_/2+4) {
+    if (x_position < x_length_/2+4 * length_multiplier_) {
       // x_position = x_length_/2;
       // x_position = rand() % x_length_/2 + x_length_/2;
       x_position = x_length_-1;
@@ -192,7 +192,7 @@ void Terrain::HelperMakeHeights() {
     } else if (x_position > x_length_-1) {
       // x_position = x_length_-1;
       // x_position = rand() % x_length_/2 + x_length_/2;
-      x_position = x_length_/2+4;
+      x_position = x_length_/2+4 * length_multiplier_;
       continue;
     }
     if (z_position < 0) {
@@ -293,7 +293,7 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     }
   }
   // special point for finding pivot translation
-  unsigned int pivot_x = 18; // relative tile x position of pivot
+  unsigned int pivot_x = 18 * length_multiplier_; // relative tile x position of pivot
   const glm::vec3 &pivot = vertices.at(pivot_x);
   // pivot.y = 1000000;
   // Rotate the point using glm function
@@ -471,7 +471,7 @@ void Terrain::HelperMakeNormals() {
 // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadVertices() {
   vertices_road_.clear();
-  for (unsigned int x = 15; x < 19; ++x) {
+  for (unsigned int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       vertices_road_.push_back(vertices.at(x + z*x_length_));
       // Lift road a bit above terrain to make it visible
@@ -482,8 +482,8 @@ void Terrain::HelperMakeRoadVertices() {
 
   // Store water vertices
   std::vector<glm::vec3> water_side;
-  water_side.reserve((x_length_-15)*z_length_);
-  for (unsigned int x = 0; x < 15; ++x) {
+  water_side.reserve((x_length_-15 * length_multiplier_)*z_length_);
+  for (unsigned int x = 0; x < 15 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
       water_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
     }
@@ -493,7 +493,7 @@ void Terrain::HelperMakeRoadVertices() {
   // Store cliff vertices (only 1 row)
   std::vector<glm::vec3> cliff_side;
   cliff_side.reserve(1*z_length_);
-  for (unsigned int x = 19; x < 20; ++x) {
+  for (unsigned int x = 19 * length_multiplier_; x < 20 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
       cliff_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
     }
@@ -507,12 +507,12 @@ void Terrain::HelperMakeRoadVertices() {
 // @warn  for optimzation this should only be called once because road normals don't change
 void Terrain::HelperMakeRoadNormals() {
   // normals_road_.clear();
-  // for (unsigned int x = 15; x < 19; ++x) {
+  // for (unsigned int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
   //   for (unsigned int z = 0; z < z_length_; ++z){
   //     normals_road_.push_back(normals.at(x + z*x_length_));
   //   }
   // }
-  normals_road_.assign(4*z_length_, glm::vec3(0,1,0));
+  normals_road_.assign((4*length_multiplier_)*z_length_, glm::vec3(0,1,0));
 }
 
 // Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
@@ -522,15 +522,17 @@ void Terrain::HelperMakeRoadNormals() {
 void Terrain::HelperMakeRoadIndicesAndUV() {
   // Create Index Data
   // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
-  indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+  //   Above based on 32 x_length_ & z_length_
+  // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+  indices_road_.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 5; ++x) {
+  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2,
+            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
             texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
@@ -543,7 +545,7 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
 // @warn  this is O(n^2) with n = 36  TODO improve complexity
 void Terrain::HelperMakeRoadCollisionMap() {
-  unsigned int x_new_row_size = 19 - 15;
+  unsigned int x_new_row_size = 19 * length_multiplier_ - 15 * length_multiplier_;
   std::vector<glm::vec3> left_side, right_side;
   left_side.reserve(z_length_);
   right_side.reserve(z_length_);

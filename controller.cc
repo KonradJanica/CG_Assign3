@@ -145,7 +145,7 @@ void Controller::UpdateGame() {
   UpdateCamera();
   if (!is_collision_) {
     UpdatePhysics();
-    UpdateCollisions();
+    // UpdateCollisions();
   }
 
   if (game_state_ == kCrashingFall) {

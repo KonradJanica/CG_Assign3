@@ -33,7 +33,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width = 32, const int &height = 32);
+    Terrain(const GLuint &program_id, const int &width = 128, const int &height = 128);
     
     // Accessor for the VAO
     // TODO comment
@@ -91,6 +91,10 @@ class Terrain {
     int x_length_;
     // Height of the heightmap
     int z_length_;
+    // The multiplier for all magic numbers
+    //   @warn this requires a square heightmap
+    //   @warn dimensions should be multiples of 32
+    int length_multiplier_;
 
     // RENDER DATA
     // The amount of indices, used to render terrain efficiently
