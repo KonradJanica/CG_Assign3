@@ -65,7 +65,6 @@ void Terrain::ProceedTiles() {
 void Terrain::RandomizeGeneration() {
   int v = rand() % 3;
   z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
-  z_smooth_max_ = 5*length_multiplier_;
   switch(v) {
     case 0:
       GenerateTerrain(kStraight);
@@ -414,18 +413,42 @@ void Terrain::HelperFixUV() {
       float yRatio = (y / (float) (z_length_ - 1));
 
       // Textures need to be more frequent in smoothing spots
-      float stretch_multiplier = z_smooth_max_ * 0.03;
+      // float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
+      float stretch_multiplier;
+      if (z_smooth_max_ == 5 * length_multiplier_) {
+      stretch_multiplier = 0.15f / length_multiplier_;
+      } else if (z_smooth_max_ == 6 * length_multiplier_) {
+      stretch_multiplier = 0.20f / length_multiplier_;
+      } else if (z_smooth_max_ == 7 * length_multiplier_) {
+      stretch_multiplier = 0.25f / length_multiplier_;
+      }
       if (y < z_smooth_max_)
         texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*stretch_multiplier);
     }
   }
 
   // FIX ROAD UV COORDINATES
-  for (unsigned int x = 0; x < 5; ++x) {
-    for (unsigned int z = 0; z < z_smooth_max_; ++z){
+  // int index = (5 * length_multiplier_) * (z_length_ - z_smooth_max_ -1);
+  // for (unsigned int x = 0; x < 5 * length_multiplier_; ++x) {
+  //   for (unsigned int z = 0; z < z_smooth_max_; ++z){
+  //     // The multiplications below change stretch of the texture (ie repeats)
+  //     float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
+  //     texture_coordinates_uv_road_.at(index) = (glm::vec2(
+  //           texture_coordinates_uv.at(x + z*x_length_).x * 3.2 * stretch_multiplier,
+  //           texture_coordinates_uv.at(x + z*x_length_).y * 1));
+  //     index++;
+  //   }
+  // }
+  
+  // FIX ROAD UV COORDINATES
+  // TODO optimize this using commented code above
+  //   (couldnt get above to work)
+  texture_coordinates_uv_road_.clear();
+  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2,
+            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
             texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
