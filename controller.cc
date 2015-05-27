@@ -599,12 +599,18 @@ void Controller::UpdateCollisions() {
   car_angle_ = -glm::orientedAngle(dir, road_dir);
   // printf("ang = %f\n",car_angle_);
 
+  // Find collision point closest to car
+  //  warning closest_pair, and dis cannot be overridden above
+  float dis_opposite_point = glm::distance(closest_pair.second, car);
+  bool is_water_closest = true;
+  if (dis > dis_opposite_point)
+    is_water_closest = false;
   // Decide which type of animation to play
   //   i.e. cliff scrape or water bounce
   // @warn also sets camera position for the crash
   if (is_collision_) {
     camera_state_ = camera_->state();
-    if (car_angle_ > 0) {
+    if (is_water_closest) {
       game_state_ = kCrashingFall;
       camera_->ChangeState(Camera::kFirstPerson);
     } else {
