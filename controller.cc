@@ -149,8 +149,8 @@ void Controller::UpdateGame() {
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   UpdateCamera();
   if (!is_collision_) {
-    UpdatePhysics();
     UpdateCollisions();
+    UpdatePhysics();
   }
 
   if (game_state_ == kCrashingFall) {
