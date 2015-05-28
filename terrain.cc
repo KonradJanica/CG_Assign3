@@ -4,7 +4,7 @@
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
-  indice_count_(0), road_indice_count_(0),
+  prev_rand_(0), indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
@@ -63,9 +63,10 @@ void Terrain::ProceedTiles() {
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration() {
-  int v = rand() % 3;
+  // TODO add different chances
+  prev_rand_ = rand() % 3;
   z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
-  switch(v) {
+  switch(prev_rand_) {
     case 0:
       GenerateTerrain(kStraight);
       break;
@@ -423,6 +424,8 @@ void Terrain::HelperFixUV() {
       stretch_multiplier = 0.25f / length_multiplier_;
       }
       // float rot = cos(DEG2RAD(prev_rotation_));
+      // float x_rot = cos(DEG2RAD(prev_rotation_)) + 1.0f;
+      // float y_rot = sin(DEG2RAD(prev_rotation_)) + 1.0f;
       if (y < z_smooth_max_)
         texture_coordinates_uv.at(offset) = glm::vec2(
             xRatio*float(z_length_)*0.10f,

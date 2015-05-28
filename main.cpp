@@ -78,11 +78,11 @@ bool g_coord_axis = true;
 // Camera object
 Camera * g_camera;
 
-int g_window_x = 640;
-int g_window_y = 480;
+int g_window_x = 640*2;
+int g_window_y = 480*2;
 
 void UpdateProjection() {
-  glm::mat4 projection = glm::perspective(g_controller->camera()->aspect(), float(g_window_x / g_window_y), 0.1f, 100.0f);
+  glm::mat4 projection = glm::perspective(75.0f, float(g_window_x / g_window_y), 0.1f, 100.0f);
   for (unsigned int i = 0; i < 5; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
@@ -346,9 +346,9 @@ int main(int argc, char **argv) {
   g_controller->AddWater(g_program_id[3]);
 
   // Add starting models
-  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj"); 
-  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj"); 
-  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true); 
+  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
+  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj");
+  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);

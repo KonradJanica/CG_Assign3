@@ -30,9 +30,9 @@
 class Object {
   public:
     // Construct with position setting parameters
-    Object(const glm::vec3 &translation, 
-           const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), 
-           const glm::vec3 &scale = glm::vec3(1,1,1),
+    Object(const glm::vec3 &translation,
+           const glm::vec3 &rotation,
+           const glm::vec3 &scale,
            float default_speed = 0,
            bool debugging_on = false);
 

@@ -97,6 +97,8 @@ class Terrain {
     int length_multiplier_;
 
     // RENDER DATA
+    // The previous random value used to calculate next turn type
+    char prev_rand_;
     // The amount of indices, used to render terrain efficiently
     int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
