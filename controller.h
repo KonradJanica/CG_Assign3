@@ -19,6 +19,7 @@
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/vector_angle.hpp"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -36,14 +37,24 @@ class Controller {
     //   used in GetMax
     enum CoordEnum {
       kX = 0,
-      kY = 1, 
+      kY = 1,
       kZ = 2,
-      kx = 0, 
-      ky = 1, 
+      kx = 0,
+      ky = 1,
       kz = 2,
       kMin = 3,
       kMax = 3,
-    };  
+    };
+    // Enum for game states
+    enum State {
+      kStart = 0,
+      kPause = 1,
+      kResume = 2,
+      kAutoDrive = 3,
+      kCrashingFall = 4,
+      kCrashingCliff = 5,
+      kGameOver = 6,
+    };
 
     // Construct with verbose debugging mode
     Controller(const Renderer * r, const bool &debug_flag = false);
@@ -90,7 +101,7 @@ class Controller {
     // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
     // The moving car
-    //   An object with the physics extension enabled
+    //   An object with physics
     Object * car_;
     // The camera object
     Camera * camera_;
@@ -101,6 +112,32 @@ class Controller {
     // The water object
     Water * water_;
 
+    // The current game state
+    State game_state_;
+    // The users camera state (for animations)
+    Camera::State camera_state_;
+    // The state of the previous collision tick
+    bool is_collision_;
+    // The midpoint of the road where the car is
+    glm::vec3 left_lane_midpoint_;
+    // The previous midpoint, updated during autodrive
+    glm::vec3 prev_left_lane_midpoint_;
+    // The direction vector of the road where the car is
+    glm::vec3 road_direction_;
+    // The rotation of the road where the car is
+    float road_y_rotation_;
+    // The angle of the car and the direction of road
+    //   Angle is clockwise from facing of road
+    //   This includes the cars centripetal direction
+    float car_angle_;
+    // Has the car hit the right side cliff yet?
+    //   Used in left (cliff) animation
+    bool is_cliff_hit_;
+    // Used in left (cliff) animation for collision detection using determinate
+    bool is_prev_positive_;
+    // The impact speed of the car for the left (cliff) side animation
+    float impact_speed_;
+
     // INTERNAL TICKS
     // The controllers camera update tick
     //   Uses car position (for chase and 1st person view)
@@ -109,8 +146,27 @@ class Controller {
     void UpdateCamera();
     // The controllers physics update tick
     //   Checks keypresses and calculates acceleration
-    //   TODO not sure if this belongs in public, can be used for lighting too etc.
     void UpdatePhysics();
+
+    // TODO comment
+    void UpdateCollisions();
+    // COLLISION HELPERS
+    // Checks whether car is between boundary pair
+    //   Creates 4 triangles out of the 4 points of the given square and returns 
+    //   true if area is positive
+    //   @warn input must be square for accurate results
+    bool IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
+
+    float colisn_anim_ticks_;
+    // The animation played when the car falls off the right (water) side
+    //   Is calculated using the vertices stored by terrain
+    //   Finds the closest vertice to car and doesn't allow it to go below it
+    //   Once complete resets the state to kAutoDrive
+    // @warn Pretty inefficent way of checking for collisions but it's only
+    //       calculated during this state.
+    void CrashAnimationFall();
+    // TODO comment
+    void CrashAnimationCliff();
 
     // The light controller
     LightController * light_controller_;

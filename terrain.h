@@ -7,6 +7,7 @@
 #include <queue>
 #include <ctime>
 #include <algorithm>
+#include <list>
 
 #include "model_data.h"
 #include "model.h"
@@ -32,7 +33,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width = 32, const int &height = 32);
+    Terrain(const GLuint &program_id, const int &width = 96, const int &height = 96);
     
     // Accessor for the VAO
     // TODO comment
@@ -59,6 +60,12 @@ class Terrain {
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
     inline std::queue<colisn_vec> collision_queue_hash() const;
+    // Accessor for the water collision checking data structure
+    //   See this func implementation for details
+    inline std::list<std::vector<glm::vec3> > colisn_lst_water() const;
+    // Accessor for the cliff collision checking data structure
+    //   See this func implementation for details
+    inline std::list<std::vector<glm::vec3> > colisn_lst_cliff() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     //   TODO remove and replace in circular buffer instead
@@ -84,8 +91,14 @@ class Terrain {
     int x_length_;
     // Height of the heightmap
     int z_length_;
+    // The multiplier for all magic numbers
+    //   @warn this requires a square heightmap
+    //   @warn dimensions should be multiples of 32
+    int length_multiplier_;
 
     // RENDER DATA
+    // The previous random value used to calculate next turn type
+    char prev_rand_;
     // The amount of indices, used to render terrain efficiently
     int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
@@ -103,11 +116,12 @@ class Terrain {
     circular_vector<unsigned int> road_vao_handle_;
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
-    //   Each key in the map represents a Z scanline
-    //   Each pair of values of the key represents it's min X and max X
-    //     i.e. it's bounding box of the road
     //     pair.first = min_x, pair.second = max_x
     std::queue<colisn_vec> collision_queue_hash_;
+    // The collisions for the right (water) side
+    std::list<std::vector<glm::vec3> > colisn_lst_water_;
+    // The collisions for the left (cliff) side
+    std::list<std::vector<glm::vec3> > colisn_lst_cliff_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -151,6 +165,8 @@ class Terrain {
     //   The rotation of the entire next tile from positive z
     //   Positive degrees rotate leftwards (anti cw from spidermans facing)
     float rotation_;
+    // The above used for UV stretch correction;
+    float prev_rotation_;
     // The amount of (tile relative) Z rows from the back to smooth
     //   Is needed to connect rotated rows
     unsigned int z_smooth_max_;
@@ -207,9 +223,10 @@ class Terrain {
     // @warn  for optimzation this should only be called once because road indices and UV don't change
     void HelperMakeRoadIndicesAndUV();
     // Generates a collision coordinate mapping
-    //   Using the vertices_road_ vector, maps all rounded Z coordinates to their corresponding min X
-    //   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
+    //   Finds all edge vertices of road in order then pairs them with the closest vertices
+    //   on the opposite side of the road
     // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
+    // @warn  this is O(n^2) with n = 36  TODO improve complexity
     void HelperMakeRoadCollisionMap();
 
     // OPENGL RENDERING FUNCTIONS
@@ -272,12 +289,20 @@ inline int Terrain::road_indice_count() const {
 }
 // Accessor for the collision checking data structure
 // A queue representing each road tile for collision checking
-//   Each key in the map represents a Z scanline
-//   Each pair of values of the key represents it's min X and max X
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
 inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
+}
+// Accessor for the water collision checking data structure
+//   Holds all vertices right (water) side of road for crashing animation
+inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_water() const {
+  return colisn_lst_water_;
+}
+// Accessor for the water collision checking data structure
+//   Holds a line of vertices left (cliff) side of road for crashing animation
+inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_cliff() const {
+  return colisn_lst_cliff_;
 }
 // Pops the first collision map 
 //   To be used after car has passed road tile
@@ -285,6 +310,8 @@ inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
   collision_queue_hash_.pop();
+  colisn_lst_water_.pop_front();
+  colisn_lst_cliff_.pop_front();
 }
 
 #endif

@@ -32,8 +32,8 @@ class Renderer {
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
-    //   @warn object not const because it is possibly changed with UpdateTransform()
-    void Render(Object * object, const Camera * camera) const;
+    //   @warn this function is not responsible for NULL PTRs
+    void Render(const Object * object, const Camera * camera) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @param Camera * camera, to get the camera matrix and correctly position world

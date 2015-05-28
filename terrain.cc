@@ -3,10 +3,10 @@
 #include "glm/gtx/rotate_vector.hpp"
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
-  : x_length_(width), z_length_(height),
-  indice_count_(0), road_indice_count_(0),
+  : x_length_(width), z_length_(height), length_multiplier_(width / 32),
+  prev_rand_(0), indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
-  rotation_(0), z_smooth_max_(5) {
+  rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -63,8 +63,10 @@ void Terrain::ProceedTiles() {
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration() {
-  int v = rand() % 3;
-  switch(v) {
+  // TODO add different chances
+  prev_rand_ = rand() % 3;
+  z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
+  switch(prev_rand_) {
     case 0:
       GenerateTerrain(kStraight);
       break;
@@ -87,8 +89,6 @@ void Terrain::GenerateTerrain(RoadType road_type) {
   HelperMakeHeights();
   HelperMakeVertices(road_type);
   HelperMakeNormals();
-  unsigned int terrain_vao = CreateVao(kTerrain);
-  terrain_vao_handle_.push_back(terrain_vao);
 
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
@@ -100,6 +100,9 @@ void Terrain::GenerateTerrain(RoadType road_type) {
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
 
+  // Make VAOs
+  unsigned int terrain_vao = CreateVao(kTerrain);
+  terrain_vao_handle_.push_back(terrain_vao);
   unsigned int road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
@@ -111,11 +114,14 @@ void Terrain::GenerateTerrain(RoadType road_type) {
 void Terrain::HelperMakeHeights() {
   // Store the connecting row to smooth
   std::vector<float> temp_last_row_heights_;
-  for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
-    temp_last_row_heights_.push_back(heights_.at(x));
+  for (unsigned int z = 0; z < z_smooth_max_; ++z) {
+    for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
+      temp_last_row_heights_.push_back(heights_.at(x - z*x_length_));
+    }
   }
 
   heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
+  float rand_x3 = rand() % 13 + 3;
   for (int y = 0; y < z_length_; ++y) {
     for (int x = 0; x < x_length_; ++x) {
       // Normalize x between -1 and 1
@@ -124,7 +130,11 @@ void Terrain::HelperMakeHeights() {
       norm_x -= 1.0;
 
       // Height modelled using X^3
+      if (x > x_length_/2) {
+      heights_.at(x+y*x_length_) = rand_x3*(norm_x*norm_x*norm_x);
+      } else {
       heights_.at(x+y*x_length_) = 20*(norm_x*norm_x*norm_x);
+      }
     }
   }
 
@@ -132,7 +142,7 @@ void Terrain::HelperMakeHeights() {
   int center_left_x = x_length_/2 - x_length_/4;
   int center_z = z_length_ - z_length_/2;
   int x_position = center_left_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000; ++i) {
+  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
       case 1: x_position++;
@@ -145,10 +155,10 @@ void Terrain::HelperMakeHeights() {
               break;
     }
     if (x_position < 0) {
-      x_position = x_length_/2-2;
+      x_position = x_length_/2-2 * length_multiplier_;
       // x_position = rand() % x_length_/2;
       continue;
-    } else if (x_position > x_length_/2-2) {
+    } else if (x_position > x_length_/2-2 * length_multiplier_) {
       // x_position = x_length_/2;
       // x_position = rand() % x_length_/2;
       x_position = 0;
@@ -172,7 +182,7 @@ void Terrain::HelperMakeHeights() {
   // x_position = x_length_/2, z_position = z_length_-1;
   int center_right_x = x_length_ - x_length_/2;
   x_position = center_right_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000; ++i) {
+  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
       case 1: x_position++;
@@ -184,7 +194,7 @@ void Terrain::HelperMakeHeights() {
       case 4: z_position--;
               break;
     }
-    if (x_position < x_length_/2+4) {
+    if (x_position < x_length_/2+4 * length_multiplier_) {
       // x_position = x_length_/2;
       // x_position = rand() % x_length_/2 + x_length_/2;
       x_position = x_length_-1;
@@ -192,7 +202,7 @@ void Terrain::HelperMakeHeights() {
     } else if (x_position > x_length_-1) {
       // x_position = x_length_-1;
       // x_position = rand() % x_length_/2 + x_length_/2;
-      x_position = x_length_/2+4;
+      x_position = x_length_/2+4 * length_multiplier_;
       continue;
     }
     if (z_position < 0) {
@@ -213,10 +223,42 @@ void Terrain::HelperMakeHeights() {
   // TODO someone try fighting with this if you dare...
   //   Something goes wrong with the normals at the connection
   // Compare connection rows to eachother and smooth new one
-  for (int x = 0; x < x_length_; ++x) {
-    // heights_.at(x) = 0.0f;
-    float new_height = temp_last_row_heights_.at(x_length_-x-1) - heights_.at(x);
-    heights_.at(x) = new_height + heights_.at(x);
+  for (int z = 0; z < z_smooth_max_; ++z) {
+    for (int x = 0; x < x_length_; ++x) {
+      // heights_.at(x) = 0.0f;
+      float new_height = temp_last_row_heights_.at((x_length_-x-1)+(z_smooth_max_-z-1)*x_length_) - heights_.at(x+z*x_length_);
+      new_height /= 1+((z_smooth_max_-1-z)/z_smooth_max_);
+      heights_.at(x+z*x_length_) += new_height;
+    }
+  }
+
+  // SMOOTH ENTIRE TERRAIN
+  // for (int i = 0; i < 10000; ++i)
+  for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
+    // for (int x = 1; x < x_length_/2+4*length_multiplier_; ++x) {
+    for (int x = 1; x < x_length_-1; ++x) {
+      // Get all heights around center height
+      //   Orientation is from car start facing
+      float &center = heights_.at(x + z*x_length_);
+      float top = heights_.at(x + (z+1)*x_length_);
+      float bot = heights_.at(x + (z-1)*x_length_);
+      float left = heights_.at(x+1 + z*x_length_);
+      float right = heights_.at(x-1 + z*x_length_);
+
+      float top_left = heights_.at(x+1 + (z+1)*x_length_);
+      float top_right = heights_.at(x-1 + (z+1)*x_length_);
+      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
+      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+
+      float average = (center+top+bot+left+right
+          +top_left+top_right+bot_left+bot_right)/8.0f;
+      center = average;  //pass by reference
+    }
+  }
+
+  // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
+  for (int z = 0; z < z_length_; ++z) {
+    heights_.at(0 + z*x_length_) = -1000000.0f;
   }
 }
 
@@ -231,7 +273,6 @@ void Terrain::HelperMakeHeights() {
 void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     float min_position, float position_range) {
   // unsigned int z_smooth_max_ = 7; // this is now member
-  z_smooth_max_ = rand() % 3 + 5;
   // Store the connecting row to smooth
   std::vector<glm::vec3> temp_last_row_vertices;
   for (unsigned int z = 0; z < z_smooth_max_; ++z) {
@@ -255,7 +296,6 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
-      // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
       float xPosition = min_position + (xRatio * position_range);
@@ -278,15 +318,15 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
         // case 1: x^2 turnning road
         case kTurnLeft:
           {
-          float zSquare = zPosition * zPosition; //x^2
-          xPosition = zSquare/(position_range*5.5) + xPosition;
-          break;
+            float zSquare = zPosition * zPosition; //x^2
+            xPosition = zSquare/(position_range*5.5) + xPosition;
+            break;
           }
         case kTurnRight:
           {
-          float zSquare = zPosition * zPosition; //x^2
-          xPosition = -zSquare/(position_range*5.5) + xPosition;
-          break;
+            float zSquare = zPosition * zPosition; //x^2
+            xPosition = -zSquare/(position_range*5.5) + xPosition;
+            break;
           }
       }
 
@@ -294,28 +334,24 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
     }
   }
   // special point for finding pivot translation
-  unsigned int pivot_x = 18; // relative tile x position of pivot
+  unsigned int pivot_x = 18 * length_multiplier_; // relative tile x position of pivot
   const glm::vec3 &pivot = vertices.at(pivot_x);
-  // pivot.y = 1000000;
-  // normals_road_.push_back(normals.at(x + z*x_length_));
-  glm::vec3 foo = glm::rotateY(pivot, rotation_);
-  float translate_x = pivot.x - foo.x;
-  float translate_z = pivot.z - foo.z;
+  // pivot.y = 10000.0f;
+  // Rotate the point using glm function
+  glm::vec3 rotated = glm::rotateY(pivot, rotation_);
+  float translate_x = pivot.x - rotated.x;
+  float translate_z = pivot.z - rotated.z;
   for (int y = 0; y < z_length_; y++) {
     for (int x = 0; x < x_length_; x++) {
       offset = (y*x_length_)+x;
 
-      glm::vec3 foo = vertices.at(offset);
-      // foo = glm::rotate(foo, 30.0f, glm::vec3(next_tile_start_.x,1,next_tile_start_.y));
-      foo = glm::rotateY(foo, rotation_);
-      // foo = foo - ( glm::vec3(next_tile_start_.x, 0, next_tile_start_.y));
-      float xPosition = foo.x + translate_x;
-      float zPosition = foo.z + translate_z;
-      // xPosition = foo.x + position_range/2;
-      float yPosition = foo.y;
+      glm::vec3 rotated = vertices.at(offset);
+      rotated = glm::rotateY(rotated, rotation_);
+      float xPosition = rotated.x + translate_x;
+      float zPosition = rotated.z + translate_z;
+      // xPosition = rotated.x + position_range/2;
+      float yPosition = rotated.y;
 
-      // vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
-      //     zPosition + next_tile_start_.y);
       vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
           zPosition + next_tile_start_.y);
     }
@@ -330,24 +366,23 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
       // Calculate next_tile_start_.x position (next X tile position)
       float displacement_x = pivot_end.x - pivot.x;
       next_tile_start_.x += displacement_x;
-      // next_tile_start_.x = position_range/2 - pivot.x;
       break;
   }
   switch(road_type) {
     case kTurnLeft:
       {
-      // generate random number between 18.00 and 24.99
-      float random = rand() % 700 / 100.0f + 18;
-      rotation_ += random;
-      // rotation_ += 18.0f;
-      break;
+        // generate random number between 18.00 and 24.99
+        float random = rand() % 700 / 100.0f + 18;
+        rotation_ += random;
+        // rotation_ += 18.0f;
+        break;
       }
     case kTurnRight:
       {
-      // generate random number between 18.00 and 24.99
-      float random = rand() % 700 / 100.0f + 18;
-      rotation_ -= random;
-      break;
+        // generate random number between 18.00 and 24.99
+        float random = rand() % 700 / 100.0f + 18;
+        rotation_ -= random;
+        break;
       }
   }
   // SMOOTH CONNECTIONS
@@ -376,22 +411,51 @@ void Terrain::HelperFixUV() {
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
-      // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
 
       // Textures need to be more frequent in smoothing spots
-      float stretch_multiplier = z_smooth_max_ * 0.03;
+      // float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
+      float stretch_multiplier;
+      if (z_smooth_max_ == 5 * length_multiplier_) {
+      stretch_multiplier = 0.15f / length_multiplier_;
+      } else if (z_smooth_max_ == 6 * length_multiplier_) {
+      stretch_multiplier = 0.20f / length_multiplier_;
+      } else if (z_smooth_max_ == 7 * length_multiplier_) {
+      stretch_multiplier = 0.25f / length_multiplier_;
+      }
+      // float rot = cos(DEG2RAD(prev_rotation_));
+      // float x_rot = cos(DEG2RAD(prev_rotation_)) + 1.0f;
+      // float y_rot = sin(DEG2RAD(prev_rotation_)) + 1.0f;
       if (y < z_smooth_max_)
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*stretch_multiplier);
+        texture_coordinates_uv.at(offset) = glm::vec2(
+            xRatio*float(z_length_)*0.10f,
+            yRatio*float(z_length_)*stretch_multiplier);
     }
   }
+  // prev_rotation_ = rotation_;
 
   // FIX ROAD UV COORDINATES
-  for (unsigned int x = 0; x < 5; ++x) {
-    for (unsigned int z = 0; z < z_smooth_max_; ++z){
+  // int index = (5 * length_multiplier_) * (z_length_ - z_smooth_max_ -1);
+  // for (unsigned int x = 0; x < 5 * length_multiplier_; ++x) {
+  //   for (unsigned int z = 0; z < z_smooth_max_; ++z){
+  //     // The multiplications below change stretch of the texture (ie repeats)
+  //     float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
+  //     texture_coordinates_uv_road_.at(index) = (glm::vec2(
+  //           texture_coordinates_uv.at(x + z*x_length_).x * 3.2 * stretch_multiplier,
+  //           texture_coordinates_uv.at(x + z*x_length_).y * 1));
+  //     index++;
+  //   }
+  // }
+  
+  // FIX ROAD UV COORDINATES
+  // TODO optimize this using commented code above
+  //   (couldnt get above to work)
+  texture_coordinates_uv_road_.clear();
+  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2,
+            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
             texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
@@ -438,11 +502,9 @@ void Terrain::HelperMakeIndicesAndUV() {
       float yRatio = (y / (float) (z_length_ - 1));
 
       // Textures need to be more frequent in smoothing spots
-      if (y < z_smooth_max_) {
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.15f);
-      } else {
-        texture_coordinates_uv.at(offset) = glm::vec2(xRatio*float(z_length_)*0.10f, yRatio*float(z_length_)*0.10f);
-      }
+      texture_coordinates_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f,
+          yRatio*float(z_length_)*0.10f / length_multiplier_);
     }
   }
 }
@@ -478,7 +540,7 @@ void Terrain::HelperMakeNormals() {
 // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadVertices() {
   vertices_road_.clear();
-  for (unsigned int x = 15; x < 19; ++x) {
+  for (unsigned int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       vertices_road_.push_back(vertices.at(x + z*x_length_));
       // Lift road a bit above terrain to make it visible
@@ -486,6 +548,27 @@ void Terrain::HelperMakeRoadVertices() {
       // vertices_road_.back().y += 0.01f + 0.02*rotation_;
     }
   }
+
+  // Store water vertices
+  std::vector<glm::vec3> water_side;
+  water_side.reserve((x_length_ - (15 * length_multiplier_))*z_length_);
+  for (unsigned int x = 0; x < 15 * length_multiplier_; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z) {
+      water_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
+    }
+  }
+  colisn_lst_water_.push_back(water_side);
+
+  // Store cliff vertices (only 1 row)
+  std::vector<glm::vec3> cliff_side;
+  cliff_side.reserve(1*z_length_);
+  // NOTE the +1 in below loop is a tweak for 96x96 terrain
+  for (unsigned int x = 19 * length_multiplier_+1; x < 20 * length_multiplier_+1; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z) {
+      cliff_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
+    }
+  }
+  colisn_lst_cliff_.push_back(cliff_side);
 }
 
 // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
@@ -494,12 +577,12 @@ void Terrain::HelperMakeRoadVertices() {
 // @warn  for optimzation this should only be called once because road normals don't change
 void Terrain::HelperMakeRoadNormals() {
   // normals_road_.clear();
-  // for (unsigned int x = 15; x < 19; ++x) {
+  // for (unsigned int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
   //   for (unsigned int z = 0; z < z_length_; ++z){
   //     normals_road_.push_back(normals.at(x + z*x_length_));
   //   }
   // }
-  normals_road_.assign(4*z_length_, glm::vec3(0,1,0));
+  normals_road_.assign((4*length_multiplier_)*z_length_, glm::vec3(0,1,0));
 }
 
 // Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
@@ -509,15 +592,17 @@ void Terrain::HelperMakeRoadNormals() {
 void Terrain::HelperMakeRoadIndicesAndUV() {
   // Create Index Data
   // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
-  indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+  //   Above based on 32 x_length_ & z_length_
+  // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+  indices_road_.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
 
   // Create UV Data
   texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 5; ++x) {
+  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2,
+            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
             texture_coordinates_uv.at(x + z*x_length_).y * 1));
     }
   }
@@ -525,38 +610,45 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
 }
 
 // Generates a collision coordinate mapping
-//   Using the vertices_road_ vector, maps all rounded Z coordinates to their corresponding min X
-//   and Max X coordinates. Then pushes the map into the member queue ready for collision checking.
+//   Finds all edge vertices of road in order then pairs them with the closest vertices
+//   on the opposite side of the road
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
+// @warn  this is O(n^2) with n = 36  TODO improve complexity
 void Terrain::HelperMakeRoadCollisionMap() {
+  unsigned int x_new_row_size = 18 * length_multiplier_ - 15 * length_multiplier_;
+  std::vector<glm::vec3> left_side, right_side;
+  left_side.reserve(z_length_);
+  right_side.reserve(z_length_);
+  // Make both sides
+  for (unsigned int z = 0; z < z_length_; ++z){
+    const glm::vec3 &left = vertices_road_.at(0 + z);
+    const glm::vec3 &right = vertices_road_.at(z + z_length_ * (x_new_row_size));
+    left_side.push_back(left); // left? side vertices
+    right_side.push_back(right); // other side vertices
+  }
+
   colisn_vec tile_map;
   tile_map.reserve(z_length_);
   std::pair<glm::vec3,glm::vec3> min_max_x_pair;
-  unsigned int x_new_row_size = 19 - 15;
-
-  for (unsigned int z = 0; z < z_length_; ++z){
-    float z_key = vertices_road_.at(0 + z).z; // z coordinate of first vertice in row
-    // z_key = round(z_key); // round value so key can be found
-    min_max_x_pair.first = vertices_road_.at(0 + z); // left? side vertices
-    min_max_x_pair.second = vertices_road_.at(z + z_length_ * (x_new_row_size - 1)); // other side vertices
-
-    // vertices_road_.at(0+z).y = 10000; //minx visualization
-    // vertices_road_.at(z + z_length_ * (x_new_row_size - 1)).y = 10000; //maxx visualization
+  // Pair left side to it's closest point on opposite side
+  for (unsigned int z = 0; z < z_length_; ++z) {
+    const glm::vec3 &left = left_side.at(z);
+    min_max_x_pair.first = left;
+    float smallest_diff = glm::distance(left_side.at(z), right_side.front());
+    glm::vec3 closest_point = right_side.front();
+    for (unsigned int x = 1; x < z_length_; ++x) {
+      float curr_diff = glm::distance(left_side.at(z), right_side.at(x));
+      if (curr_diff < smallest_diff) {
+        smallest_diff = curr_diff;
+        closest_point = right_side.at(x);
+      }
+    }
+    min_max_x_pair.second = closest_point;
 
     tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
-    // tile_map[z_key] = min_max_x_pair; // overrides duplicates
-
-
-    // MAPPING DEBUGS
-    // // printf("test = %f, z = %f\n", vertices_top.at(z).x, z_key);
-    // printf("z = %f\n", z_key);
-    // printf("min x = %f, max x = %f\n", min_max_x_pair.first, min_max_x_pair.second);
   }
 
   collision_queue_hash_.push(tile_map);
-  // for (auto& x: collision_queue_hash_.front()) {
-  //   printf("hashed z = %f, x_min = %f, x_max = %f\n", x.first, x.second.first, x.second.second);
-  // }
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer

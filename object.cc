@@ -7,7 +7,7 @@ Object::Object(const glm::vec3 &translation,
     float default_speed,
     bool debugging_on)
   : translation_(translation), rotation_(rotation), scale_(scale),
-  displacement_(0), speed_(default_speed), centri_speed_(0.0f),
+  displacement_(0), speed_(default_speed), default_speed_(default_speed), centri_speed_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
   }
@@ -68,12 +68,10 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   float force_x = 0;
   float force_z = 0;
   // The current velocity vector
-  float direction_x = sin(DEG2RAD(rotation().y));
-  float direction_z = cos(DEG2RAD(rotation().y));
-  float velocity_x = speed_ * direction_x;
-  float velocity_z = speed_ * direction_z;
-
-
+  float direction_x = direction().x;
+  float direction_z = direction().z;
+  velocity_x_ = speed_ * direction_x;
+  velocity_z_ = speed_ * direction_z;
 
   if (is_key_pressed_hash.at('w')) {
     // simulated gear shifting
@@ -104,11 +102,11 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   }
 
   // Rolling resistance (friction of tires)
-  force_x -= AIRRESSISTANCE * velocity_x * speed_;
-  force_z -= AIRRESSISTANCE * velocity_z * speed_;
+  force_x -= AIRRESSISTANCE * velocity_x_ * speed_;
+  force_z -= AIRRESSISTANCE * velocity_z_ * speed_;
   // Air resistance x
-  force_x -= FRICTION * velocity_x;
-  force_z -= FRICTION * velocity_z;
+  force_x -= FRICTION * velocity_x_;
+  force_z -= FRICTION * velocity_z_;
 
   // CALCULATE ACCELERATION => a = F/M
   float acceleration_x = force_x / MASS;
@@ -148,7 +146,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     }
   }
 
-  float v = sqrt(velocity_x*velocity_x + velocity_z*velocity_z);
+  float v = sqrt(velocity_x_*velocity_x_ + velocity_z_*velocity_z_);
   if (v < 45) {
     v = 45;
   }
@@ -172,16 +170,16 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   float centripetal_ax = 0.0f;
   float centripetal_az = 0.0f;
-  float centripeta_velocity_x = 0.0f;
-  float centripeta_velocity_z = 0.0f;
+  centripeta_velocity_x_ = 0.0f;
+  centripeta_velocity_z_ = 0.0f;
   bool is_turn = false;
   if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
       float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
       centripetal_ax = centre_of_circle_vector.x * a;
       centripetal_az = centre_of_circle_vector.z * a;
       set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
@@ -191,8 +189,8 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
       float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z = centre_of_circle_vector.z * centri_speed_;
+      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
+      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
       a *= -1;
       centripetal_ax = centre_of_circle_vector.x * a;
       centripetal_az = centre_of_circle_vector.z * a;
@@ -204,41 +202,40 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     centri_speed_ = 0.0f;
 
   // CALCULATE VELOCITY => v = v+dt*a 
-  velocity_x += delta_time * acceleration_x;
-  velocity_z += delta_time * acceleration_z;
+  velocity_x_ += delta_time * acceleration_x;
+  velocity_z_ += delta_time * acceleration_z;
 
   // CALCULATE SPEED
-  if (velocity_x * direction_x < 0 && velocity_z * direction_z < 0) {
+  if (velocity_x_ * direction_x < 0 && velocity_z_ * direction_z < 0) {
     speed_ = 0.0f;
     centri_speed_ = 0.0f;
   } else {
-    speed_ = sqrt(velocity_x * velocity_x + velocity_z * velocity_z);
-    centripeta_velocity_x += delta_time * centripetal_ax;
-    centripeta_velocity_z += delta_time * centripetal_az;
+    speed_ = sqrt(velocity_x_ * velocity_x_ + velocity_z_ * velocity_z_);
+    centripeta_velocity_x_ += delta_time * centripetal_ax;
+    centripeta_velocity_z_ += delta_time * centripetal_az;
     centri_speed_ += delta_time * a;
     if (is_debugging_) {
       printf("centripetal velocity = %f\n", centri_speed_);
     }
-    velocity_x += centripeta_velocity_x;
-    velocity_z += centripeta_velocity_z;
+    velocity_x_ += centripeta_velocity_x_;
+    velocity_z_ += centripeta_velocity_z_;
   }
   if (is_debugging_) {
     printf("speed = %f\n", speed_);
   }
   // convert speed to game world speed
   // TODO put into separate constants class
-  velocity_x /= SPEEDSCALE;
-  velocity_z /= SPEEDSCALE;
+  velocity_x_ /= SPEEDSCALE;
+  velocity_z_ /= SPEEDSCALE;
 
   // CALCULATE NEW POSITION => p = p+dt*v
-  translation_.x += delta_time * velocity_x;
-  translation_.z += delta_time * velocity_z;
-  displacement_.x += delta_time * velocity_x;
-  displacement_.z += delta_time * velocity_z;
+  translation_.x += delta_time * velocity_x_;
+  translation_.z += delta_time * velocity_z_;
+  displacement_.x += delta_time * velocity_x_;
+  displacement_.z += delta_time * velocity_z_;
 }
 
 // Updates the transform matrix using glLookAt
-//  Includes physics calulations and movements if they exist
 //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
 void Object::UpdateModelMatrix() {
 
@@ -257,4 +254,13 @@ void Object::UpdateModelMatrix() {
       glm::vec3(translation_.x, translation_.y, translation_.z));
 
   model_matrix_ = translate * rotate * scale;
+}
+
+// Accessor for the direction vector
+//   @warn the roll (z rotation) is not calculated
+glm::vec3 Object::direction() const {
+  float direction_x = sin(DEG2RAD(rotation().y));
+  float direction_y = -sin(DEG2RAD(rotation().x));
+  float direction_z = cos(DEG2RAD(rotation().y));
+  return glm::vec3(direction_x, direction_y, direction_z);
 }

@@ -30,16 +30,18 @@
 class Object {
   public:
     // Construct with position setting parameters
-    Object(const glm::vec3 &translation, 
-           const glm::vec3 &rotation = glm::vec3(0.0f,0.0f,0.0f), 
-           const glm::vec3 &scale = glm::vec3(1,1,1),
+    Object(const glm::vec3 &translation,
+           const glm::vec3 &rotation,
+           const glm::vec3 &scale,
            float default_speed = 0,
            bool debugging_on = false);
 
     // Updates the model matrix using glLookAt
-    //  Includes physics calulations and movements if they exist
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
     void UpdateModelMatrix();
+    // Calculate the direction vector
+    //   @warn the roll (z rotation) is not calculated
+    glm::vec3 direction() const;
 
     // ACCESSORS:
     // Accessor for the current model matrix
@@ -50,6 +52,14 @@ class Object {
     inline glm::vec3 rotation() const;
     // Accessor for the displacement vector
     inline glm::vec3 displacement() const;
+    // Accessor for the centripetal X velocity
+    inline float centripeta_velocity_x() const;
+    // Accessor for the centripetal Z velocity
+    inline float centripeta_velocity_z() const;
+    // Accessor for the total X velocity
+    inline float velocity_x() const;
+    // Accessor for the total Z velocity
+    inline float velocity_z() const;
 
     // MUTATORS:
     // Sets the position
@@ -71,6 +81,19 @@ class Object {
     // Accessor for the current speed of the object
     //   @return speed_, the current speed of the object
     inline float speed() const;
+    // Accessor for the constant default speed of the object
+    //   @return default_speed_, the default speed of the object
+    inline float default_speed() const;
+    // Reset speed and acceleration to 0
+    inline void ResetPhysics();
+    // Reduce speed by amount
+    //   Corrects speed < 0 to 0
+    //   @param the amount to decrease the speed by
+    inline void ReduceSpeed(float amount);
+    // Reduce centripetal velocity by an amount
+    //   @param percentage amount
+    //   @warn should only be called when car is not in driving mode
+    inline void ReduceCentriVelocity(float percentage);
 
     // VIRTUAL CHILD (Model) METHODS:
     // Accessor for current shader program.
@@ -128,6 +151,9 @@ class Object {
     glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
+    // The direction of the object
+    //   @warn roll is not calculated
+    glm::vec3 direction_;
 
     // glm::scale transformation
     //   The scale of the object
@@ -138,8 +164,16 @@ class Object {
 
     // The speed of the object in the direction it is facing
     float speed_;
+    // The default speed of the object
+    const float default_speed_;
     // The speed of the object at 90 degrees towards turning center
     float centri_speed_;
+    // The centripetal velocitites of the object
+    float centripeta_velocity_x_;
+    float centripeta_velocity_z_;
+    // The velocities of the object
+    float velocity_x_;
+    float velocity_z_;
 
     // Verbose debugging - prints physics variables
     bool is_debugging_;
@@ -180,6 +214,27 @@ inline glm::vec3 Object::displacement() const {
 inline float Object::speed() const {
   return speed_;
 }
+// Accessor for the constant default speed of the object
+//   @return default_speed_, the default speed of the object
+inline float Object::default_speed() const {
+  return default_speed_;
+}
+// Accessor for the centripetal X velocity
+inline float Object::centripeta_velocity_x() const {
+  return centripeta_velocity_x_;
+}
+// Accessor for the centripetal Z velocity
+inline float Object::centripeta_velocity_z() const {
+  return centripeta_velocity_z_;
+}
+// Accessor for the total X velocity
+inline float Object::velocity_x() const {
+  return velocity_x_;
+}
+// Accessor for the total Z velocity
+inline float Object::velocity_z() const {
+  return velocity_z_;
+}
 
 // MUTATORS:
 // Sets the position
@@ -195,6 +250,28 @@ inline void Object::set_rotation(glm::vec3 new_rotation) {
 // Sets the displacement
 inline void Object::set_displacement(glm::vec3 new_displacement) {
   displacement_ = new_displacement;
+}
+// Reset speed and acceleration to 0
+inline void Object::ResetPhysics() {
+  speed_ = default_speed();
+  centri_speed_ = 0;
+}
+// Reduce speed by amount
+//   Corrects speed < 0 to 0
+//   @param the amount to decrease the speed by
+inline void Object::ReduceSpeed(float amount) {
+  speed_ -= amount;
+  if (speed() < 0) {
+    speed_ = 0;
+  }
+}
+// Reduce centripetal velocity by an amount
+//   @param percentage amount
+//   @warn should only be called when car is not in driving mode
+inline void Object::ReduceCentriVelocity(float percentage) {
+  percentage /= 100;
+  centripeta_velocity_x_ *= percentage;
+  centripeta_velocity_z_ *= percentage;
 }
 
 #endif
