@@ -128,7 +128,7 @@ void main(void) {
   vec3 normal_mv = normalize(a_normal_mv);
   float ratio = 1.00 / 1.33;
   vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
-  vec3 R = refract(I, normalize(normal_mv), ratio);
+  vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
 
   vec4 litColour = calcDirectionalLight(normal_mv);
   for (int i = 0; i < gNumPointLights; i++)
@@ -142,11 +142,11 @@ void main(void) {
   }
 
   vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
-  fragColour = colour;
+  //fragColour = colour;
   //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
   //colour.a = 1.0;
 
-  //fragColour = texture(skybox, R) * litColour;
+  fragColour = texture(skybox, R) * litColour;
 
   //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }
