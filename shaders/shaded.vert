@@ -21,7 +21,7 @@ void main()
 {
 	if(isShadow == 1) // we are rendering to shadow buffer
 	{
-
+		gl_Position = projection_matrix * modelview_matrix * vec4(a_vertex, 1.0);
 	}
 	else
 	{

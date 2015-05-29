@@ -226,7 +226,7 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
   if(renderToShadow)
   {
     //We want to make the view matrix, from the POV of the light
-    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    view_matrix = glm::lookAt(-glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
     //..and send it (later...after translations)
 
     //make the projection matrix the ortho one
@@ -290,7 +290,10 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
                         0.0, 0.0, 0.5, 0.0,
                         0.5, 0.5, 0.5, 1.0);
     glm::mat4 DepthBiasMVP;
-    DepthBiasMVP = biasMatrix * projection_ortho_ * modelview_matrix;
+
+    glm::mat4 view_matrix_light  = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+    DepthBiasMVP = biasMatrix * projection_ortho_ * view_matrix_light * model_matrix;
     glUniformMatrix4fv(biasHandle, 1, false, glm::value_ptr(DepthBiasMVP));
   }
 
@@ -419,7 +422,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, bool rende
   if(renderToShadow)
   {
     //We want to make the view matrix, from the POV of the light
-    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    view_matrix = glm::lookAt(-glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
     //..and send it (later...after translations)
 
     //make the projection matrix the ortho one      
@@ -497,7 +500,10 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, bool rende
                         0.0, 0.0, 0.5, 0.0,
                         0.5, 0.5, 0.5, 1.0);
     glm::mat4 DepthBiasMVP;
-    DepthBiasMVP = biasMatrix * projection_ortho_ * view_matrix;
+
+    glm::mat4 view_matrix_light = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+    DepthBiasMVP = biasMatrix * projection_ortho_ * view_matrix_light;
     glUniformMatrix4fv(biasHandle, 1, false, glm::value_ptr(DepthBiasMVP));
   }
 }

@@ -179,8 +179,10 @@ void main(void) {
     // Calc Shadow Factor
     float bias = 0.005;
     float visibility = 1.0;
-    if(texture(shadowMap, shadow_coord.xy).x < shadow_coord.z - bias)
+    vec4 vis = vec4(1.0, 1.0, 1.0, 1.0);
+    if(texture(shadowMap, shadow_coord.xy).x < shadow_coord.z)
     {
+      vis = vec4(1.0, 0.0, 0.0, 1.0);
       visibility = 0.000;
     }
     // Cannot trust pipeline interpolation to generate normalized normals
@@ -201,6 +203,6 @@ void main(void) {
   
     //fragColour = litColour * texture(texMap, a_tex_coord);
   
-    fragColour = visibility * mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
+    fragColour = vis * mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
   }
 }
