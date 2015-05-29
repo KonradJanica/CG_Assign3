@@ -55,6 +55,8 @@ class Renderer {
 
     inline void SetProjection(const glm::mat4 &projection);
 
+    inline GLuint getFrameBuffer() const;
+
   private:
     // The VAO Handle for the Axis Coordinates
     unsigned int coord_vao_handle;
@@ -70,7 +72,11 @@ class Renderer {
 };
 
 inline void Renderer::SetProjection(const glm::mat4 &projection) {
-    projection_ =  glm::ortho<float>(-40,40,-40,40,-1,100);
+    projection_ =  projection;
 }
 
+inline GLuint Renderer::getFrameBuffer() const
+{
+    return frame_buffer_name_;
+}
 #endif

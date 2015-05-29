@@ -1,6 +1,6 @@
 #include "renderer.h"
 
-// Create frambuffers
+// MITCH/ANDREW  - Normals being sent for shadows, consider if this needs to be done
 
 
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
@@ -99,24 +99,9 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
   glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-  if(renderToShadow)
-  {
-    //We want to make the view matrix, from the POV of the light
-    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
-    //..and send it (later...after translations)
-
-    //make the projection matrix the ortho one
-    int projHandle = glGetUniformLocation(water->watershader(), "projection_matrix");
-    if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");}    
-    //..and send it
-    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_ortho_) );
-  }
-  else
-  {
-    // We want to make the view  matrix from the camera
-    view_matrix = camera->view_matrix();
-    //..and send it (later..after translations)
-  }
+  
+  view_matrix = camera->view_matrix();
+ 
 
   // Create and send normal matrix
   glm::mat3 normMatrix;
@@ -233,6 +218,8 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
   }
 
   glm::mat4 view_matrix;
+  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
+  if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");} 
   if(renderToShadow)
   {
     //We want to make the view matrix, from the POV of the light
@@ -240,8 +227,8 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
     //..and send it (later...after translations)
 
     //make the projection matrix the ortho one
-    int projHandle = glGetUniformLocation(program_id, "projection_matrix");
-    if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");}    
+    
+       
     //..and send it
     glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_ortho_) );
   }
@@ -250,6 +237,7 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
     // We want to make the view  matrix from the camera
     view_matrix = camera->view_matrix();
     //..and send it (later..after translations)
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_) );
   }
 
   glm::mat3 normMatrix;
@@ -285,6 +273,22 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
     glUniform1i(texHandle, 0);
 
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
+  }
+
+  if(!renderToShadow)
+  {
+    int biasHandle = glGetUniformLocation(program_id, "depth_bias_MVP");
+    if(biasHandle == -1)
+    {
+      printf("Couldnt get the biashandle in render terrain\n");
+    }
+    glm::mat4 biasMatrix(0.5, 0.0, 0.0, 0.0,
+                        0.0, 0.5, 0.0, 0.0,
+                        0.0, 0.0, 0.5, 0.0,
+                        0.5, 0.5, 0.5, 1.0);
+    glm::mat4 DepthBiasMVP;
+    DepthBiasMVP = biasMatrix * projection_ortho_ * modelview_matrix;
+    glUniformMatrix4fv(biasHandle, 1, false, glm::value_ptr(DepthBiasMVP));
   }
 
 }
@@ -406,7 +410,27 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, bool rende
     }
   }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  glm::mat4 view_matrix;
+  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
+  if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");} 
+  if(renderToShadow)
+  {
+    //We want to make the view matrix, from the POV of the light
+    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    //..and send it (later...after translations)
+
+    //make the projection matrix the ortho one      
+    //..and send it
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_ortho_) );
+  }
+  else
+  {
+    // We want to make the view  matrix from the camera
+    view_matrix = camera->view_matrix();
+    //..and send it (later..after translations)
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_) );
+  }
+
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
@@ -456,5 +480,21 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, bool rende
     glUniform1i(texHandle, 0);
 
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+  }
+
+  if(!renderToShadow)
+  {
+    int biasHandle = glGetUniformLocation(program_id, "depth_bias_MVP");
+    if(biasHandle == -1)
+    {
+      printf("Couldnt get the biashandle in render terrain\n");
+    }
+    glm::mat4 biasMatrix(0.5, 0.0, 0.0, 0.0,
+                        0.0, 0.5, 0.0, 0.0,
+                        0.0, 0.0, 0.5, 0.0,
+                        0.5, 0.5, 0.5, 1.0);
+    glm::mat4 DepthBiasMVP;
+    DepthBiasMVP = biasMatrix * projection_ortho_ * view_matrix;
+    glUniformMatrix4fv(biasHandle, 1, false, glm::value_ptr(DepthBiasMVP));
   }
 }

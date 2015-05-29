@@ -55,11 +55,16 @@ uniform float shininess;
 
 uniform sampler2D texMap;
 
+uniform sampler2D shadowMap;
+
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 in vec2 a_tex_coord;
 
+uniform int isShadow;
+
 out vec4 fragColour;
+out float fragDepth;
 
 // @author - Mitch
 // Use different fog calculations to determine how fog is
@@ -164,24 +169,29 @@ vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
 }
 
 void main(void) {
-
-  // Cannot trust pipeline interpolation to generate normalized normals
-  vec4 vertex_mv = a_vertex_mv;
-  vec3 normal_mv = normalize(a_normal_mv); 
-
-  vec4 litColour = calcDirectionalLight(normal_mv);
-
-  for (int i = 0; i < gNumPointLights; i++)
-  {
-    litColour += calcPointLight(gPointLights[i], vertex_mv, normal_mv);
+  if(isShadow == 1){
+    fragDepth = gl_FragCoord.z;
   }
-
-  for (int i = 0; i < gNumSpotLights; i++)
+  else
   {
-    litColour += calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
+    // Cannot trust pipeline interpolation to generate normalized normals
+    vec4 vertex_mv = a_vertex_mv;
+    vec3 normal_mv = normalize(a_normal_mv); 
+  
+    vec4 litColour = calcDirectionalLight(normal_mv);
+  
+    for (int i = 0; i < gNumPointLights; i++)
+    {
+      litColour += calcPointLight(gPointLights[i], vertex_mv, normal_mv);
+    }
+  
+    for (int i = 0; i < gNumSpotLights; i++)
+    {
+      litColour += calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
+    }
+  
+    //fragColour = litColour * texture(texMap, a_tex_coord);
+  
+    fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
   }
-
-	//fragColour = litColour * texture(texMap, a_tex_coord);
-
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
 }

@@ -60,6 +60,43 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
+
+  // DRAW THE SCENE TO A BUFFER FOR SHADOWS
+  // ------------------------------------
+
+  // Get the handle for isShadow
+  glUseProgram(car_->program_id());
+  int isShadowHandle = glGetUniformLocation(car_->program_id(), "isShadow");
+  if(isShadowHandle == 1)
+  {
+    printf("We couldnt find the uniform handle for the isShadow\n");
+  }
+  glUniform1i(isShadowHandle, 1);
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->getFrameBuffer());
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  // Spider-man
+  renderer_->Render(objects_.at(0), camera_, true);
+  // Aventador
+  renderer_->Render(objects_.at(1), camera_, true);
+  // Car with physics
+  renderer_->Render(car_, camera_, true);
+  // Terrain
+  renderer_->Render(terrain_, camera_, true); 
+
+
+
+
+  // ------------------------------------
+
+  // Draw to the regular buffer
+  glUseProgram(car_->program_id());
+  glUniform1i(isShadowHandle, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
   // Spider-man
@@ -86,6 +123,7 @@ void Controller::PositionLights() {
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
   DirectionalLight dirLight;
+  // MITCH I CHANGED THIS TO BE VERY BRIGHT
   dirLight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
   dirLight.Direction = norm_matrix * glm::vec3(0.3f, -1.0f, -0.3f);
 
