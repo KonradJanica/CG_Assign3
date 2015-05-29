@@ -42,6 +42,10 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
     GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
     delta_time_ = current_frame - last_frame_;
     last_frame_ = current_frame;
+
+    // Also create the framebuffers
+
+
   } else {
     Object * object = new Model(program_id, model_filename,
         glm::vec3(0.0f, 0.0f, 0.0f), // Translation
@@ -82,7 +86,7 @@ void Controller::PositionLights() {
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
   DirectionalLight dirLight;
-  dirLight.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  dirLight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
   dirLight.Direction = norm_matrix * glm::vec3(0.3f, -1.0f, -0.3f);
 
   // Point lights
@@ -123,7 +127,6 @@ void Controller::PositionLights() {
 
   light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
   dirLight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-  dirLight.Direction = norm_matrix * glm::vec3(0.0f, -1.0f, -0.6f);
   light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
   light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);

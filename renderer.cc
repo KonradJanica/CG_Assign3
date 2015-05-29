@@ -1,11 +1,60 @@
 #include "renderer.h"
 
+// Create frambuffers
+
+
 // Constructor, initializes an empty axis coordinate VAO to optimize Render()
 //   Allows for Verbose Debugging Mode
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely with debugging enabled
 Renderer::Renderer(const bool &debug_flag) 
   : coord_vao_handle(0), is_debugging_(debug_flag) {
+    projection_ortho_ =  glm::ortho<float>(-40,40,-40,40,-1,100);
+
+}
+
+void Renderer::SetFrame(const GLuint &program_id, unsigned int windowX, unsigned int windowY)
+{
+  glUseProgram(program_id);
+
+  // generate namespace for the frame buffer and depthbuffer
+  glGenFramebuffers(1, &frame_buffer_name_);
+  glGenTextures(1, &depth_texture_);
+  
+  //switch to our fbo so we can bind stuff to it
+  glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
+  
+  // create the depth texture and attach it to the frame buffer.
+  glBindTexture(GL_TEXTURE_2D, depth_texture_);
+  // Give an empty image to OpenGL ( the last "0" )
+  //TODO ANDREW MITCH KONRAD - FIX 1280x
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  
+  
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  
+
+  // Set "renderedTexture" as our depth attachement
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture_, 0);
+  
+  
+  // Instruct openGL that we won't bind a color texture with the currently binded FBO
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+
+  // Always check that our framebuffer is ok
+  GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  
+  if (Status != GL_FRAMEBUFFER_COMPLETE) {
+      printf("FB error, status: 0x%x\n", Status);
+      exit(-1);
+  }
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 //   Renders the passed in water to the scene
@@ -13,7 +62,7 @@ Renderer::Renderer(const bool &debug_flag)
 //   @param Water * water, the skybox to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Camera * camera, const Skybox * Sky) const
+void Renderer::RenderWater(const Water * water, const Camera * camera, const Skybox * Sky, bool renderToShadow) const
 {
   glUseProgram(water->watershader());
 
@@ -45,13 +94,29 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
       exit(1);
     }
   }
-  
+  glm::mat4 view_matrix;
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
+  if(renderToShadow)
+  {
+    //We want to make the view matrix, from the POV of the light
+    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    //..and send it (later...after translations)
 
-  glm::mat4 view_matrix = camera->view_matrix();
+    //make the projection matrix the ortho one
+    int projHandle = glGetUniformLocation(water->watershader(), "projection_matrix");
+    if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");}    
+    //..and send it
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_ortho_) );
+  }
+  else
+  {
+    // We want to make the view  matrix from the camera
+    view_matrix = camera->view_matrix();
+    //..and send it (later..after translations)
+  }
 
   // Create and send normal matrix
   glm::mat3 normMatrix;
@@ -130,7 +195,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 //   @param Object * object, an object to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera * camera) const {
+void Renderer::Render(const Object * object, const Camera * camera, bool renderToShadow) const {
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -167,7 +232,26 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
     }
   }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  glm::mat4 view_matrix;
+  if(renderToShadow)
+  {
+    //We want to make the view matrix, from the POV of the light
+    view_matrix = glm::lookAt(glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    //..and send it (later...after translations)
+
+    //make the projection matrix the ortho one
+    int projHandle = glGetUniformLocation(program_id, "projection_matrix");
+    if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");}    
+    //..and send it
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection_ortho_) );
+  }
+  else
+  {
+    // We want to make the view  matrix from the camera
+    view_matrix = camera->view_matrix();
+    //..and send it (later..after translations)
+  }
+
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
@@ -291,7 +375,7 @@ void Renderer::EnableAxis(const GLuint &program_id) {
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
+void Renderer::Render(const Terrain * terrain, const Camera * camera, bool renderToShadow) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

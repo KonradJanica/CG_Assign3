@@ -78,8 +78,8 @@ bool g_coord_axis = true;
 // Camera object
 Camera * g_camera;
 
-int g_window_x = 640*2;
-int g_window_y = 480*2;
+unsigned int g_window_x = 640*2;
+unsigned int g_window_y = 480*2;
 
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(75.0f, float(g_window_x / g_window_y), 0.1f, 100.0f);
@@ -89,6 +89,7 @@ void UpdateProjection() {
     assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
     glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
   }
+  g_renderer->SetProjection(projection);
 }
 
 /**
@@ -139,7 +140,7 @@ void idle() {
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
 
-  UpdateProjection();
+  // UpdateProjection();
 
   glutPostRedisplay();
 }
@@ -331,6 +332,8 @@ int main(int argc, char **argv) {
   // Construct Axis VAO
   g_renderer->EnableAxis(g_program_id[1]);
 
+  g_renderer->SetFrame(g_program_id[2], g_window_x, g_window_y);
+
   g_controller = new Controller(g_renderer);
 
   // Setup camera global
@@ -349,6 +352,8 @@ int main(int argc, char **argv) {
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
   g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj");
   g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
+
+  UpdateProjection();
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);
