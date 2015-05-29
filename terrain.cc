@@ -4,7 +4,7 @@
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
-  prev_rand_(0), indice_count_(0), road_indice_count_(0),
+  generated_ticks_(0), prev_rand_(0), indice_count_(0), road_indice_count_(0),
   terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
@@ -14,6 +14,12 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
     vertices.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
     next_tile_start_ = glm::vec2(-10,-10);
     prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from min_position
+    // Height randomization vars
+    int center_left_x = x_length_/2 - x_length_/4;
+    int center_z = z_length_ - z_length_/2;
+    x_cliff_position_ = center_left_x, z_cliff_position_ = center_z;
+    int center_right_x = x_length_ - x_length_/2;
+    x_water_position_ = center_right_x, z_water_position_ = center_z;
 
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");
@@ -34,48 +40,75 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
     // This is the amount of tiles that will be in the circular_vector at all times
     // Always start with 2 straight pieces so car is on 2nd tile road
     //   and so can't see first tile being popped off
-    GenerateTerrain(kStraight);
+    GenerateStartingTerrain(kStraight);
 
     // Pop off first collision map which is already behind car
     col_pop();
-    GenerateTerrain(kStraight);
+    GenerateStartingTerrain(kStraight);
     for (int x = 0; x < 5; ++x) {
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
-      RandomizeGeneration();
-      // GenerateTerrain();
+      RandomizeGeneration(true);
     }
   }
 
 // Generates next tile and removes first one
 //   Uses the circular_vector data structure to do this in O(1)
+//   Resets the generation ticks to 0, E.g. begins generating next tile
 //   TODO merge col_pop or something
 void Terrain::ProceedTiles() {
   // TODO free/delete GL VAOs
   terrain_vao_handle_.pop_front();
   road_vao_handle_.pop_front();
 
+  // Reset generation state
+  generated_ticks_ = 0;
+
   // Generates a random terrain piece and pushes it back
   // into circular_vector VAO buffer
+  // TODO add different chances to prev_rand_
+  prev_rand_ = rand() % 3;
+  z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
+  temp_last_row_heights_.clear(); //clear previous last row for smoothing
   RandomizeGeneration();
-  // GenerateTerrain();
+}
+
+// Generates the next part of tile for spreading over multiple ticks
+void Terrain::GenerationTick() {
+  //Check for overflow
+  if (generated_ticks_ >= 0) {
+    // printf("gen ticks = %d\n",generated_ticks_);
+    ++generated_ticks_;
+    RandomizeGeneration();
+  }
 }
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
-void Terrain::RandomizeGeneration() {
-  // TODO add different chances
-  prev_rand_ = rand() % 3;
-  z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
-  switch(prev_rand_) {
-    case 0:
-      GenerateTerrain(kStraight);
-      break;
-    case 1:
-      GenerateTerrain(kTurnLeft);
-      break;
-    case 2:
-      GenerateTerrain(kTurnRight);
-      break;
+void Terrain::RandomizeGeneration(const bool is_start) {
+  if (is_start) {
+    switch(prev_rand_) {
+      case 0:
+        GenerateStartingTerrain(kStraight);
+        break;
+      case 1:
+        GenerateStartingTerrain(kTurnLeft);
+        break;
+      case 2:
+        GenerateStartingTerrain(kTurnRight);
+        break;
+    }
+  } else {
+    switch(prev_rand_) {
+      case 0:
+        GenerateTerrain(kStraight);
+        break;
+      case 1:
+        GenerateTerrain(kTurnLeft);
+        break;
+      case 2:
+        GenerateTerrain(kTurnRight);
+        break;
+    }
   }
 }
 
@@ -85,21 +118,19 @@ void Terrain::RandomizeGeneration() {
 //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
-void Terrain::GenerateTerrain(RoadType road_type) {
-  HelperMakeHeights();
+void Terrain::GenerateStartingTerrain(RoadType road_type) {
+  temp_last_row_heights_.clear(); //clear previous last row for smoothing
+  HelperMakeHeights(0, kRandomIterations);
+  HelperMakeSmoothHeights();
   HelperMakeVertices(road_type);
   HelperMakeNormals();
-
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
   HelperMakeRoadVertices();
-
   // Fix the UV caused by z_smooth_max_ being random
   HelperFixUV();
-
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
-
   // Make VAOs
   unsigned int terrain_vao = CreateVao(kTerrain);
   terrain_vao_handle_.push_back(terrain_vao);
@@ -108,116 +139,171 @@ void Terrain::GenerateTerrain(RoadType road_type) {
 
 }
 
-// Model the heights using an X^3 mathematical functions, then randomize heights
-// for all vertices in heightmap
-//   @warn pretty expensive operation 10000*2 loops
-void Terrain::HelperMakeHeights() {
-  // Store the connecting row to smooth
-  std::vector<float> temp_last_row_heights_;
-  for (unsigned int z = 0; z < z_smooth_max_; ++z) {
-    for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
-      temp_last_row_heights_.push_back(heights_.at(x - z*x_length_));
-    }
+// Generate Terrain tile piece with road
+//   Mutates the input members, (e.g. vertices, indicies etc.) and then
+//   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+//   The members are mutated over $kGenerationTicks to spread load
+//   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
+//   @warn creates and pushes back a road VAO based on the terrain middle section
+//   @warn pushes next road collision map into member queue
+void Terrain::GenerateTerrain(RoadType road_type) {
+  if (generated_ticks_ < kHeightGenerationTicks
+      && generated_ticks_ >= 0) {
+    int iterations_per_tick = kRandomIterations/kHeightGenerationTicks;
+    int start = iterations_per_tick * generated_ticks_;
+    int end = start + iterations_per_tick;
+    // printf("start = %d, end = %d\n",start,end);
+    HelperMakeHeights(start, end); //TODO
+
+    return;
+  }
+  if (generated_ticks_ == kHeightGenerationTicks) {
+    HelperMakeSmoothHeights();
+    return;
   }
 
-  heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
-  float rand_x3 = rand() % 13 + 3;
-  for (int y = 0; y < z_length_; ++y) {
-    for (int x = 0; x < x_length_; ++x) {
-      // Normalize x between -1 and 1
-      float norm_x = (float)x / (x_length_-1);
-      norm_x *= 2.0;
-      norm_x -= 1.0;
+  // The amount of ticks after heights have been generated
+  signed char vao_ticks = generated_ticks_ - kHeightGenerationTicks;
 
-      // Height modelled using X^3
-      if (x > x_length_/2) {
-      heights_.at(x+y*x_length_) = rand_x3*(norm_x*norm_x*norm_x);
-      } else {
-      heights_.at(x+y*x_length_) = 20*(norm_x*norm_x*norm_x);
+  switch(vao_ticks) {
+    case 1:
+      HelperMakeVertices(road_type);
+      break;
+    case 2:
+      HelperMakeNormals();
+      break;
+    case 3:
+      //  ROAD - Extract middle flat section and make road VAO
+      //  BEWARD FULL OF MAGIC NUMBERS
+      HelperMakeRoadVertices();
+      break;
+    case 4:
+      // Fix the UV caused by z_smooth_max_ being random
+      HelperFixUV();
+      break;
+    case 5:
+      // Collision map for current road tile
+      HelperMakeRoadCollisionMap();
+      break;
+    case 6:
+      {
+        // Make terrain VAO
+        unsigned int terrain_vao = CreateVao(kTerrain);
+        terrain_vao_handle_.push_back(terrain_vao);
+        break;
+      }
+    case 7:
+      {
+        // Make road VAO
+        unsigned int road_vao = CreateVao(kRoad);
+        road_vao_handle_.push_back(road_vao);
+        break;
+      }
+  }
+}
+
+// Model the heights using an X^3 mathematical functions, then randomize heights
+// for all vertices in heightmap
+//   @param  start  Index to start looping from
+//   @param  end    Index to finish the loop
+//   @warn pretty expensive operation 10000*2 loops
+//   @warn spread over a couple of loops
+void Terrain::HelperMakeHeights(const int start, const int end) {
+  if (generated_ticks_ == 0) {
+    // Store the connecting row to smooth
+    for (unsigned int z = 0; z < z_smooth_max_; ++z) {
+      for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
+        temp_last_row_heights_.push_back(heights_.at(x - z*x_length_));
+      }
+    }
+
+    printf("generating first %d\n",generated_ticks_);
+
+    heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
+    float rand_x3 = rand() % 13 + 3;
+    for (int z = 0; z < z_length_; ++z) {
+      for (int x = 0; x < x_length_; ++x) {
+        // Normalize x between -1 and 1
+        float norm_x = (float)x / (x_length_-1);
+        norm_x *= 2.0;
+        norm_x -= 1.0;
+
+        // Height modelled using X^3
+        if (x > x_length_/2) {
+          heights_.at(x+z*x_length_) = rand_x3*(norm_x*norm_x*norm_x);
+        } else {
+          heights_.at(x+z*x_length_) = 20*(norm_x*norm_x*norm_x);
+        }
       }
     }
   }
 
   // Randomize Top Terrain
-  int center_left_x = x_length_/2 - x_length_/4;
-  int center_z = z_length_ - z_length_/2;
-  int x_position = center_left_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
+  for (int i = start; i < end; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
-      case 1: x_position++;
+      case 1: x_cliff_position_++;
               break;
-      case 2: x_position--;
+      case 2: x_cliff_position_--;
               break;
-      case 3: z_position++;
+      case 3: z_cliff_position_++;
               break;
-      case 4: z_position--;
+      case 4: z_cliff_position_--;
               break;
     }
-    if (x_position < 0) {
-      x_position = x_length_/2-2 * length_multiplier_;
-      // x_position = rand() % x_length_/2;
+    if (x_cliff_position_ < 0) {
+      x_cliff_position_ = x_length_/2-2 * length_multiplier_;
       continue;
-    } else if (x_position > x_length_/2-2 * length_multiplier_) {
-      // x_position = x_length_/2;
-      // x_position = rand() % x_length_/2;
-      x_position = 0;
+    } else if (x_cliff_position_ > x_length_/2-2 * length_multiplier_) {
+      x_cliff_position_ = 0;
       continue;
     }
-    if (z_position < 0) {
-      // z_position = 0;
-      // z_position = rand() % z_length_;
-      z_position = z_length_-1;
+    if (z_cliff_position_ < 0) {
+      z_cliff_position_ = z_length_-1;
       continue;
-    } else if (z_position > z_length_-1) {
-      // z_position = z_length_-1;
-      // z_position = rand() % z_length_;
-      z_position = 0;
+    } else if (z_cliff_position_ > z_length_-1) {
+      z_cliff_position_ = 0;
       continue;
     }
-    heights_.at(x_position + z_position*x_length_) -= 0.100f;
+    heights_.at(x_cliff_position_ + z_cliff_position_*x_length_) -= 0.100f;
   }
 
   // Randomize Bottom Terrain
-  // x_position = x_length_/2, z_position = z_length_-1;
-  int center_right_x = x_length_ - x_length_/2;
-  x_position = center_right_x, z_position = center_z;
-  for (unsigned int i = 0; i < 10000 * length_multiplier_; ++i) {
+  for (int i = start; i < end; ++i) {
     int v = rand() % 4 + 1;
     switch(v) {
-      case 1: x_position++;
+      case 1: x_water_position_++;
               break;
-      case 2: x_position--;
+      case 2: x_water_position_--;
               break;
-      case 3: z_position++;
+      case 3: z_water_position_++;
               break;
-      case 4: z_position--;
+      case 4: z_water_position_--;
               break;
     }
-    if (x_position < x_length_/2+4 * length_multiplier_) {
-      // x_position = x_length_/2;
-      // x_position = rand() % x_length_/2 + x_length_/2;
-      x_position = x_length_-1;
+    if (x_water_position_ < x_length_/2+4 * length_multiplier_) {
+      x_water_position_ = x_length_-1;
       continue;
-    } else if (x_position > x_length_-1) {
-      // x_position = x_length_-1;
-      // x_position = rand() % x_length_/2 + x_length_/2;
-      x_position = x_length_/2+4 * length_multiplier_;
+    } else if (x_water_position_ > x_length_-1) {
+      x_water_position_ = x_length_/2+4 * length_multiplier_;
       continue;
     }
-    if (z_position < 0) {
-      // z_position = 0;
-      // z_position = rand() % z_length_;
-      z_position = z_length_-1;
+    if (z_water_position_ < 0) {
+      z_water_position_ = z_length_-1;
       continue;
-    } else if (z_position > z_length_-1) {
-      // z_position = z_length_-1;
-      // z_position = rand() % z_length_;
-      z_position = 0;
+    } else if (z_water_position_ > z_length_-1) {
+      z_water_position_ = 0;
       continue;
     }
-    heights_.at(x_position + z_position*x_length_) += 0.100f;
+    heights_.at(x_water_position_ + z_water_position_*x_length_) += 0.100f;
   }
+
+}
+
+// Smooths the terrain at the connections
+// TODO more commenting
+//   @warn requires a last row member
+void Terrain::HelperMakeSmoothHeights() {
 
   // SMOOTH CONNECTIONS
   // TODO someone try fighting with this if you dare...
@@ -232,11 +318,33 @@ void Terrain::HelperMakeHeights() {
     }
   }
 
-  // SMOOTH ENTIRE TERRAIN
-  // for (int i = 0; i < 10000; ++i)
+  // SMOOTH WATER TERRAIN
   for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
-    // for (int x = 1; x < x_length_/2+4*length_multiplier_; ++x) {
-    for (int x = 1; x < x_length_-1; ++x) {
+    for (int x = 1; x < x_length_/2+4 * length_multiplier_; ++x) {
+      // Get all heights around center height
+      //   Orientation is from car start facing
+      float &center = heights_.at(x + z*x_length_);
+      if (z < z_length_)
+        float top = heights_.at(x + (z+1)*x_length_);
+      float bot = heights_.at(x + (z-1)*x_length_);
+      float left = heights_.at(x+1 + z*x_length_);
+      float right = heights_.at(x-1 + z*x_length_);
+
+      if (z < z_length_) {
+        float top_left = heights_.at(x+1 + (z+1)*x_length_);
+        float top_right = heights_.at(x-1 + (z+1)*x_length_);
+      }
+      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
+      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+
+      float average = (center+top+bot+left+right
+          +top_left+top_right+bot_left+bot_right)/8.0f;
+      center = average;  //pass by reference
+    }
+  }
+  // SMOOTH CLIFF TERRAIN
+  for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
+    for (int x = 1; x < x_length_/2+4 * length_multiplier_; ++x) {
       // Get all heights around center height
       //   Orientation is from car start facing
       float &center = heights_.at(x + z*x_length_);
@@ -417,11 +525,11 @@ void Terrain::HelperFixUV() {
       // float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
       float stretch_multiplier;
       if (z_smooth_max_ == 5 * length_multiplier_) {
-      stretch_multiplier = 0.15f / length_multiplier_;
+        stretch_multiplier = 0.15f / length_multiplier_;
       } else if (z_smooth_max_ == 6 * length_multiplier_) {
-      stretch_multiplier = 0.20f / length_multiplier_;
+        stretch_multiplier = 0.20f / length_multiplier_;
       } else if (z_smooth_max_ == 7 * length_multiplier_) {
-      stretch_multiplier = 0.25f / length_multiplier_;
+        stretch_multiplier = 0.25f / length_multiplier_;
       }
       // float rot = cos(DEG2RAD(prev_rotation_));
       // float x_rot = cos(DEG2RAD(prev_rotation_)) + 1.0f;
@@ -446,7 +554,7 @@ void Terrain::HelperFixUV() {
   //     index++;
   //   }
   // }
-  
+
   // FIX ROAD UV COORDINATES
   // TODO optimize this using commented code above
   //   (couldnt get above to work)

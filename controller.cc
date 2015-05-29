@@ -145,12 +145,14 @@ void Controller::UpdateGame() {
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
+  terrain_->GenerationTick();
+
   // printf("mid = (%f,%f,%f)\n",left_lane_midpoint_.x,left_lane_midpoint_.y,left_lane_midpoint_.z);
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   UpdateCamera();
   if (!is_collision_) {
-    UpdateCollisions();
     UpdatePhysics();
+    UpdateCollisions();
   }
 
   if (game_state_ == kCrashingFall) {

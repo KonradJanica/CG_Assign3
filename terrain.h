@@ -74,7 +74,10 @@ class Terrain {
     // Generates next tile and removes first one
     //   Uses the circular_vector data structure to do this in O(1)
     //   TODO merge col_pop or something
+    //   TODO comment spread over ticks
     void ProceedTiles();
+    // Generates the next part of tile for spreading over multiple ticks
+    void GenerationTick();
 
   private:
     // CONSTANTS
@@ -87,22 +90,39 @@ class Terrain {
       kTurnLeft = 1,
       kTurnRight = 2,
     };
+    // The amount of ticks to spread height generation over
+    const signed char kHeightGenerationTicks = 50;
+    // The amount of ticks to spread VAO creation over
+    const signed char kVaoGenerationTicks = 5;
+    // The maximum number of randomizing height generation iterations
+    const int kRandomIterations = 10000 * length_multiplier_;
     // Width of the heightmap
-    int x_length_;
+    unsigned char x_length_;
     // Height of the heightmap
-    int z_length_;
+    unsigned char z_length_;
     // The multiplier for all magic numbers
     //   @warn this requires a square heightmap
     //   @warn dimensions should be multiples of 32
-    int length_multiplier_;
+    char length_multiplier_;
 
     // RENDER DATA
+    // The amount of ticks generated so far
+    //   Used to spread iterations over multiple ticks
+    //   Spread over $kGenerationTicks ticks
+    signed char generated_ticks_;
+    // The x and y positions of the height randomization for the (left) cliff part
+    int x_cliff_position_;
+    int z_cliff_position_;
+    // The x and y positions of the height randomization for the (right) water part
+    int x_water_position_;
+    int z_water_position_;
     // The previous random value used to calculate next turn type
+    //   Next turn rand is generated in proceedTiles
     char prev_rand_;
     // The amount of indices, used to render terrain efficiently
-    int indice_count_;
+    unsigned int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
-    int road_indice_count_;
+    unsigned int road_indice_count_;
     // The shader to use to render heightmap
     //   Road uses the same shader
     GLuint terrain_program_id_;
@@ -170,12 +190,25 @@ class Terrain {
     // The amount of (tile relative) Z rows from the back to smooth
     //   Is needed to connect rotated rows
     unsigned int z_smooth_max_;
+    // The last row used for smoothing
+    std::vector<float> temp_last_row_heights_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
-    void RandomizeGeneration();
+    //   Starting terrain is generated all at once but flowing terrain generation is spread
+    //   over $kGenerationTicks ticks
+    //   @param Whether or not the terrain is the starting terrain
+    void RandomizeGeneration(const bool is_start = false);
     // Generate Terrain tile piece with road
     //   Mutates the input members, (e.g. vertices, indicies etc.) and then
     //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
+    //   @warn creates and pushes back a road VAO based on the terrain middle section
+    //   @warn pushes next road collision map into member queue
+    void GenerateStartingTerrain(RoadType road_type);
+    // Generate Terrain tile piece with road
+    //   Mutates the input members, (e.g. vertices, indicies etc.) and then
+    //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   The members are mutated over $kGenerationTicks to spread load
     //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     //   @warn pushes next road collision map into member queue
@@ -184,8 +217,15 @@ class Terrain {
     // TERRAIN GENERATION HELPERS
     // Model the heights using an X^3 mathematical functions, then randomize heights
     // for all vertices in heightmap
+    //   @param  start  Index to start looping from
+    //   @param  end    Index to finish the loop
     //   @warn pretty expensive operation 10000*2 loops
-    void HelperMakeHeights();
+    //   @warn spread over a couple of loops
+    void HelperMakeHeights(int start, const int end);
+    // Smooths the terrain at the connections
+    // TODO more commenting
+    //   @warn requires a last row member
+    void HelperMakeSmoothHeights();
     // Overloaded function to generate a square height map on the X/Z plane. Different
     // road_type parameters can be added to curve the Z coordinates and hence make turning
     // pieces.
