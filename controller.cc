@@ -67,13 +67,13 @@ void Controller::Draw() {
   // Get the handle for isShadow
   glUseProgram(car_->program_id());
   int isShadowHandle = glGetUniformLocation(car_->program_id(), "isShadow");
-  if(isShadowHandle == 1)
+  if(isShadowHandle == -1)
   {
     printf("We couldnt find the uniform handle for the isShadow\n");
   }
   glUniform1i(isShadowHandle, 1);
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_->getFrameBuffer());
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
   glClear(GL_DEPTH_BUFFER_BIT);
 
   // Spider-man
@@ -89,7 +89,13 @@ void Controller::Draw() {
 
 
   // ------------------------------------
-
+  int isShadowTexHandle = glGetUniformLocation(car_->program_id(), "shadowMap");
+  if(isShadowTexHandle == -1)
+  {
+    printf("We couldnt find the uniform handle for the shadowMap\n");
+  }
+  glBindTexture(GL_TEXTURE_2D, renderer_->getDepth());
+  glUniform1i(isShadowTexHandle, 1);
   // Draw to the regular buffer
   glUseProgram(car_->program_id());
   glUniform1i(isShadowHandle, 0);

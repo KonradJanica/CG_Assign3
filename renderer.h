@@ -57,6 +57,8 @@ class Renderer {
 
     inline GLuint getFrameBuffer() const;
 
+    inline GLuint getDepth() const;
+
   private:
     // The VAO Handle for the Axis Coordinates
     unsigned int coord_vao_handle;
@@ -70,7 +72,10 @@ class Renderer {
     glm::mat4 projection_ortho_;
     glm::mat4 projection_;
 };
-
+inline GLuint Renderer::getDepth() const
+{
+    return depth_texture_;
+}
 inline void Renderer::SetProjection(const glm::mat4 &projection) {
     projection_ =  projection;
 }

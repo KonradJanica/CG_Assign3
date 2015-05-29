@@ -17,13 +17,16 @@ void Renderer::SetFrame(const GLuint &program_id, unsigned int windowX, unsigned
 {
   glUseProgram(program_id);
 
+  
+  glActiveTexture(GL_TEXTURE1);
+
   // generate namespace for the frame buffer and depthbuffer
   glGenFramebuffers(1, &frame_buffer_name_);
   glGenTextures(1, &depth_texture_);
   
   //switch to our fbo so we can bind stuff to it
   glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
-  
+
   // create the depth texture and attach it to the frame buffer.
   glBindTexture(GL_TEXTURE_2D, depth_texture_);
   // Give an empty image to OpenGL ( the last "0" )

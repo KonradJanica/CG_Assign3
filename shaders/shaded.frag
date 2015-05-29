@@ -60,6 +60,7 @@ uniform sampler2D shadowMap;
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 in vec2 a_tex_coord;
+in vec4 shadow_coord;
 
 uniform int isShadow;
 
@@ -168,12 +169,20 @@ vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
   }
 }
 
+
 void main(void) {
   if(isShadow == 1){
     fragDepth = gl_FragCoord.z;
   }
   else
   {
+    // Calc Shadow Factor
+    float bias = 0.005;
+    float visibility = 1.0;
+    if(texture(shadowMap, shadow_coord.xy).x < shadow_coord.z - bias)
+    {
+      visibility = 0.000;
+    }
     // Cannot trust pipeline interpolation to generate normalized normals
     vec4 vertex_mv = a_vertex_mv;
     vec3 normal_mv = normalize(a_normal_mv); 
@@ -192,6 +201,6 @@ void main(void) {
   
     //fragColour = litColour * texture(texMap, a_tex_coord);
   
-    fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
+    fragColour = visibility * mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
   }
 }
