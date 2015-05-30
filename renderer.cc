@@ -294,9 +294,9 @@ void Renderer::EnableAxis(const GLuint &program_id) {
 void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // Setup Handles
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");

@@ -34,14 +34,15 @@ LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
 .PHONY:  clean
 
 all : assign3$(EXT)
+	./assign3$(EXT)
 
-assign3$(EXT) : $(LINK) $(LIB)
+assign3$(EXT): $(LINK) $(LIB)
 	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
 
-main.o : model_data.h model.h camera.h renderer.h main.cpp 
+main.o: model_data.h model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
 
-controller.o : controller.cc controller.h light_controller.h renderer.h camera.h terrain.h object.h model.h
+controller.o: controller.cc controller.h light_controller.h renderer.h camera.h terrain.h object.h model.h
 	$(CC) $(CPPFLAGS) -c controller.cc
 
 light_controller.o: light_controller.cc light_controller.h
@@ -53,13 +54,13 @@ Skybox.o: Skybox.cc Skybox.h
 Water.o: Water.cc Water.h
 	$(CC) $(CPPFLAGS) -c Water.cc
 
-renderer.o : renderer.cc renderer.h camera.h terrain.h object.h model.h
+renderer.o: renderer.cc renderer.h camera.h terrain.h object.h model.h
 	$(CC) $(CPPFLAGS) -c renderer.cc
 
-camera.o : camera.cc camera.h
+camera.o: camera.cc camera.h
 	$(CC) $(CPPFLAGS) -c camera.cc
 
-terrain.o : terrain.cc terrain.h
+terrain.o: terrain.cc terrain.h
 	$(CC) $(CPPFLAGS) -c terrain.cc
 
 model.o: model.cc model.h object.h model_data.h
@@ -71,7 +72,7 @@ object.o: object.cc object.h
 model_data.o: model_data.cc model_data.h
 	$(CC) $(CPPFLAGS) -c model_data.cc
 
-$(LIB) :
+$(LIB):
 	$(MAKE) -C lib/tiny_obj_loader
 	$(MAKE) -C lib/shader
 
