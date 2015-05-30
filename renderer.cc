@@ -222,11 +222,14 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
 
   glm::mat4 view_matrix;
   int projHandle = glGetUniformLocation(program_id, "projection_matrix");
-  if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");} 
-  if(renderToShadow)
+  if (projHandle == -1) {printf("We couldnt get the ortho projection for the water\n");} 
+  if (renderToShadow)
   {
     //We want to make the view matrix, from the POV of the light
-    view_matrix = glm::lookAt(-glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    const glm::vec3 dirLight(0.3f, -1.0f, -0.3f);
+    const glm::vec3 invDirLight(-dirLight);
+
+    view_matrix = glm::lookAt(invDirLight, glm::vec3(0,0,0), glm::vec3(0,1,0));
     //..and send it (later...after translations)
 
     //make the projection matrix the ortho one
@@ -278,10 +281,10 @@ void Renderer::Render(const Object * object, const Camera * camera, bool renderT
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
 
-  if(!renderToShadow)
+  if (!renderToShadow)
   {
     int biasHandle = glGetUniformLocation(program_id, "depth_bias_MVP");
-    if(biasHandle == -1)
+    if (biasHandle == -1)
     {
       printf("Couldnt get the biashandle in render terrain\n");
     }
@@ -418,11 +421,14 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, bool rende
 
   glm::mat4 view_matrix;
   int projHandle = glGetUniformLocation(program_id, "projection_matrix");
-  if(projHandle == -1){printf("We couldnt get the ortho projection for the water\n");} 
-  if(renderToShadow)
+  if (projHandle == -1) {printf("We couldnt get the ortho projection for the water\n");} 
+  if (renderToShadow)
   {
     //We want to make the view matrix, from the POV of the light
-    view_matrix = glm::lookAt(-glm::vec3(0.3f, -1.0f, -0.3f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    const glm::vec3 dirLight(0.3f, -1.0f, -0.3f);
+    const glm::vec3 invDirLight(-dirLight);
+
+    view_matrix = glm::lookAt(invDirLight, glm::vec3(0,0,0), glm::vec3(0,1,0));
     //..and send it (later...after translations)
 
     //make the projection matrix the ortho one      
