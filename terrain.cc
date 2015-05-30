@@ -17,9 +17,9 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
     // Height randomization vars
     int center_left_x = x_length_/2 - x_length_/4;
     int center_z = z_length_ - z_length_/2;
-    x_cliff_position_ = center_left_x, z_cliff_position_ = center_z;
+    x_water_position_ = center_left_x, z_water_position_ = center_z;
     int center_right_x = x_length_ - x_length_/2;
-    x_water_position_ = center_right_x, z_water_position_ = center_z;
+    x_cliff_position_ = center_right_x, z_cliff_position_ = center_z;
 
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");
@@ -238,36 +238,6 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
     }
   }
 
-  // Randomize Top Terrain
-  for (int i = start; i < end; ++i) {
-    int v = rand() % 4 + 1;
-    switch(v) {
-      case 1: x_cliff_position_++;
-              break;
-      case 2: x_cliff_position_--;
-              break;
-      case 3: z_cliff_position_++;
-              break;
-      case 4: z_cliff_position_--;
-              break;
-    }
-    if (x_cliff_position_ < 0) {
-      x_cliff_position_ = x_length_/2-2 * length_multiplier_;
-      continue;
-    } else if (x_cliff_position_ > x_length_/2-2 * length_multiplier_) {
-      x_cliff_position_ = 0;
-      continue;
-    }
-    if (z_cliff_position_ < 0) {
-      z_cliff_position_ = z_length_-1;
-      continue;
-    } else if (z_cliff_position_ > z_length_-1) {
-      z_cliff_position_ = 0;
-      continue;
-    }
-    heights_.at(x_cliff_position_ + z_cliff_position_*x_length_) -= 0.100f;
-  }
-
   // Randomize Bottom Terrain
   for (int i = start; i < end; ++i) {
     int v = rand() % 4 + 1;
@@ -281,11 +251,11 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
       case 4: z_water_position_--;
               break;
     }
-    if (x_water_position_ < x_length_/2+4 * length_multiplier_) {
-      x_water_position_ = x_length_-1;
+    if (x_water_position_ < 0) {
+      x_water_position_ = x_length_/2-2 * length_multiplier_;
       continue;
-    } else if (x_water_position_ > x_length_-1) {
-      x_water_position_ = x_length_/2+4 * length_multiplier_;
+    } else if (x_water_position_ > x_length_/2-2 * length_multiplier_) {
+      x_water_position_ = 0;
       continue;
     }
     if (z_water_position_ < 0) {
@@ -295,7 +265,37 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
       z_water_position_ = 0;
       continue;
     }
-    heights_.at(x_water_position_ + z_water_position_*x_length_) += 0.100f;
+    heights_.at(x_water_position_ + z_water_position_*x_length_) -= 0.100f;
+  }
+
+  // Randomize Top Terrain
+  for (int i = start; i < end; ++i) {
+    int v = rand() % 4 + 1;
+    switch(v) {
+      case 1: x_cliff_position_++;
+              break;
+      case 2: x_cliff_position_--;
+              break;
+      case 3: z_cliff_position_++;
+              break;
+      case 4: z_cliff_position_--;
+              break;
+    }
+    if (x_cliff_position_ < x_length_/2+4 * length_multiplier_) {
+      x_cliff_position_ = x_length_-1;
+      continue;
+    } else if (x_cliff_position_ > x_length_-1) {
+      x_cliff_position_ = x_length_/2+4 * length_multiplier_;
+      continue;
+    }
+    if (z_cliff_position_ < 0) {
+      z_cliff_position_ = z_length_-1;
+      continue;
+    } else if (z_cliff_position_ > z_length_-1) {
+      z_cliff_position_ = 0;
+      continue;
+    }
+    heights_.at(x_cliff_position_ + z_cliff_position_*x_length_) += 0.100f;
   }
 
 }
@@ -320,7 +320,7 @@ void Terrain::HelperMakeSmoothHeights() {
 
   // SMOOTH WATER TERRAIN
   for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
-    for (int x = 1; x < x_length_/2-1 ; ++x) {
+    for (int x = 1; x < x_length_/2-4 ; ++x) {
       // Get all heights around center height
       //   Orientation is from car start facing
       float &center = heights_.at(x + z*x_length_);
