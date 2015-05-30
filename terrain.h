@@ -119,6 +119,9 @@ class Terrain {
     // The previous random value used to calculate next turn type
     //   Next turn rand is generated in proceedTiles
     char prev_rand_;
+    // The previous random value used to generate the cliff (X^3 i.e. cubic) base heights
+    //   Used to ensure there are no sudden peaks
+    char prev_cliff_x3_rand_;
     // The amount of indices, used to render terrain efficiently
     unsigned int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
@@ -226,6 +229,16 @@ class Terrain {
     // TODO more commenting
     //   @warn requires a last row member
     void HelperMakeSmoothHeights();
+    // Averages the heights_ member to smooth the terrain
+    //   Has a range for X but runs through the entire Z plane (for splitting water 
+    //   and cliff
+    //   @param h, a reference to a vector which contains heightmap values and
+    //             will be modified
+    //   @param start, the start of the heightmap in the X plane
+    //   @param end,   the end of the heightmap in the X plane
+    //   @warn @a heights_ member is modified
+    //   @warn excludes Z = 0 to ensure height connections don't create visible gaps
+    void AverageHeights(const int start, const int end);
     // Overloaded function to generate a square height map on the X/Z plane. Different
     // road_type parameters can be added to curve the Z coordinates and hence make turning
     // pieces.

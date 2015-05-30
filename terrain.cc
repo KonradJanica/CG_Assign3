@@ -4,8 +4,8 @@
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
-  generated_ticks_(0), prev_rand_(0), indice_count_(0), road_indice_count_(0),
-  terrain_program_id_(program_id),
+  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), 
+  indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
     srand(time(NULL));
@@ -121,7 +121,7 @@ void Terrain::RandomizeGeneration(const bool is_start) {
 void Terrain::GenerateStartingTerrain(RoadType road_type) {
   temp_last_row_heights_.clear(); //clear previous last row for smoothing
   HelperMakeHeights(0, kRandomIterations);
-  // HelperMakeSmoothHeights();
+  HelperMakeSmoothHeights();
   HelperMakeVertices(road_type);
   HelperMakeNormals();
   //  ROAD - Extract middle flat section and make road VAO
@@ -153,12 +153,13 @@ void Terrain::GenerateTerrain(RoadType road_type) {
     int start = iterations_per_tick * generated_ticks_;
     int end = start + iterations_per_tick;
     // printf("start = %d, end = %d\n",start,end);
-    HelperMakeHeights(start, end); //TODO
+    HelperMakeHeights(start, end);
 
     return;
   }
   if (generated_ticks_ == kHeightGenerationTicks) {
     HelperMakeSmoothHeights();
+    printf("SMOOTHING\n");
     return;
   }
 
@@ -179,7 +180,7 @@ void Terrain::GenerateTerrain(RoadType road_type) {
       break;
     case 4:
       // Fix the UV caused by z_smooth_max_ being random
-      HelperFixUV();
+      // HelperFixUV();
       break;
     case 5:
       // Collision map for current road tile
@@ -211,16 +212,14 @@ void Terrain::GenerateTerrain(RoadType road_type) {
 void Terrain::HelperMakeHeights(const int start, const int end) {
   if (generated_ticks_ == 0) {
     // Store the connecting row to smooth
-    for (unsigned int z = 0; z < z_smooth_max_; ++z) {
-      for (unsigned int x = heights_.size()-1; x >= heights_.size()-1-x_length_; --x) {
-        temp_last_row_heights_.push_back(heights_.at(x - z*x_length_));
-      }
-    }
+    temp_last_row_heights_.assign(heights_.end()-x_length_, heights_.end());
 
-    printf("generating first %d\n",generated_ticks_);
-
-    // heights_.assign(x_length_*z_length_, 0.00f); // 2nd param is default height
-    float rand_x3 = rand() % 13 + 3;
+    // Generate base model of terrain (X^3 i.e. cubic)
+    prev_cliff_x3_rand_ += rand() % 8 - 4; //flucuation of the cliff base height
+    if (prev_cliff_x3_rand_ < 1)
+      prev_cliff_x3_rand_ = 1;
+    else if (prev_cliff_x3_rand_ > 20)
+      prev_cliff_x3_rand_ = 20;
     for (int z = 0; z < z_length_; ++z) {
       for (int x = 0; x < x_length_; ++x) {
         // Normalize x between -1 and 1
@@ -230,7 +229,7 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
 
         // Height modelled using X^3
         if (x > x_length_/2) {
-          heights_.at(x+z*x_length_) = rand_x3*(norm_x*norm_x*norm_x);
+          heights_.at(x+z*x_length_) = prev_cliff_x3_rand_*(norm_x*norm_x*norm_x);
         } else {
           heights_.at(x+z*x_length_) = 20*(norm_x*norm_x*norm_x);
         }
@@ -305,75 +304,71 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
 //   @warn requires a last row member
 void Terrain::HelperMakeSmoothHeights() {
   // SMOOTH CONNECTIONS
-  // TODO someone try fighting with this if you dare...
-  //   Something goes wrong with the normals at the connection
   // Compare connection rows to eachother and smooth new one
-  for (int z = 0; z < z_smooth_max_; ++z) {
-    for (int x = 0; x < x_length_; ++x) {
-      // heights_.at(x) = 0.0f;
-      float new_height = temp_last_row_heights_.at((x_length_-x-1)+(z_smooth_max_-z-1)*x_length_) - heights_.at(x+z*x_length_);
-      new_height /= 1+((z_smooth_max_-1-z)/z_smooth_max_);
-      new_height = 0;
-      heights_.at(x+z*x_length_) += new_height;
-    }
+  for (int x = 0; x < x_length_; ++x) {
+    heights_.at(x+0*x_length_) = temp_last_row_heights_.at(x);
   }
 
   // SMOOTH WATER TERRAIN
-  for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
-    for (int x = 1; x < x_length_/2-4 ; ++x) {
-      // Get all heights around center height
-      //   Orientation is from car start facing
-      float &center = heights_.at(x + z*x_length_);
-      float bot = heights_.at(x + (z-1)*x_length_);
-      float left = heights_.at(x+1 + z*x_length_);
-      float right = heights_.at(x-1 + z*x_length_);
-
-      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
-      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
-
-      float average;
-      if (z == z_length_) {
-        float average = (center+bot+left+right
-            +bot_left+bot_right)/6.0f;
-      } else {
-        float top_left = heights_.at(x+1 + (z+1)*x_length_);
-        float top_right = heights_.at(x-1 + (z+1)*x_length_);
-        float top = heights_.at(x + (z+1)*x_length_);
-
-        float average = (center+top+bot+left+right
-            +top_left+top_right+bot_left+bot_right)/8.0f;
-      }
-      center = average;  //pass by reference
-    }
-  }
+  AverageHeights(1, x_length_/2-4);
   // SMOOTH CLIFF TERRAIN
-  if (0)
-  for (int z = z_smooth_max_; z < z_length_ - 1; ++z) {
-    for (int x = 1; x < x_length_/2-4; ++x) {
-      // Get all heights around center height
-      //   Orientation is from car start facing
-      float &center = heights_.at(x + z*x_length_);
-      float top = heights_.at(x + (z+1)*x_length_);
-      float bot = heights_.at(x + (z-1)*x_length_);
-      float left = heights_.at(x+1 + z*x_length_);
-      float right = heights_.at(x-1 + z*x_length_);
-
-      float top_left = heights_.at(x+1 + (z+1)*x_length_);
-      float top_right = heights_.at(x-1 + (z+1)*x_length_);
-      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
-      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
-
-      float average = (center+top+bot+left+right
-          +top_left+top_right+bot_left+bot_right)/8.0f;
-      center = average;  //pass by reference
-    }
-  }
+  AverageHeights((x_length_/2+5), x_length_-1);
+  AverageHeights((x_length_/2+5), x_length_-1);
+  AverageHeights((x_length_/2+5), x_length_-1);
+  AverageHeights((x_length_/2+5), x_length_-1);
+  AverageHeights((x_length_/2+5), x_length_-1);
 
   // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
   for (int z = 0; z < z_length_; ++z) {
     heights_.at(0 + z*x_length_) = -1000000.0f;
   }
 
+}
+
+// Averages the heights_ member to smooth the terrain
+//   Has a range for X but runs through the entire Z plane (for splitting water 
+//   and cliff
+//   @param h, a reference to a vector which contains heightmap values and
+//             will be modified
+//   @param start, the start of the heightmap in the X plane
+//   @param end,   the end of the heightmap in the X plane
+//   @warn @a heights_ member is modified
+//   @warn excludes Z = 0 to ensure height connections don't create visible gaps
+void Terrain::AverageHeights(const int start, const int end) {
+  int z = 1;
+  for (; z < z_length_ - 2; ++z) {
+    for (int x = start; x < end; ++x) {
+      // Get all heights around center height
+      //   Orientation is from car start facing
+      float &center = heights_.at(x + z*x_length_);
+      float left = heights_.at(x+1 + z*x_length_);
+      float right = heights_.at(x-1 + z*x_length_);
+      float bot = heights_.at(x + (z-1)*x_length_);
+      float top = heights_.at(x + (z+1)*x_length_);
+      float top_left = heights_.at(x+1 + (z+1)*x_length_);
+      float top_right = heights_.at(x-1 + (z+1)*x_length_);
+      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
+      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+
+      float average = (center+top+bot+left+right
+          +top_left+top_right+bot_left+bot_right)/9.0f;
+      center = average;  //pass by reference
+    }
+  }
+  z = z_length_-1;
+  for (int x = start; x < end; ++x) {
+    // Get all heights around center height
+    //   Orientation is from car start facing
+    float &center = heights_.at(x + z*x_length_);
+    float left = heights_.at(x+1 + z*x_length_);
+    float right = heights_.at(x-1 + z*x_length_);
+    float bot = heights_.at(x + (z-1)*x_length_);
+    float bot_left = heights_.at(x+1 + (z-1)*x_length_);
+    float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+    float average = (center+bot+left+right
+        +bot_left+bot_right)/6.0f;
+    center = average;  //pass by reference
+  }
 }
 
 // Overloaded function to generate a square height map on the X/Z plane. Different
@@ -501,32 +496,32 @@ void Terrain::HelperMakeVertices(RoadType road_type, TileType tile_type,
   // Compare connection rows to eachother and smooth new one
   // for (int z = z_smooth_max_-1; z < z_smooth_max_; ++z) {
   // z_smooth_max_ = 2;
-    std::vector<glm::vec3> translate_column_by;
-    std::vector<glm::vec3> dis_between_tiles_v;
-    // TODO make const
-    const float dis_x = float(position_range) / float(x_length_-1);
-    float dis_z = float(position_range) / float(z_length_-1);
-    // dis_z = vertices.at(x_length_).z - vertices.at(0).z;
-    printf("dis_z = %f\n",dis_z);
-    printf("last z = %f\n", temp_last_row_vertices.at(0).z);
-    const glm::vec3 dis_between_columns = glm::vec3(dis_x, float(), dis_z);
-    for (int x = 0; x < x_length_; ++x) {
-      glm::vec3 dis_between_tiles = vertices.at(x+(0)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
-      dis_between_tiles_v.push_back(dis_between_tiles);
-      glm::vec3 dis_between_smooth = vertices.at(x+(z_smooth_max_)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
-      // printf("z spacing = %f\n", dis_between_smooth.z);
-      dis_between_smooth.x /= z_smooth_max_;
-      dis_between_smooth.z /= z_smooth_max_;
-      glm::vec3 new_column_size = dis_between_smooth;
-      glm::vec3 translate_by = new_column_size;
-      // translate_by.x /= dis_between_columns.x;
-      // translate_by.z /= dis_between_columns.z;
-      // translate_by = glm::vec3(1,1,1);
-      translate_column_by.push_back(translate_by);
-      if (x == 0)
+  std::vector<glm::vec3> translate_column_by;
+  std::vector<glm::vec3> dis_between_tiles_v;
+  // TODO make const
+  const float dis_x = float(position_range) / float(x_length_-1);
+  float dis_z = float(position_range) / float(z_length_-1);
+  // dis_z = vertices.at(x_length_).z - vertices.at(0).z;
+  printf("dis_z = %f\n",dis_z);
+  printf("last z = %f\n", temp_last_row_vertices.at(0).z);
+  const glm::vec3 dis_between_columns = glm::vec3(dis_x, float(), dis_z);
+  for (int x = 0; x < x_length_; ++x) {
+    glm::vec3 dis_between_tiles = vertices.at(x+(0)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
+    dis_between_tiles_v.push_back(dis_between_tiles);
+    glm::vec3 dis_between_smooth = vertices.at(x+(z_smooth_max_)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
+    // printf("z spacing = %f\n", dis_between_smooth.z);
+    dis_between_smooth.x /= z_smooth_max_;
+    dis_between_smooth.z /= z_smooth_max_;
+    glm::vec3 new_column_size = dis_between_smooth;
+    glm::vec3 translate_by = new_column_size;
+    // translate_by.x /= dis_between_columns.x;
+    // translate_by.z /= dis_between_columns.z;
+    // translate_by = glm::vec3(1,1,1);
+    translate_column_by.push_back(translate_by);
+    if (x == 0)
       printf("tb = (%f,%f,%f)\n",translate_by.x,translate_by.y,translate_by.z);
-    }
-    // printf("temp = %d, last = %d\n",temp_last_row_vertices.size(), last_row_diffs.size());
+  }
+  // printf("temp = %d, last = %d\n",temp_last_row_vertices.size(), last_row_diffs.size());
   for (int z = 0; z < z_smooth_max_; ++z) {
     for (int x = 0; x < x_length_; ++x) {
       const float x_front = vertices.at(x+0*x_length_).x;
