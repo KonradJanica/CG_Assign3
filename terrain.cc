@@ -313,6 +313,10 @@ void Terrain::HelperMakeSmoothHeights() {
   for (int x = 0; x < x_length_; ++x) {
     heights_.at(x+0*x_length_) = temp_last_row_heights_.at(x);
   }
+  // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
+  for (int z = 0; z < z_length_; ++z) {
+    heights_.at(0 + z*x_length_) = -1000000.0f;
+  }
 
   // SMOOTH WATER TERRAIN
   AverageHeights(1, x_length_/2-4);
@@ -323,10 +327,6 @@ void Terrain::HelperMakeSmoothHeights() {
   AverageHeights((x_length_/2+15), x_length_-1);
   AverageHeights((x_length_/2+15), x_length_-1);
 
-  // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
-  for (int z = 0; z < z_length_; ++z) {
-    heights_.at(0 + z*x_length_) = -1000000.0f;
-  }
 
 }
 
@@ -342,7 +342,8 @@ void Terrain::HelperMakeSmoothHeights() {
 void Terrain::AverageHeights(const int start, const int end) {
   int z = 1;
   for (; z < z_length_ - 2; ++z) {
-    for (int x = start; x < end; ++x) {
+    int x = start;
+    for (; x < end; ++x) {
       // Get all heights around center height
       //   Orientation is from car start facing
       float &center = heights_.at(x + z*x_length_);
@@ -359,6 +360,22 @@ void Terrain::AverageHeights(const int start, const int end) {
           +top_left+top_right+bot_left+bot_right)/9.0f;
       center = average;  //pass by reference
     }
+    x = end;
+    // Get all heights around center height
+    //   Orientation is from car start facing
+    float &center = heights_.at(x + z*x_length_);
+    float left = 0;
+    float right = heights_.at(x-1 + z*x_length_);
+    float bot = heights_.at(x + (z-1)*x_length_);
+    float top = heights_.at(x + (z+1)*x_length_);
+    float top_left = 0;
+    float top_right = heights_.at(x-1 + (z+1)*x_length_);
+    float bot_left = 0;
+    float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+
+    float average = (center+top+bot+left+right
+        +top_left+top_right+bot_left+bot_right)/9.0f;
+    center = average;  //pass by reference
   }
   z = z_length_-1;
   for (int x = start; x < end; ++x) {
