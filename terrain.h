@@ -227,9 +227,11 @@ class Terrain {
     //   @warn spread over a couple of loops
     void HelperMakeHeights(int start, const int end);
     // Smooths the terrain at the connections
-    // TODO more commenting
+    //   Spreads the load over 2 ticks
+    //   @param bool, whether or not this is the first call
     //   @warn requires a last row member
-    void HelperMakeSmoothHeights();
+    //   @warn AverageHeights modifies heights_ member
+    void HelperMakeSmoothHeights(const bool is_first_call);
     // Averages the heights_ member to smooth the terrain
     //   Has a range for X but runs through the entire Z plane (for splitting water 
     //   and cliff
@@ -248,8 +250,8 @@ class Terrain {
     // @param  min_position    The relative start position of the heightmap over X/Z
     // @param  position_range  The spread of the heightmap over X/Z 
     // @warn  No changes can be made to vertices_ member until the Road Helpers complete
-    void HelperMakeVertices(RoadType road_type = kStraight, TileType tile_type = kTerrain,
-        float min_position = 0.0f, float position_range = 20.0f);
+    void HelperMakeVertices(const RoadType road_type = kStraight, const TileType tile_type = kTerrain,
+        const float min_position = 0.0f, const float position_range = 20.0f);
     // Generates the indices and UV texture coordinates to be used by the tile
     // @note  These don't change for the same x_length_ * z_length_ height maps
     // @warn  No changes can be made to indices or UV member until the Road Helpers complete
