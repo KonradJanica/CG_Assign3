@@ -4,7 +4,7 @@
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32),
-  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), 
+  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5),
   indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
@@ -220,6 +220,11 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
       prev_cliff_x3_rand_ = 1;
     else if (prev_cliff_x3_rand_ > 20)
       prev_cliff_x3_rand_ = 20;
+    prev_water_x3_rand_ += rand() % 6 - 3; //flucuation of the water base height
+    if (prev_water_x3_rand_ < 5)
+      prev_water_x3_rand_ = 5;
+    else if (prev_water_x3_rand_ > 20)
+      prev_water_x3_rand_ = 20;
     for (int z = 0; z < z_length_; ++z) {
       for (int x = 0; x < x_length_; ++x) {
         // Normalize x between -1 and 1
@@ -231,7 +236,7 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
         if (x > x_length_/2) {
           heights_.at(x+z*x_length_) = prev_cliff_x3_rand_*(norm_x*norm_x*norm_x);
         } else {
-          heights_.at(x+z*x_length_) = 20*(norm_x*norm_x*norm_x);
+          heights_.at(x+z*x_length_) = prev_water_x3_rand_*(norm_x*norm_x*norm_x);
         }
       }
     }

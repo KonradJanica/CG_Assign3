@@ -119,9 +119,10 @@ class Terrain {
     // The previous random value used to calculate next turn type
     //   Next turn rand is generated in proceedTiles
     char prev_rand_;
-    // The previous random value used to generate the cliff (X^3 i.e. cubic) base heights
-    //   Used to ensure there are no sudden peaks
+    // The previous random value used to generate the cliff and water (X^3 i.e. cubic) base heights
+    //   Used to ensure there are no sudden peaks and for extra feel
     char prev_cliff_x3_rand_;
+    char prev_water_x3_rand_;
     // The amount of indices, used to render terrain efficiently
     unsigned int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
