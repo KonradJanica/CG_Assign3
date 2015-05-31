@@ -30,13 +30,26 @@ Water::Water(const GLuint &program_id)
   int mtldiffuseHandle = glGetUniformLocation(water_shader_, "mtl_diffuse");
   int mtlspecularHandle = glGetUniformLocation(water_shader_, "mtl_specular");
   int shininessHandle = glGetUniformLocation(water_shader_, "shininess");
-  if ( mtlambientHandle == -1 ||
-      mtldiffuseHandle == -1 ||
-      mtlspecularHandle == -1 ||
-      shininessHandle == -1) {
-      printf("Couldnt get handles for water material properties\n");
+  // if ( mtlambientHandle == -1 ||
+  //     mtldiffuseHandle == -1 ||
+  //     mtlspecularHandle == -1 ||
+  //     shininessHandle == -1) {
+  //     printf("Couldnt get handles for water material properties\n");
+  // }
+  if( mtlambientHandle == -1)
+  {
+    printf("Couldnt get ambient handles for water material properties\n");
   }
 
+  if( mtldiffuseHandle == -1)
+  {
+    printf("Couldnt get diff handles for water material properties\n");
+  }
+
+    if( mtlspecularHandle== -1)
+  {
+    printf("Couldnt get specular handles for water material properties\n");
+  }
   float mtlambient[3] = { 0.5, 0.5, 0.5 };  // ambient material
   float mtldiffuse[3] = { 0.5, 0.5, 0.5};  // diffuse material
   float mtlspecular[3] = { 0.5, 0.5, 0.5 };  // specular material

@@ -47,7 +47,7 @@ uniform PointLight gPointLights[MAX_POINT_LIGHTS];
 uniform SpotLight gSpotLights[MAX_SPOT_LIGHTS];
 
 // Material properties
-uniform float mtl_ambient;
+uniform vec3 mtl_ambient;
 uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
@@ -141,12 +141,12 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
-  vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
+  //vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
   //fragColour = colour;
   //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
   //colour.a = 1.0;
 
-  fragColour = texture(skybox, R) * litColour;
+  fragColour = litColour * texture(skybox, R);
 
   //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }

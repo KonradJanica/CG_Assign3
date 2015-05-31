@@ -45,7 +45,7 @@ class Renderer {
     // Enable x,y,z axis coordinates
     void EnableAxis(const GLuint &program_id);
 
-    void RenderWater(const Water * water, const Camera * camera, const Skybox * Sky) const;
+    void RenderWater(const Water * water, const Object * object, const Camera * camera, const Skybox * Sky) const;
 
     void RenderTerrain();
 

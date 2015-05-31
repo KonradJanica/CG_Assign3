@@ -13,7 +13,7 @@ Renderer::Renderer(const bool &debug_flag)
 //   @param Water * water, the skybox to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Camera * camera, const Skybox * Sky) const
+void Renderer::RenderWater(const Water * water, const Object* object, const Camera * camera, const Skybox * Sky) const
 {
   glUseProgram(water->watershader());
 
@@ -57,9 +57,9 @@ void Renderer::RenderWater(const Water * water, const Camera * camera, const Sky
   glm::mat3 normMatrix;
   normMatrix = glm::mat3(view_matrix);
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-
-  view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f,-3.0f, 0.0f));
-  view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
+  //object->translation().y
+  view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f, -5.0f, 15.0f));
+  view_matrix = glm::scale(view_matrix ,glm::vec3(100.0f));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Send the cubemap (for reflections)
@@ -354,7 +354,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     glUniform1i(texHandle, 0);
 
     int amount = terrain->indice_count();
-    glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+    //glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
