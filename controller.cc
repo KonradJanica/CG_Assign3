@@ -528,9 +528,20 @@ void Controller::UpdateCollisions() {
     it = closest_it;
     it++; // We want next point (i.e. end-1 == begin)
     next_pair = *it;
-    // printf("assuming end of tile reached, pop!\n");
-    terrain_->col_pop();
-    terrain_->ProceedTiles();
+    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
+    // Check if car is in range
+    if (IsInside(car, bounding_box)) {
+      //inside bounds
+      is_collision_ = false;
+    } else {
+      // printf("possible collision on edge of road!\n");
+      // printf("assuming end of tile reached, pop!\n");
+      terrain_->col_pop();
+      terrain_->ProceedTiles();
+
+      UpdateCollisions();
+      return;
+    }
 
   } else {
 
@@ -540,16 +551,16 @@ void Controller::UpdateCollisions() {
     it = closest_it;
     it--;
     previous_pair = *it;
-  }
-  // Make boundary box the neighbours of current pair
-  std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
-  // Check if car is in range
-  if (IsInside(car, bounding_box)) {
-    //inside bounds
-    is_collision_ = false;
-  } else {
-    // printf("collision on edge of road!\n");
-    is_collision_ = true;
+    // Make boundary box the neighbours of current pair
+    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
+    // Check if car is in range
+    if (IsInside(car, bounding_box)) {
+      //inside bounds
+      is_collision_ = false;
+    } else {
+      // printf("collision on edge of road!\n");
+      is_collision_ = true;
+    }
   }
   // Calculate middle of road and it's direction
   // Get the next points to smooth it
