@@ -135,6 +135,10 @@ void Controller::PositionLights() {
 //   @warn terrain_ on heap, must be deleted after
 void Controller::EnableTerrain(const GLuint &program_id) {
   terrain_ = new Terrain(program_id);
+  // Initialize Dummy Iterator for first equilavence check in collisions
+  const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
+  const Terrain::colisn_vec &head = col.front();
+  prev_prev_colisn_pair_ = *head.begin();
 }
 
 // The main control tick
@@ -452,9 +456,11 @@ void Controller::CrashAnimationFall() {
 }
 
 // Checks whether car is between the biggest rectangle than can be formed
+//   @param car, the car object (to find it's position)
+//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
 // @return  true  if can is inside corner of rectangle
 // @warn input must be square for accurate results
-bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
+bool Controller::IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
   Terrain::boundary_pair curr = bp.first;
   Terrain::boundary_pair next = bp.second;
   glm::vec3 a = curr.first;
@@ -483,6 +489,25 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
   return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
 }
 
+// Checks whether car is between the biggest rectangle than can be formed
+//   @param car, the car vec3 (to find it's position)
+//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
+//   @return  true  if can is inside corner of rectangle
+//   @warn input must be square for accurate results
+bool Controller::IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp) {
+  const glm::vec3 &a = bp.first;
+  const glm::vec3 &b = bp.second;
+
+  float dot_product = (car.x - a.x) * (b.x - a.x) + (car.z - a.z) * (b.z - a.z);
+  if (dot_product < 0)
+    return false;
+  float squared_dis = (b.x - a.x) * (b.x - a.x) + (b.z - a.z) * (b.z - a.z);
+  if (dot_product > squared_dis)
+    return false;
+
+  return true;
+}
+
 // TODO comment
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 void Controller::UpdateCollisions() {
@@ -507,61 +532,60 @@ void Controller::UpdateCollisions() {
     }
     it++;
   }
-  // If closest is the first then something went wrong
-  if (closest_it == head.begin()) {
-    printf("ERROR IN COLLISION CHECK! - CLOSEST POINT IS BEGIN()\n");
-  }
-  // Get vertice pair next to closest
-  //   but make sure it isn't the last pair overwise pop
-  //   This was causing undefined behaviour before hence checks now in
-  //   place looking for end
   Terrain::boundary_pair previous_pair;
   Terrain::boundary_pair next_pair;
-  it = closest_it;
-  it++;
-  if (it == head.end()) {
+  // If closest is the first then something went wrong
+  if (closest_it == head.begin()) {
+    // printf("ERROR IN COLLISION CHECK! - CLOSEST POINT IS BEGIN()\n");
     it = closest_it;
-    it--;
-    previous_pair = *it;
-    // Get next pair from next vector in circular_vector
-    closest_it = col[1].begin(); // reassign to find new midpoint etc.
-    it = closest_it;
-    it++; // We want next point (i.e. end-1 == begin)
+    it++;
     next_pair = *it;
-    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
-    // Check if car is in range
-    if (IsInside(car, bounding_box)) {
-      //inside bounds
-      is_collision_ = false;
-    } else {
-      // printf("possible collision on edge of road!\n");
-      // printf("assuming end of tile reached, pop!\n");
+    previous_pair = prev_prev_colisn_pair_;
+  } else {
+    // Get vertice pair next to closest
+    //   but make sure it isn't the last pair overwise pop
+    //   This was causing undefined behaviour before hence checks now in
+    //   place looking for end
+    it = closest_it;
+    it++;
+
+    if (it == head.end()) {
+      it = closest_it;
+      it--;
+      it--;
+      previous_pair = *it;
+      // Get next pair from next vector in circular_vector
+      closest_it = col[1].begin(); // reassign to find new midpoint etc.
+      it = closest_it;
+      it++; // We want next point (i.e. end-1 == begin)
+      next_pair = *it;
+
       terrain_->col_pop();
       terrain_->ProceedTiles();
-
-      UpdateCollisions();
-      return;
-    }
-
-  } else {
-
-    // If conditions flow through then make box with neighbours of the closest pair
-    //   and check if car is inside the box
-    next_pair = *it;
-    it = closest_it;
-    it--;
-    previous_pair = *it;
-    // Make boundary box the neighbours of current pair
-    std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
-    // Check if car is in range
-    if (IsInside(car, bounding_box)) {
-      //inside bounds
-      is_collision_ = false;
     } else {
-      // printf("collision on edge of road!\n");
-      is_collision_ = true;
+
+      // If conditions flow through then make box with neighbours of the closest pair
+      //   and check if car is inside the box
+      next_pair = *it;
+      it = closest_it;
+      it--;
+      it--;
+      previous_pair = *it;
     }
   }
+  // Make boundary box the neighbours of current pair
+  
+  // Check if car is in range
+  if (IsInside(car, *closest_it)) {
+    //inside bounds
+    is_collision_ = false;
+  } else {
+    printf("collision on edge of road!\n");
+    is_collision_ = true;
+  }
+  // TODO comment
+  prev_prev_colisn_pair_ = previous_pair;
+
   // Calculate middle of road and it's direction
   // Get the next points to smooth it
   it = closest_it;

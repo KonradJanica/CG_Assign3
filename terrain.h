@@ -94,16 +94,16 @@ class Terrain {
     const signed char kHeightGenerationTicks = 50;
     // The amount of ticks to spread VAO creation over
     const signed char kVaoGenerationTicks = 5;
-    // The maximum number of randomizing height generation iterations
-    const int kRandomIterations = 10000 * length_multiplier_;
     // Width of the heightmap
-    unsigned char x_length_;
+    const unsigned char x_length_;
     // Height of the heightmap
-    unsigned char z_length_;
+    const unsigned char z_length_;
     // The multiplier for all magic numbers
     //   @warn this requires a square heightmap
     //   @warn dimensions should be multiples of 32
-    char length_multiplier_;
+    const char length_multiplier_;
+    // The maximum number of randomizing height generation iterations
+    const int kRandomIterations;
 
     // RENDER DATA
     // The amount of ticks generated so far

@@ -3,7 +3,7 @@
 #include "glm/gtx/rotate_vector.hpp"
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
-  : x_length_(width), z_length_(height), length_multiplier_(width / 32),
+  : x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
   generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5),
   indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
