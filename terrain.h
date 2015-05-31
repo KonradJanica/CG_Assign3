@@ -59,7 +59,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::queue<colisn_vec> collision_queue_hash() const;
+    inline circular_vector<colisn_vec> collision_queue_hash() const;
     // Accessor for the water collision checking data structure
     //   See this func implementation for details
     inline std::list<std::vector<glm::vec3> > colisn_lst_water() const;
@@ -141,7 +141,7 @@ class Terrain {
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //     pair.first = min_x, pair.second = max_x
-    std::queue<colisn_vec> collision_queue_hash_;
+    circular_vector<colisn_vec> collision_queue_hash_;
     // The collisions for the right (water) side
     std::list<std::vector<glm::vec3> > colisn_lst_water_;
     // The collisions for the left (cliff) side
@@ -347,7 +347,7 @@ inline int Terrain::road_indice_count() const {
 // A queue representing each road tile for collision checking
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
+inline circular_vector<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Accessor for the water collision checking data structure
@@ -365,7 +365,7 @@ inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_cliff() const {
 //   TODO remove and replace in circular buffer instead
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
-  collision_queue_hash_.pop();
+  collision_queue_hash_.pop_front();
   colisn_lst_water_.pop_front();
   colisn_lst_cliff_.pop_front();
 }

@@ -158,6 +158,7 @@ void Terrain::GenerateTerrain(RoadType road_type) {
   }
   if (generated_ticks_ == kHeightGenerationTicks) {
     HelperMakeSmoothHeights(true);
+
     return;
   }
 
@@ -208,6 +209,7 @@ void Terrain::GenerateTerrain(RoadType road_type) {
 //   @warn spread over a couple of loops
 void Terrain::HelperMakeHeights(const int start, const int end) {
   if (generated_ticks_ == 0) {
+
     // Store the connecting row to smooth
     temp_last_row_heights_.assign(heights_.end()-x_length_, heights_.end());
 
@@ -313,6 +315,13 @@ void Terrain::HelperMakeSmoothHeights(const bool is_first_call) {
       heights_.at(0 + z*x_length_) = -1000000.0f;
     }
 
+    // SMOOTH CONNECTIONS
+    // Compare connection rows to eachother and smooth new one
+    for (int x = 0; x < x_length_; ++x) {
+      heights_.at(x+0*x_length_) = temp_last_row_heights_.at(x);
+      // heights_.at(x+0*x_length_) = 0;
+    }
+
     // SMOOTH WATER TERRAIN
     AverageHeights(1, x_length_/2-4);
     return;
@@ -324,13 +333,6 @@ void Terrain::HelperMakeSmoothHeights(const bool is_first_call) {
   // AverageHeights((x_length_/2+15), x_length_-1);
   // AverageHeights((x_length_/2+15), x_length_-1);
 
-
-  // SMOOTH CONNECTIONS
-  // Compare connection rows to eachother and smooth new one
-  for (int x = 0; x < x_length_; ++x) {
-    heights_.at(x+0*x_length_) = temp_last_row_heights_.at(x);
-    // heights_.at(x+0*x_length_) = 0;
-  }
 }
 
 // Averages the heights_ member to smooth the terrain
@@ -429,18 +431,18 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
       float zRatio = (z / (float) (z_length_ - 1));
 
       float xPosition = min_position + (xRatio * position_range);
-      float yPosition;
+      float yPosition = heights_.at(offset);
       float zPosition = min_position + (zRatio * position_range);
 
       // Water or Terrain
-      switch(tile_type) {
-        case kTerrain:
-          yPosition = heights_.at(offset);
-          break;
-        case kRoad:
-          assert(0 && "improper use of function");
-          break;
-      }
+      // switch(tile_type) {
+      //   case kTerrain:
+      //     yPosition = heights_.at(offset);
+      //     break;
+      //   case kRoad:
+      //     assert(0 && "improper use of function");
+      //     break;
+      // }
 
       // Curve addition
       switch(road_type) {
@@ -531,10 +533,15 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     for (int x = 0; x < x_length_; ++x) {
       float &vert_x = vertices.at(x+z*x_length_).x;
       vert_x = temp_last_row_vertices.at(x).x + z * translate_column_by.at(x).x;
-
+      
       float &vert_z = vertices.at(x+z*x_length_).z;
       vert_z = temp_last_row_vertices.at(x).z + z * translate_column_by.at(x).z;
     }
+  }
+  // Ensure heights are connected
+  for (int x = 0; x < x_length_; ++x) {
+      float &vert_y = vertices.at(x+0*x_length_).y;
+      vert_y = temp_last_row_vertices.at(x).y;
   }
 }
 
@@ -788,7 +795,7 @@ void Terrain::HelperMakeRoadCollisionMap() {
     tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
   }
 
-  collision_queue_hash_.push(tile_map);
+  collision_queue_hash_.push_back(tile_map);
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer

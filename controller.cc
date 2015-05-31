@@ -487,7 +487,7 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 void Controller::UpdateCollisions() {
   // Setup vars
-  const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
+  const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
   const Terrain::colisn_vec head = col.front();
   Terrain::colisn_vec::const_iterator it = head.begin();
