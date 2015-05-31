@@ -11,6 +11,7 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
     light_controller_ = new LightController();
     is_key_pressed_hash_.reserve(256);
     is_key_pressed_hash_.resize(256);
+    playSound = 1;
 
   }
 
@@ -155,11 +156,17 @@ void Controller::UpdateGame() {
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo
+    if(playSound)
+      system("aplay ./sounds/metal_crash.wav &> /dev/null/ &");
+    playSound = 0;
     CrashAnimationFall();
     return;
   }
   if (game_state_ == kCrashingCliff) {
     // delta_time_ /= 5; //slowmo
+    if(playSound)
+      system("aplay ./sounds/metal_crash.wav &> /dev/null/ &");
+    playSound = 0;
     CrashAnimationCliff();
     return;
   }
@@ -191,6 +198,7 @@ void Controller::UpdateCamera() {
 // @warn Pretty inefficent way of checking for collisions but it's only
 //       calculated during this state.
 void Controller::CrashAnimationCliff() {
+
   // Lock camera state
   // camera_->ChangeState(Camera::kFreeView);
   const glm::vec3 &car_pos = car_->translation();
@@ -338,6 +346,7 @@ void Controller::CrashAnimationCliff() {
       game_state_ = kAutoDrive;
       is_collision_ = false;
       camera_->ChangeState(camera_state_); // users previous camera
+      playSound = 1;
       return;
     }
   }
@@ -352,6 +361,7 @@ void Controller::CrashAnimationCliff() {
 // @warn Pretty inefficent way of checking for collisions but it's only
 //       calculated during this state.
 void Controller::CrashAnimationFall() {
+
   // Lock camera state
   camera_->ChangeState(Camera::kFreeView);
   // Rotate car
@@ -442,6 +452,7 @@ void Controller::CrashAnimationFall() {
       game_state_ = kAutoDrive;
       is_collision_ = false;
       camera_->ChangeState(camera_state_); // users previous camera
+      playSound = 1;
       return;
     }
   }
@@ -546,8 +557,7 @@ void Controller::UpdateCollisions() {
   } else {
     // printf("collision on edge of road!\n");
     is_collision_ = true;
-    // MITCH PLAY SOUND
-    system("aplay ./sounds/metal_crash.wav&");
+    
   }
   // Calculate middle of road and it's direction
   // Get the next points to smooth it
@@ -586,6 +596,7 @@ void Controller::UpdateCollisions() {
   //   i.e. cliff scrape or water bounce
   // @warn also sets camera position for the crash
   if (is_collision_) {
+        // MITCH PLAY SOUND
     camera_state_ = camera_->state();
     if (is_water_closest) {
       game_state_ = kCrashingFall;

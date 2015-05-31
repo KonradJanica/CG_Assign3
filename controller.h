@@ -113,6 +113,8 @@ class Controller {
     // The water object
     Water * water_;
 
+    bool playSound;
+
     // The current game state
     State game_state_;
     // The users camera state (for animations)
