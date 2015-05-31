@@ -20,6 +20,8 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
     x_water_position_ = center_left_x, z_water_position_ = center_z;
     int center_right_x = x_length_ - x_length_/2;
     x_cliff_position_ = center_right_x, z_cliff_position_ = center_z;
+    // Reserve space (required to ensure default iterators are not invalidated)
+    collision_queue_hash_.reserve(6);
 
     // Textures
     texture_ = LoadTexture("textures/rock01.jpg");

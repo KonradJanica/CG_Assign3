@@ -135,10 +135,8 @@ void Controller::PositionLights() {
 //   @warn terrain_ on heap, must be deleted after
 void Controller::EnableTerrain(const GLuint &program_id) {
   terrain_ = new Terrain(program_id);
-  // Initialize Dummy Iterator for first equilavence check in collisions
-  const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
-  const Terrain::colisn_vec &head = col.front();
-  prev_prev_colisn_pair_ = *head.begin();
+  // Initialize Dummy Index for first equilavence check in collisions
+  prev_colisn_pair_idx_ = 0;
 }
 
 // The main control tick
@@ -515,69 +513,54 @@ void Controller::UpdateCollisions() {
   const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
   const Terrain::colisn_vec &head = col.front();
-  Terrain::colisn_vec::const_iterator it = head.begin();
+  Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
 
   // Find closest edge point
   Terrain::boundary_pair closest_pair;
   float dis = FLT_MAX;
   Terrain::colisn_vec::const_iterator closest_it = head.begin();
 
+  --prev_colisn_pair_idx_;
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
     float cur_dis = glm::distance(cur_vec, car);
-    if (cur_dis < dis) {
+    if (cur_dis > dis) {
+      break;
+    } else {
       dis = cur_dis;
       closest_pair = *it;
       closest_it = it;
     }
     it++;
+    ++prev_colisn_pair_idx_;
   }
-  Terrain::boundary_pair previous_pair;
   Terrain::boundary_pair next_pair;
-  // If closest is the first then something went wrong
-  if (closest_it == head.begin()) {
-    // printf("ERROR IN COLLISION CHECK! - CLOSEST POINT IS BEGIN()\n");
-    it = closest_it;
+  // Get vertice pair next to closest
+  //   but make sure it isn't the last pair overwise pop
+  it = closest_it;
+  it++;
+  // Reduce autodrive jerking
+  if (it != head.end())
     it++;
+
+  if (it == head.end()) {
+    // Get next pair from next vector in circular_vector
+    closest_it = col[1].begin(); // reassign to find new midpoint etc.
+    it = closest_it;
+    it++; // We want next point (i.e. end-1 == begin)
     next_pair = *it;
-    previous_pair = prev_prev_colisn_pair_;
+
+    terrain_->col_pop();
+    terrain_->ProceedTiles();
+    prev_colisn_pair_idx_ = 0;
   } else {
-    // Get vertice pair next to closest
-    //   but make sure it isn't the last pair overwise pop
-    //   This was causing undefined behaviour before hence checks now in
-    //   place looking for end
-    it = closest_it;
-    it++;
-    // Reduce autodrive jerking
-    if (it != head.end())
-      it++;
-    if (it != head.end())
-      it++;
 
-    if (it == head.end()) {
-      it = closest_it;
-      it--;
-      previous_pair = *it;
-      // Get next pair from next vector in circular_vector
-      closest_it = col[1].begin(); // reassign to find new midpoint etc.
-      it = closest_it;
-      it++; // We want next point (i.e. end-1 == begin)
-      next_pair = *it;
-
-      terrain_->col_pop();
-      terrain_->ProceedTiles();
-    } else {
-
-      // If conditions flow through then make box with neighbours of the closest pair
-      //   and check if car is inside the box
-      next_pair = *it;
-      it = closest_it;
-      it--;
-      previous_pair = *it;
-    }
+    // If conditions flow through then make box with neighbours of the closest pair
+    //   and check if car is inside the box
+    next_pair = *it;
   }
   // Make boundary box the neighbours of current pair
-  
+
   // Check if car is in range
   if (IsInside(car, *closest_it)) {
     //inside bounds
@@ -586,8 +569,6 @@ void Controller::UpdateCollisions() {
     printf("collision on edge of road!\n");
     is_collision_ = true;
   }
-  // TODO comment
-  prev_prev_colisn_pair_ = previous_pair;
 
   // Calculate middle of road and it's direction
   // Get the next points to smooth it

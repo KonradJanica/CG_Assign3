@@ -149,7 +149,7 @@ class Controller {
     void UpdatePhysics();
 
     // TODO comment
-    Terrain::boundary_pair prev_prev_colisn_pair_;
+    unsigned char prev_colisn_pair_idx_;
     // TODO comment
     void UpdateCollisions();
     // COLLISION HELPERS
