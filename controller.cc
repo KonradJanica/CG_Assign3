@@ -489,7 +489,7 @@ void Controller::UpdateCollisions() {
   // Setup vars
   const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
-  const Terrain::colisn_vec head = col.front();
+  const Terrain::colisn_vec &head = col.front();
   Terrain::colisn_vec::const_iterator it = head.begin();
 
   // Find closest edge point
@@ -515,30 +515,32 @@ void Controller::UpdateCollisions() {
   //   but make sure it isn't the last pair overwise pop
   //   This was causing undefined behaviour before hence checks now in
   //   place looking for end
+  Terrain::boundary_pair previous_pair;
+  Terrain::boundary_pair next_pair;
   it = closest_it;
-  while (*it == *closest_it && it != head.end()) {
-    it++;
-  }
-  if (it != head.end())
-    it++; // pop 2 vertices early
-  if (it != head.end())
-    it++;
+  it++;
   if (it == head.end()) {
+    it = closest_it;
+    it--;
+    previous_pair = *it;
+    // Get next pair from next vector in circular_vector
+    closest_it = col[1].begin(); // reassign to find new midpoint etc.
+    it = closest_it;
+    it++; // We want next point (i.e. end-1 == begin)
+    next_pair = *it;
     // printf("assuming end of tile reached, pop!\n");
     terrain_->col_pop();
     terrain_->ProceedTiles();
 
-    // Check collision for next tile
-    UpdateCollisions();
-    return;
-  }
+  } else {
 
-  // If conditions flow through then make box with neighbours of the closest pair
-  //   and check if car is inside the box
-  Terrain::boundary_pair next_pair = *it;
-  it = closest_it;
-  it--;
-  Terrain::boundary_pair previous_pair = *it;
+    // If conditions flow through then make box with neighbours of the closest pair
+    //   and check if car is inside the box
+    next_pair = *it;
+    it = closest_it;
+    it--;
+    previous_pair = *it;
+  }
   // Make boundary box the neighbours of current pair
   std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
   // Check if car is in range
@@ -551,14 +553,14 @@ void Controller::UpdateCollisions() {
   }
   // Calculate middle of road and it's direction
   // Get the next points to smooth it
-  closest_it++;
-  closest_it++;
+  it = closest_it;
+  it++;
   // Find midpoint
-  glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
+  glm::vec3 road_midpoint = ((*it).first+(*it).second);
   road_midpoint /= 2;
   road_midpoint.y = car_->translation().y;
   // Find lane midpoints
-  left_lane_midpoint_ = road_midpoint + (*closest_it).second;
+  left_lane_midpoint_ = road_midpoint + (*it).second;
   left_lane_midpoint_ /= 2;
   // Find road direction
   glm::vec3 first_point = previous_pair.first;
@@ -598,6 +600,7 @@ void Controller::UpdateCollisions() {
     colisn_anim_ticks_ = 0;
     UpdateCamera(); // Camera needs to be updated to change position
   }
+
 }
 
 // The controllers physics update tick
