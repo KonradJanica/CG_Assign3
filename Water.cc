@@ -198,9 +198,9 @@ void Water::GenerateMesh()
       for (int x=0;x < width;x++){
         // Fiddle with this to stretch (the y*0.1 part)
         //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
-          vertices_[idxFlag++] = (float)y /height;
+          vertices_[idxFlag++] = (float)y + (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x  /width;
+          vertices_[idxFlag++] = (float)x + (x*0.1) /width;
       }
   }
 

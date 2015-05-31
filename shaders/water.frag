@@ -141,12 +141,14 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
-  //vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
+ // vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
   //fragColour = colour;
   //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
   //colour.a = 1.0;
 
-  fragColour = litColour * texture(skybox, R);
+  vec4 colour = litColour * texture(skybox, R);
+  colour.a = 0.5;
+  fragColour = colour;
 
   //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }
