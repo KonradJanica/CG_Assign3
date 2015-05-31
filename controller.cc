@@ -548,10 +548,14 @@ void Controller::UpdateCollisions() {
     //   place looking for end
     it = closest_it;
     it++;
+    // Reduce autodrive jerking
+    if (it != head.end())
+      it++;
+    if (it != head.end())
+      it++;
 
     if (it == head.end()) {
       it = closest_it;
-      it--;
       it--;
       previous_pair = *it;
       // Get next pair from next vector in circular_vector
@@ -568,7 +572,6 @@ void Controller::UpdateCollisions() {
       //   and check if car is inside the box
       next_pair = *it;
       it = closest_it;
-      it--;
       it--;
       previous_pair = *it;
     }
@@ -598,7 +601,7 @@ void Controller::UpdateCollisions() {
   left_lane_midpoint_ = road_midpoint + (*it).second;
   left_lane_midpoint_ /= 2;
   // Find road direction
-  glm::vec3 first_point = previous_pair.first;
+  glm::vec3 first_point = closest_it->first;
   glm::vec3 next_point = next_pair.first;
   glm::vec3 direction = next_point - first_point;
   road_direction_ = glm::normalize(direction);
