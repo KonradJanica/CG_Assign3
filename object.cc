@@ -73,6 +73,11 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   velocity_x_ = speed_ * direction_x;
   velocity_z_ = speed_ * direction_z;
 
+  if (is_key_pressed_hash.at('h'))
+  {
+    system("aplay ./sounds/car_horn_final.wav &> /dev/null &");
+  }
+
   if (is_key_pressed_hash.at('w')) {
     // simulated gear shifting
     // real car physics use rpm

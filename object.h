@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <cstdlib>
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>

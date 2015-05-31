@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <cstdlib>
 #include "model_data.h"
 #include "model.h"
 #include "camera.h"

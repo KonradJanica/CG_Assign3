@@ -546,6 +546,8 @@ void Controller::UpdateCollisions() {
   } else {
     // printf("collision on edge of road!\n");
     is_collision_ = true;
+    // MITCH PLAY SOUND
+    system("aplay ./sounds/metal_crash.wav&");
   }
   // Calculate middle of road and it's direction
   // Get the next points to smooth it

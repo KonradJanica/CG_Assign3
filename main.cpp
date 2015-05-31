@@ -210,6 +210,7 @@ void keyboardDown(unsigned char key, int x, int y) {
     case 'j':
     case 'k':
     case 'l':
+    case 'h':
       g_controller->KeyPressed(key);
       break;
     case 'f':
