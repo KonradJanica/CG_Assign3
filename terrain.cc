@@ -560,6 +560,17 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     float &vert_y = vertices.at(x+0*x_length_).y;
     vert_y = temp_last_row_vertices.at(x).y;
   }
+
+  // Make Left side infinite
+  for (int z = 0; z < z_length_; ++z) {
+      float &vert_x = vertices.at((x_length_-1)+z*x_length_).x;
+      // vert_x += 1 * cos(DEG2RAD(prev_rotation_)) * vert_x;
+      float &vert_z = vertices.at((x_length_-1)+z*x_length_).z;
+      // vert_z += 1 * -sin(DEG2RAD(prev_rotation_)) * vert_z;
+      vert_x *= 2;
+      vert_z *= 2;
+  }
+  prev_rotation_ = rotation_;
 }
 
 // Fixes the UV caused by a changing z_smooth_max_
