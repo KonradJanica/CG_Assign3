@@ -147,9 +147,15 @@ unsigned int Water::CreateVao()
     printf("Couldnt get vertex location for water\n");
   }
 
+  int textureLoc = glGetAttribLocation(water_shader_, "a_texture");
+  if(textureLoc == -1)
+  {
+    printf("Couldnt get texture coords for water\n");
+  }
+
   // Two buffer [vertex, index]
-  unsigned int buffer[2];
-  glGenBuffers(2, buffer);
+  unsigned int buffer[3];
+  glGenBuffers(3, buffer);
 
   // Set vertex attribute
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
@@ -160,6 +166,12 @@ unsigned int Water::CreateVao()
     // Index
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*water_num_indices_, indices_, GL_STATIC_DRAW);
+
+  // Texture attributes
+  // glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
+  // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * coordinates_.size(), &coordinates_[0], GL_STATIC_DRAW);
+  // glEnableVertexAttribArray(textureLoc);
+  // glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
     
     // Un-bind
   glBindVertexArray(0);
@@ -193,6 +205,7 @@ void Water::GenerateMesh()
   
   int width = plane_width+1;
   int height = plane_height+1;
+  //coordinates_.assign(width*height, glm::vec2());
   // set up mesh points
   int idxFlag = 0;
   for (int y=0;y < height;y++){

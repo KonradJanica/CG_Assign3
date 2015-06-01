@@ -73,6 +73,11 @@ class Water {
 
     // Vector to hold Vertex data
     float * vertices_;   
+
+    int x;
+    //std::vector<int> x;
+
+    //vector<int> coordinates_;
 };
 
 // =======================================================================// 
