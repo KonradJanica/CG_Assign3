@@ -4,7 +4,7 @@
 
 Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
-  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5),
+  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), prev_spacing_rand_((rand() % 100)*0.003f - 0.15f),
   indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
   rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
     // New Seed
@@ -123,7 +123,15 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
   HelperMakeHeights(0, kRandomIterations);
   HelperMakeSmoothHeights(true);
   HelperMakeSmoothHeights(false); //load is spread over 2 ticks after start
-  HelperMakeVertices(road_type);
+  // Expand spacing of tiles subtly
+  float v = (rand() % 100)*0.003f - 0.15f;
+  // printf("v = %f\n",v);
+  prev_spacing_rand_ += v;
+  if (prev_spacing_rand_ < 20)
+    prev_spacing_rand_ = 20;
+  else if (prev_spacing_rand_ > 25)
+    prev_spacing_rand_ = 25;
+  HelperMakeVertices(road_type, kTerrain, 0, prev_spacing_rand_);
   HelperMakeNormals();
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
@@ -172,8 +180,18 @@ void Terrain::GenerateTerrain(RoadType road_type) {
       HelperMakeSmoothHeights(false);
       break;
     case 2:
-      HelperMakeVertices(road_type);
-      break;
+      {
+        // Expand spacing of tiles subtly
+        float v = (rand() % 100)*0.003f - 0.15f;
+        // printf("v = %f\n",v);
+        prev_spacing_rand_ += v;
+        if (prev_spacing_rand_ < 20)
+          prev_spacing_rand_ = 20;
+        else if (prev_spacing_rand_ > 25)
+          prev_spacing_rand_ = 25;
+        HelperMakeVertices(road_type, kTerrain, 0, prev_spacing_rand_);
+        break;
+      }
     case 3:
       HelperMakeNormals();
       break;
@@ -411,17 +429,14 @@ void Terrain::AverageHeights(const int start, const int end) {
 void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_type,
     const float min_position, const float position_range) {
   // Store the connecting row to smooth
-  std::vector<glm::vec3>::iterator z_smooth_begin = z_smooth_begin = vertices.end()-1*x_length_;
-  std::vector<glm::vec3>::iterator z_smooth_end = z_smooth_end = vertices.end()-0*x_length_;
+  std::vector<glm::vec3>::iterator z_smooth_begin = vertices.end()-1*x_length_;
+  std::vector<glm::vec3>::iterator z_smooth_end = vertices.end()-0*x_length_;
   std::vector<glm::vec3> temp_last_row_vertices(z_smooth_begin, z_smooth_end);
 
   // Zero vertice vector
   // vertices.assign(x_length_ * z_length_, glm::vec3());
 
   int offset;
-  float max_z = -FLT_MAX; // Used to calculate next_tile_start_
-  // TODO min_x, max_x for turning
-  float max_x = -FLT_MAX;
   // First, build the data for the vertex buffer
   for (int z = 0; z < z_length_; z++) {
     for (int x = 0; x < x_length_; x++) {
@@ -535,15 +550,15 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     for (int x = 0; x < x_length_; ++x) {
       float &vert_x = vertices.at(x+z*x_length_).x;
       vert_x = temp_last_row_vertices.at(x).x + z * translate_column_by.at(x).x;
-      
+
       float &vert_z = vertices.at(x+z*x_length_).z;
       vert_z = temp_last_row_vertices.at(x).z + z * translate_column_by.at(x).z;
     }
   }
   // Ensure heights are connected
   for (int x = 0; x < x_length_; ++x) {
-      float &vert_y = vertices.at(x+0*x_length_).y;
-      vert_y = temp_last_row_vertices.at(x).y;
+    float &vert_y = vertices.at(x+0*x_length_).y;
+    vert_y = temp_last_row_vertices.at(x).y;
   }
 }
 

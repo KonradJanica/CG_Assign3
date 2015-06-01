@@ -123,6 +123,8 @@ class Terrain {
     //   Used to ensure there are no sudden peaks and for extra feel
     char prev_cliff_x3_rand_;
     char prev_water_x3_rand_;
+    // The previous random value used to generate next spacing of tile
+    float prev_spacing_rand_;
     // The amount of indices, used to render terrain efficiently
     unsigned int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
