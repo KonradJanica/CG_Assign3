@@ -3,6 +3,7 @@ PLATFORM := $(shell uname)
 
 ifneq (, $(findstring CYGWIN, $(PLATFORM)))
     GL_LIBS = -lopengl32 -lglut -lglu -lglew
+	SDL = -L/usr/local/lib -lcygwin -lSDL2main -lSDL2 -lSDL2_mixer -mwindows
 	EXT = .exe
     CPPFLAGS =-DWIN32
 endif
@@ -37,7 +38,7 @@ all : assign3$(EXT)
 	./assign3$(EXT)
 
 assign3$(EXT): $(LINK) $(LIB)
-	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
+	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS) $(SDL)
 
 main.o: model_data.h model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp

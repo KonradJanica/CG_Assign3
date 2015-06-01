@@ -75,7 +75,11 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   if (is_key_pressed_hash.at('h'))
   {
-    system("aplay ./sounds/car_horn_final.wav -q&");
+    // system("aplay ./sounds/car_horn_final.wav -q&");
+    // if ( Mix_PlayChannel(-1, wave, 0) == -1 ) {
+    //   printf("WAV play fail");
+    //   exit(1);
+    // }
   }
 
   if (is_key_pressed_hash.at('w')) {
@@ -168,7 +172,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   // Increase drifitng on W (oversteer)
   if (is_key_pressed_hash.at('w')) {
     a *= 3;
-  // Decrease drifinting on S (understeer)
+    // Decrease drifinting on S (understeer)
   } else if (is_key_pressed_hash.at('s')) {
     a *= -1;
   }

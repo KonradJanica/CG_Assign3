@@ -38,6 +38,17 @@
 #include <GL/glut.h>
 #endif
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+// Our wav file
+Mix_Chunk *wave = NULL;
+// Our music file
+Mix_Music *music = NULL;
+#define SOUND_PATH "./sounds/"
+#define CAR_HORN SOUND_PATH "/car_horn_final.wav"
+#define WAV_PATH "./sounds/testwav.wav"
+#define MUS_PATH "./sounds/testogg.ogg"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -210,8 +221,16 @@ void keyboardDown(unsigned char key, int x, int y) {
     case 'j':
     case 'k':
     case 'l':
-    case 'h':
       g_controller->KeyPressed(key);
+      break;
+    case 'h':
+      // system("aplay ./sounds/car_horn_final.wav -q&");
+      if (!Mix_Playing(0)) {
+        if ( Mix_PlayChannel(0, wave, 0) == -1 ) {
+          printf("WAV play fail");
+          exit(1);
+        }
+      }
       break;
     case 'f':
       {    
@@ -269,6 +288,41 @@ void keyboardDown(unsigned char key, int x, int y) {
  * Takes no arguments
  */
 int main(int argc, char **argv) {
+
+  // Initialize SDL.
+  if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+    std::cout << "SDL_Init() Fail" << std::endl;
+    return -1;
+  }
+  //Initialize SDL_mixer 
+  if( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, 2, 4096 ) == -1 ) {
+    std::cout << "SDL_mixer Fail" << std::endl;
+    return -1; 
+  }
+
+  // Load our sound effect
+  wave = Mix_LoadWAV(CAR_HORN);
+  if (wave == NULL) {
+    std::cout << "WAV load fail" << std::endl;
+    return -1;
+  }
+
+  // Load our music
+  music = Mix_LoadMUS(MUS_PATH);
+  if (music == NULL) {
+    std::cout << "OGG load fail" << std::endl;
+    return -1;
+  }
+
+  if ( Mix_PlayChannel(0, wave, 0) == -1 ) {
+    std::cout << "WAV play fail" << std::endl;
+    return -1;
+  }
+
+  if ( Mix_PlayMusic( music, 1) == -1 ) {
+    std::cout << "OGG play fail" << std::endl;
+    return -1;
+  }
 
   // assert(argc > 1 && "provide Arg1 of .obj file");
 
