@@ -53,15 +53,26 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
 
   glm::mat4 view_matrix = camera->view_matrix();
 
+
+  //object->translation().y
+  //view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f, -5.0f, 15.0f));
+  // Mitch this needs to be based on where the road is
+  view_matrix = glm::translate(view_matrix, glm::vec3(object->translation().x - 100.0f , -3.0f, camera->cam_pos().z ));
+
+  // Do not scale on X (this is the up-down axis)
+  view_matrix = glm::scale(view_matrix , glm::vec3(1.0f, 1.0f, 1.0f));
+
+
+  //view_matrix = glm::rotate(view_matrix, object->rotation().y, glm::vec3(0, 1, 0));
+  //view_matrix = glm::rotate(view_matrix, object->rotation().x, glm::vec3(1, 0, 0));
+  //view_matrix = glm::rotate(view_matrix, object->rotation().z, glm::vec3(0, 0, 1));
+
+  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
+
   // Create and send normal matrix
   glm::mat3 normMatrix;
   normMatrix = glm::mat3(view_matrix);
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
-  //object->translation().y
-  //view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f, -5.0f, 15.0f));
-  view_matrix = glm::translate(view_matrix, glm::vec3(-100.0f,-3.0f, object->translation().z - 10.0f));
-  view_matrix = glm::scale(view_matrix ,glm::vec3(10.0f));
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Send the cubemap (for reflections)
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());

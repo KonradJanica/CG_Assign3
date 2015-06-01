@@ -200,7 +200,7 @@ void Water::GenerateMesh()
         //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
           vertices_[idxFlag++] = (float)y + (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x + (x*0.1) /width;
+          vertices_[idxFlag++] = (float)x + (x*0.01)/width;
       }
   }
 
