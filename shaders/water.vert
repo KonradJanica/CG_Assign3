@@ -27,7 +27,7 @@ float wave(int i, float x, float y) {
     float frequency = 2*pi/wavelength[i];
     float phase = speed[i] * frequency;
     float theta = dot(direction[i], vec2(x, y));
-    return (amplitude[i]/2.0) * sin(theta * frequency + (time/50000.0) * phase);
+    return (amplitude[i]) * sin(theta * frequency + (time/30000.0) * phase);
 }
 
 float waveHeight(float x, float y) {
@@ -41,16 +41,16 @@ float dWavedx(int i, float x, float y) {
     float frequency = 2*pi/wavelength[i];
     float phase = speed[i] * frequency;
     float theta = dot(direction[i], vec2(x, y));
-    float A = (amplitude[i]/2.0) * direction[i].x * frequency;
-    return A * cos(theta * frequency + (time/50000.0) * phase);
+    float A = (amplitude[i]) * direction[i].x * frequency;
+    return A * cos(theta * frequency + (time/30000.0) * phase);
 }
 
 float dWavedy(int i, float x, float y) {
     float frequency = 2*pi/wavelength[i];
     float phase = speed[i] * frequency;
     float theta = dot(direction[i], vec2(x, y));
-    float A = (amplitude[i]/2.0) * direction[i].y * frequency;
-    return A * cos(theta * frequency + (time/50000.0) * phase);
+    float A = (amplitude[i]) * direction[i].y * frequency;
+    return A * cos(theta * frequency + (time/30000.0) * phase);
 }
 
 vec3 waveNormal(float x, float y) {

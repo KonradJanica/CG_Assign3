@@ -85,6 +85,7 @@ Water::Water(const GLuint &program_id)
     memset(uniformName, 0, sizeof(uniformName));
 
     float amplitude = 0.5f / (i + 1);
+    amplitude*=3;
     printf("amplitude[%d] = %f \n", i, amplitude);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
     int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
