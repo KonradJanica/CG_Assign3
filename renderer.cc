@@ -62,10 +62,13 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   // Do not scale on X (this is the up-down axis)
   view_matrix = glm::scale(view_matrix , glm::vec3(1.0f, 1.0f, 1.0f));
 
-
+  glm::mat4 rotate = glm::mat4(1.0f);
+  rotate = glm::rotate(rotate, object->rotation().y, glm::vec3(0, 1, 0));
   //view_matrix = glm::rotate(view_matrix, object->rotation().y, glm::vec3(0, 1, 0));
   //view_matrix = glm::rotate(view_matrix, object->rotation().x, glm::vec3(1, 0, 0));
   //view_matrix = glm::rotate(view_matrix, object->rotation().z, glm::vec3(0, 0, 1));
+
+  view_matrix = view_matrix * rotate;
 
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
