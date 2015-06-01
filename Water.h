@@ -36,6 +36,12 @@ class Water {
     // anything but water.vert and water.frag to render this water
     Water(const GLuint &program_id);
 
+    ~Water() { 
+        delete vertices_;
+        delete indices_;
+        delete uv;
+    };   
+
     // Returns the VAO
     inline unsigned int watervao() const;
 
@@ -47,6 +53,10 @@ class Water {
 
     // Return the amount of Vertices 
     inline unsigned int water_vertex_count() const;
+
+
+
+    //GLuint water_norm_;
 
   private:
     
@@ -74,10 +84,10 @@ class Water {
     // Vector to hold Vertex data
     float * vertices_;   
 
-    int x;
-    //std::vector<int> x;
+    glm::vec2 * uv;
 
-    //vector<int> coordinates_;
+    std::vector<int> mine;
+
 };
 
 // =======================================================================// 

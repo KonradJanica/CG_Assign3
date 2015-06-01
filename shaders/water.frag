@@ -53,12 +53,14 @@ uniform vec3 mtl_specular;
 uniform float shininess;
 
 uniform samplerCube skybox;
+uniform sampler2D norm_tex;
 
 uniform vec3 cameraPos;
 
 in vec4 a_vertex_mv;
 in vec4 colour;
 in vec3 a_normal_mv;
+in vec2 a_tex_coord;
 out vec4 fragColour;
 
 

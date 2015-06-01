@@ -167,9 +167,9 @@ unsigned int Water::CreateVao()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*water_num_indices_, indices_, GL_STATIC_DRAW);
 
-  // Texture attributes
+  // // Texture attributes
   // glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
-  // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * coordinates_.size(), &coordinates_[0], GL_STATIC_DRAW);
+  // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * water_num_vertices_, &uv_[0], GL_STATIC_DRAW);
   // glEnableVertexAttribArray(textureLoc);
   // glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
     
@@ -206,8 +206,10 @@ void Water::GenerateMesh()
   int width = plane_width+1;
   int height = plane_height+1;
   //coordinates_.assign(width*height, glm::vec2());
-  // set up mesh points
+  uv = new glm::vec2[total_vertices];
+    // set up mesh points
   int idxFlag = 0;
+  int uvFlag = 0;
   for (int y=0;y < height;y++){
       for (int x=0;x < width;x++){
         // Fiddle with this to stretch (the y*0.1 part)
@@ -215,6 +217,8 @@ void Water::GenerateMesh()
           vertices_[idxFlag++] = (float)y + (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
           vertices_[idxFlag++] = (float)x + (x*0.01)/width;
+
+          uv[uvFlag++] = glm::vec2((float)y + (y*0.1)/height, (float)x + (x*0.01)/width);
       }
   }
 
