@@ -53,22 +53,23 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
 
   glm::mat4 view_matrix = camera->view_matrix();
 
+  // Get only the needed components of the object's model matrix
 
-  //object->translation().y
-  //view_matrix = glm::translate(view_matrix, glm::vec3(-15.0f, -5.0f, 15.0f));
-  // Mitch this needs to be based on where the road is
-  view_matrix = glm::translate(view_matrix, glm::vec3(object->translation().x - 100.0f , -3.0f, camera->cam_pos().z ));
+  // Translation to put water where car is
+  // Y component is fixed at -3.0f so that it does not follow car falling down
+  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
+      glm::vec3(object->translation().x, -3.0f, object->translation().z));
 
-  // Do not scale on X (this is the up-down axis)
-  view_matrix = glm::scale(view_matrix , glm::vec3(1.0f, 1.0f, 1.0f));
-
-  glm::mat4 rotate = glm::mat4(1.0f);
+  // Only get rotation about y
+  // If we get rotation about x, water will move up and down when car pivots up and down
+  // We also don't want to have the water roll so don't get z
+  glm::mat4 object_rotate = glm::mat4(1.0f);
   rotate = glm::rotate(rotate, object->rotation().y, glm::vec3(0, 1, 0));
-  //view_matrix = glm::rotate(view_matrix, object->rotation().y, glm::vec3(0, 1, 0));
-  //view_matrix = glm::rotate(view_matrix, object->rotation().x, glm::vec3(1, 0, 0));
-  //view_matrix = glm::rotate(view_matrix, object->rotation().z, glm::vec3(0, 0, 1));
 
-  view_matrix = view_matrix * rotate;
+  // Translate to reposition the origin of the water
+  glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0f, 0.0f, -50.0f));
+  
+  view_matrix = view_matrix * object_translate * object_rotate * water_translate;
 
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
