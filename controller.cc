@@ -156,7 +156,7 @@ void Controller::UpdateGame() {
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo
     if(playSound)
-      system("aplay ./sounds/metal_crash.wav &> /dev/null/ &");
+      system("aplay ./sounds/metal_crash.wav -q &");
     playSound = 0;
     CrashAnimationFall();
     return;
@@ -164,7 +164,7 @@ void Controller::UpdateGame() {
   if (game_state_ == kCrashingCliff) {
     // delta_time_ /= 5; //slowmo
     if(playSound)
-      system("aplay ./sounds/metal_crash.wav &> /dev/null/ &");
+      system("aplay ./sounds/metal_crash.wav -q &");
     playSound = 0;
     CrashAnimationCliff();
     return;

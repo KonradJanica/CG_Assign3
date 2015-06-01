@@ -75,7 +75,7 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
 
   if (is_key_pressed_hash.at('h'))
   {
-    system("aplay ./sounds/car_horn_final.wav &> /dev/null &");
+    system("aplay ./sounds/car_horn_final.wav -q&");
   }
 
   if (is_key_pressed_hash.at('w')) {
