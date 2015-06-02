@@ -99,10 +99,15 @@ void Rain::UpdatePosition()
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     particles_[i].pos.y -= particles_[i].speed;
-    particles_[i].pos.x += particles_[i].speed * sin(DEG2RAD(60));
+    particles_[i].pos.x += particles_[i].speed;// * sin(DEG2RAD(60));
     if(particles_[i].pos.y < -5)
     {
       particles_[i].pos.y = 30.0f - (rand() % 5);
+    }
+
+    if (particles_[i].pos.x > 50.0f) 
+    {
+      particles_[i].pos.x = 0.0f;
     }
 
 
