@@ -56,7 +56,7 @@ Renderer *g_renderer;
 Controller *g_controller;
 
 // Our shader program
-GLuint g_program_id[5];
+GLuint g_program_id[6];
 
 // Fog global
 int g_fog_mode = 0;
@@ -129,6 +129,7 @@ void idle() {
   }
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
+
 
   UpdateProjection();
 
@@ -302,6 +303,10 @@ int main(int argc, char **argv) {
   if (g_program_id[4] == 0)
     return 1;
 
+  g_program_id[5] = LoadShaders("shaders/rain.vert", "shaders/rain.frag");
+  if (g_program_id[5] == 0)
+    return 1;
+
 
   g_renderer = new Renderer();
   // Construct Axis VAO
@@ -320,6 +325,9 @@ int main(int argc, char **argv) {
 
   // Setup Water
   g_controller->AddWater(g_program_id[3]);
+
+  // Setup Rain
+  g_controller->AddRain(g_program_id[5]);
 
   // Add starting models
   // g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
