@@ -11,6 +11,8 @@
  * 
  */
 
+ #define DEG2RAD(x) ((x)*M_PI/180.0)
+
 #define VALS_PER_VERT 3
 #define VALS_PER_COLOUR 4
 #define CUBE_NUM_TRIS 12      // number of triangles in a cube (2 per face)
@@ -34,10 +36,10 @@ unsigned int Rain::CreateVao()
   glUseProgram(rain_shader_);
 
   static const GLfloat vertices[] = { 
-   -0.005f, -0.05f, 0.0f,
-    0.005f, -0.05f, 0.0f,
-   -0.005f,  0.05f, 0.0f,
-    0.005f,  0.05f, 0.0f,
+   -0.01f, -0.05f, 0.0f,
+    0.01f, -0.05f, 0.0f,
+   -0.01f,  0.05f, 0.0f,
+    0.01f,  0.05f, 0.0f,
   };
 
   GLuint vao;
@@ -80,7 +82,10 @@ void Rain::Init()
     int rand_val = rand() % 10;
     particles_[i].pos = glm::vec3(rand() % maxx, rand() % 30,rand() % maxz);
     particles_[i].speed = 0.1f;
-    particles_[i].colour = glm::vec4((rand() % 100) / 100.0f, (rand() % 100) / 100.0f, (rand() % 100) / 100.0f, 1.0f);
+    float red = (rand() % 49 + 24) / 255.0f;
+    float green = (rand() % 77 + 17) / 255.0f;
+    float blue = (rand() % 176 + 70) / 255.0f;
+    particles_[i].colour = glm::vec4(red, green, blue, 1.0f);
     // particles_[i].colour.x = 0.0f;
     // particles_[i].colour.y = 0.0f;
     // particles_[i].colour.z = 0.3f;
@@ -94,28 +99,31 @@ void Rain::UpdatePosition()
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     particles_[i].pos.y -= particles_[i].speed;
+    particles_[i].pos.x += particles_[i].speed * sin(DEG2RAD(60));
     if(particles_[i].pos.y < -5)
     {
       particles_[i].pos.y = 30.0f - (rand() % 5);
     }
 
+
+
     particle_position_buffer_data_[i*3 + 0] = particles_[i].pos.x;
     particle_position_buffer_data_[i*3 + 1] = particles_[i].pos.y;
     particle_position_buffer_data_[i*3 + 2] = particles_[i].pos.z;
 
-    // particle_colour_buffer_data_[i*4 + 0] = particles_[i].colour.x;
-    // particle_colour_buffer_data_[i*4 + 1] = particles_[i].colour.y;
-    // particle_colour_buffer_data_[i*4 + 2] = particles_[i].colour.z;
-    // particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
-
-    particle_colour_buffer_data_[i*4 + 0] = 0.0f;
-    particle_colour_buffer_data_[i*4 + 1] = 0.0f;
-    particle_colour_buffer_data_[i*4 + 2] = 1.0f;
+    particle_colour_buffer_data_[i*4 + 0] = particles_[i].colour.x;
+    particle_colour_buffer_data_[i*4 + 1] = particles_[i].colour.y;
+    particle_colour_buffer_data_[i*4 + 2] = particles_[i].colour.z;
     particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
+
+    // particle_colour_buffer_data_[i*4 + 0] = 0.0f;
+    // particle_colour_buffer_data_[i*4 + 1] = 0.0f;
+    // particle_colour_buffer_data_[i*4 + 2] = 1.0f;
+    // particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
   }
 }
 
-void Rain::Render(Camera * camera, Object * car)
+void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
 {
   glUseProgram(rain_shader_);
 
@@ -136,6 +144,20 @@ void Rain::Render(Camera * camera, Object * car)
   if (mvHandle == -1) {
     printf("Rain could not find 'modelview_matrix' uniform\n");
   }
+
+  // Uncomment this block if we are going to try do reflective rain
+  // int texHandle = glGetUniformLocation(rain_shader_, "skybox");
+  // if (texHandle == -1) {
+    
+  //     fprintf(stderr, "Could not find uniform variables (RAIN - SKYCUBE)\n");
+   
+  // }
+
+  // int camPosHandle = glGetUniformLocation(rain_shader_, "cameraPos");
+  // if (camPosHandle == -1) {
+  //   printf("Couldnt get the campos for raindrop reflections\n");
+  // }
+  // glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
 
   GLuint initialVerticesHandle = glGetAttribLocation(rain_shader_, "initial_vertices");
   GLuint positionsHandle = glGetAttribLocation(rain_shader_, "displaced_vertices");

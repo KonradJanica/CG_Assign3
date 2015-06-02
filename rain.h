@@ -13,6 +13,7 @@
 #define ASSIGN3_RAIN_H_
 
 #include <vector>
+#include "Skybox.h"
 #include "camera.h"
 #include "object.h"
 #include <stdlib.h>
@@ -42,7 +43,7 @@ class Rain {
     // anything but rain.vert and rain.frag to render this rain
     Rain(const GLuint &program_id);
 
-    void Render(Camera * camera, Object * car);
+    void Render(Camera * camera, Object * car, Skybox * skybox);
     
     // Updates the position of each particles
     void UpdatePosition();

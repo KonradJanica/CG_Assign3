@@ -80,7 +80,7 @@ void Controller::Draw() {
   // TODO Toggle
 
    renderer_->RenderAxis(camera_);
-   rain_->Render(camera_, car_);
+   rain_->Render(camera_, car_, skybox_);
   
 
   car_->UpdateModelMatrix();
