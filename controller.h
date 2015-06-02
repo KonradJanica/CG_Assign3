@@ -35,18 +35,6 @@
 
 class Controller {
   public:
-    // Enum for vertex coordinates
-    //   used in GetMax
-    enum CoordEnum {
-      kX = 0,
-      kY = 1,
-      kZ = 2,
-      kx = 0,
-      ky = 1,
-      kz = 2,
-      kMin = 3,
-      kMax = 3,
-    };
     // Enum for game states
     enum State {
       kStart = 0,
@@ -78,12 +66,6 @@ class Controller {
     void EnableTerrain(const GLuint &program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
-    // Accessor for largest vertex in indexed model
-    //   @return max_$_, the maximum cartesian coordinate of given input
-    inline float GetMax(unsigned int index, int e_numb) const;
-    // Accessor for smallest vertex in indexed model
-    //   @return min_$_, the minimum cartesian coordinate of given input
-    inline float GetMin(unsigned int index, int e_numb) const;
     // Accessor for Camera Object
     inline Camera * camera();
 
@@ -213,44 +195,6 @@ inline void Controller::SetLightPosition(const float &x, const float &y, const f
   light_pos_.y = y;
   light_pos_.z = z;
   light_pos_.w = w;
-}
-// Accessor for largest vertex in indexed model
-//   @param index of member model
-//   @param enum value
-//   @return max_$_, the maximum cartesian coordinate of given input
-inline float Controller::GetMax(unsigned int index, int e_numb) const {
-  assert(index < objects_.size() && "Trying to access Models_ out of range");
-  switch(e_numb) {
-    case 0: 
-      return objects_.at(index)->GetMax(0);
-    case 1: 
-      return objects_.at(index)->GetMax(1);
-    case 2:
-      return objects_.at(index)->GetMax(2);
-    case 3:
-      return objects_.at(index)->GetMax(3);
-    default:
-      assert(false);
-  }
-}
-// Accessor for smallest vertex in indexed model
-//   @param index of member model
-//   @param enum value
-//   @return min_$_, the minimum cartesian coordinate of given input
-inline float Controller::GetMin(unsigned int index, int e_numb) const {
-  assert(index < objects_.size() && "Trying to access Models_ out of range");
-  switch(e_numb) {
-    case 0: 
-      return objects_.at(index)->GetMin(0);
-    case 1: 
-      return objects_.at(index)->GetMin(1);
-    case 2:
-      return objects_.at(index)->GetMin(2);
-    case 3:
-      return objects_.at(index)->GetMin(3);
-    default:
-      assert(false);
-  }
 }
 // Accessor for Camera Object
 inline Camera * Controller::camera() {
