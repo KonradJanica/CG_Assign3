@@ -78,8 +78,8 @@ bool g_coord_axis = true;
 // Camera object
 Camera * g_camera;
 
-int g_window_x = 640*2;
-int g_window_y = 480*2;
+int g_window_x = 640;
+int g_window_y = 480;
 
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(75.0f, float(g_window_x / g_window_y), 0.1f, 100.0f);

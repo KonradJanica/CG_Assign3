@@ -152,13 +152,22 @@ class Controller {
     void UpdatePhysics();
 
     // TODO comment
+    unsigned char prev_colisn_pair_idx_;
+    // TODO comment
     void UpdateCollisions();
     // COLLISION HELPERS
     // Checks whether car is between boundary pair
     //   Creates 4 triangles out of the 4 points of the given square and returns 
-    //   true if area is positive
+    //   @param car, the car object (to find it's position)
+    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
+    //   @return true if car is inside corner of rectangle
     //   @warn input must be square for accurate results
-    bool IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
+    bool IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
+    // Checks whether car is between a pair of points
+    //   @param car, the car vec3 (to find it's position)
+    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
+    //   @return true if car is within the points
+    bool IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp);
 
     float colisn_anim_ticks_;
     // The animation played when the car falls off the right (water) side

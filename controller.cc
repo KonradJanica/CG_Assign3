@@ -136,6 +136,8 @@ void Controller::PositionLights() {
 //   @warn terrain_ on heap, must be deleted after
 void Controller::EnableTerrain(const GLuint &program_id) {
   terrain_ = new Terrain(program_id);
+  // Initialize Dummy Index for first equilavence check in collisions
+  prev_colisn_pair_idx_ = 0;
 }
 
 // The main control tick
@@ -146,12 +148,14 @@ void Controller::UpdateGame() {
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
+  terrain_->GenerationTick();
+
   // printf("mid = (%f,%f,%f)\n",left_lane_midpoint_.x,left_lane_midpoint_.y,left_lane_midpoint_.z);
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   UpdateCamera();
   if (!is_collision_) {
-    UpdateCollisions();
     UpdatePhysics();
+    UpdateCollisions();
   }
 
   if (game_state_ == kCrashingFall) {
@@ -461,9 +465,11 @@ void Controller::CrashAnimationFall() {
 }
 
 // Checks whether car is between the biggest rectangle than can be formed
+//   @param car, the car object (to find it's position)
+//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
 // @return  true  if can is inside corner of rectangle
 // @warn input must be square for accurate results
-bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
+bool Controller::IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
   Terrain::boundary_pair curr = bp.first;
   Terrain::boundary_pair next = bp.second;
   glm::vec3 a = curr.first;
@@ -492,86 +498,103 @@ bool Controller::IsInside(const glm::vec3 &car, std::pair<Terrain::boundary_pair
   return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
 }
 
+// Checks whether car is between the biggest rectangle than can be formed
+//   @param car, the car vec3 (to find it's position)
+//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
+//   @return  true  if can is inside corner of rectangle
+//   @warn input must be square for accurate results
+bool Controller::IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp) {
+  const glm::vec3 &a = bp.first;
+  const glm::vec3 &b = bp.second;
+
+  float dot_product = (car.x - a.x) * (b.x - a.x) + (car.z - a.z) * (b.z - a.z);
+  if (dot_product < 0)
+    return false;
+  float squared_dis = (b.x - a.x) * (b.x - a.x) + (b.z - a.z) * (b.z - a.z);
+  if (dot_product > squared_dis)
+    return false;
+
+  return true;
+}
+
 // TODO comment
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 void Controller::UpdateCollisions() {
   // Setup vars
-  const std::queue<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
+  const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
   const glm::vec3 &car = car_->translation();
-  const Terrain::colisn_vec head = col.front();
-  Terrain::colisn_vec::const_iterator it = head.begin();
+  const Terrain::colisn_vec &head = col.front();
+  Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
 
   // Find closest edge point
   Terrain::boundary_pair closest_pair;
   float dis = FLT_MAX;
   Terrain::colisn_vec::const_iterator closest_it = head.begin();
 
+  --prev_colisn_pair_idx_;
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
     float cur_dis = glm::distance(cur_vec, car);
-    if (cur_dis < dis) {
+    if (cur_dis > dis) {
+      break;
+    } else {
       dis = cur_dis;
       closest_pair = *it;
       closest_it = it;
     }
     it++;
+    ++prev_colisn_pair_idx_;
   }
-  // If closest is the first then something went wrong
-  if (closest_it == head.begin()) {
-    printf("ERROR IN COLLISION CHECK! - CLOSEST POINT IS BEGIN()\n");
-  }
+  Terrain::boundary_pair next_pair;
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
-  //   This was causing undefined behaviour before hence checks now in
-  //   place looking for end
   it = closest_it;
-  while (*it == *closest_it && it != head.end()) {
-    it++;
-  }
-  if (it != head.end())
-    it++; // pop 2 vertices early
+  it++;
+  // Reduce autodrive jerking
   if (it != head.end())
     it++;
+
   if (it == head.end()) {
-    // printf("assuming end of tile reached, pop!\n");
+    // Get next pair from next vector in circular_vector
+    closest_it = col[1].begin(); // reassign to find new midpoint etc.
+    it = closest_it;
+    it++; // We want next point (i.e. end-1 == begin)
+    next_pair = *it;
+
     terrain_->col_pop();
     terrain_->ProceedTiles();
+    prev_colisn_pair_idx_ = 0;
+  } else {
 
-    // Check collision for next tile
-    UpdateCollisions();
-    return;
+    // If conditions flow through then make box with neighbours of the closest pair
+    //   and check if car is inside the box
+    next_pair = *it;
   }
-
-  // If conditions flow through then make box with neighbours of the closest pair
-  //   and check if car is inside the box
-  Terrain::boundary_pair next_pair = *it;
-  it = closest_it;
-  it--;
-  Terrain::boundary_pair previous_pair = *it;
   // Make boundary box the neighbours of current pair
-  std::pair<Terrain::boundary_pair,Terrain::boundary_pair> bounding_box(previous_pair, next_pair);
+
   // Check if car is in range
-  if (IsInside(car, bounding_box)) {
+  if (IsInside(car, *closest_it)) {
     //inside bounds
     is_collision_ = false;
   } else {
-    // printf("collision on edge of road!\n");
+    printf("collision on edge of road!\n");
     is_collision_ = true;
     
   }
+
   // Calculate middle of road and it's direction
   // Get the next points to smooth it
-  closest_it++;
-  closest_it++;
+  it = closest_it;
+  it++;
   // Find midpoint
-  glm::vec3 road_midpoint = ((*closest_it).first+(*closest_it).second);
+  glm::vec3 road_midpoint = ((*it).first+(*it).second);
   road_midpoint /= 2;
   road_midpoint.y = car_->translation().y;
   // Find lane midpoints
-  left_lane_midpoint_ = road_midpoint + (*closest_it).second;
+  left_lane_midpoint_ = road_midpoint + (*it).second;
   left_lane_midpoint_ /= 2;
   // Find road direction
-  glm::vec3 first_point = previous_pair.first;
+  glm::vec3 first_point = closest_it->first;
   glm::vec3 next_point = next_pair.first;
   glm::vec3 direction = next_point - first_point;
   road_direction_ = glm::normalize(direction);
@@ -609,6 +632,7 @@ void Controller::UpdateCollisions() {
     colisn_anim_ticks_ = 0;
     UpdateCamera(); // Camera needs to be updated to change position
   }
+
 }
 
 // The controllers physics update tick

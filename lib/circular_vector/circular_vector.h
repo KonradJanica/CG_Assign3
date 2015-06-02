@@ -20,9 +20,10 @@
 
 #include <algorithm> // std::swap, std::max, std::lexicographical_compare, std::equal
 #include <stdexcept> // std::invalid_argument, std::out_of_range
+#include <memory>    // std::allocator
 
 // Forward declaration of iterator class
-template <typename T_noconst, typename T, typename element_type = typename T::value_type>
+template <typename _T_noconst, typename _T, typename _element_type = typename _T::value_type>
 class circular_vector_iterator;
 
 // An STL Compliant Circular Vector Container
@@ -38,24 +39,24 @@ class circular_vector_iterator;
 //     per insertion.
 //   The Default Capacity should be larger than 1 otherwise a Circular Vector is
 //   pointless.
-template <typename T, typename Alloc = std::allocator<T> >
+template <typename _T, typename _Alloc = std::allocator<_T> >
 class circular_vector {
   public:
     // TYPEDEFS:
-    typedef circular_vector<T, Alloc>            self_type;
-    typedef Alloc                                allocator_type;
-    typedef typename Alloc::value_type           value_type;
-    typedef typename Alloc::pointer              pointer;
-    typedef typename Alloc::const_pointer        const_pointer;
-    typedef typename Alloc::reference            reference;
-    typedef typename Alloc::const_reference      const_reference;
-    typedef typename Alloc::size_type            size_type;
-    typedef typename Alloc::difference_type      difference_type;
+    typedef circular_vector<_T, _Alloc>           self_type;
+    typedef _Alloc                                allocator_type;
+    typedef typename _Alloc::value_type           value_type;
+    typedef typename _Alloc::pointer              pointer;
+    typedef typename _Alloc::const_pointer        const_pointer;
+    typedef typename _Alloc::reference            reference;
+    typedef typename _Alloc::const_reference      const_reference;
+    typedef typename _Alloc::size_type            size_type;
+    typedef typename _Alloc::difference_type      difference_type;
     // Iterator
     typedef circular_vector_iterator <self_type, self_type> 
       iterator;
     // Const Iterator
-    typedef circular_vector_iterator <self_type,const self_type, const value_type> 
+    typedef circular_vector_iterator <self_type,const self_type, const value_type>
       const_iterator;
     // Reverse Iterator
     typedef std::reverse_iterator<iterator>       reverse_iterator;
@@ -75,7 +76,7 @@ class circular_vector {
     //         reserved space.
     // @param  capacity  The starting allocated storage reserve
     // @throws  std::invalid_argument  With negative capacity values
-    explicit circular_vector(size_type capacity = kDefaultCapacity, const allocator_type &alloc = allocator_type())
+    explicit circular_vector(size_type capacity = kDefaultCapacity, const _Alloc &alloc = _Alloc())
       : size_(0), capacity_(capacity), start_idx_(capacity/2), end_idx_(capacity/2),
       alloc_(alloc), array_(alloc_.allocate(capacity)) {
         if (capacity <= 0) {
@@ -86,7 +87,7 @@ class circular_vector {
     // @param  n    The size and capacity of the %circular_vector
     // @param  val  The data value to fill the %circular_vector
     // @throws  std::invalid_argument  With negative size values
-    explicit circular_vector(size_type n, const value_type &val, const allocator_type &alloc = allocator_type())
+    explicit circular_vector(size_type n, const value_type &val, const _Alloc &alloc = _Alloc())
       : size_(0), capacity_(n), start_idx_(n/2), end_idx_(n/2),
       alloc_(alloc), array_(alloc_.allocate(n)) {
         if (n <= 0) {
@@ -100,7 +101,7 @@ class circular_vector {
     // @param  first  The initial position to start the copy from
     // @param  last   The final exclusive position of the copy range
     template <class InputIterator>
-      circular_vector(InputIterator first, InputIterator last, const allocator_type& alloc = allocator_type())
+      circular_vector(InputIterator first, InputIterator last, const _Alloc &alloc = _Alloc())
       : size_(0), capacity_(last-first), start_idx_((last-first)/2), end_idx_((last-first)/2),
       alloc_(alloc), array_(alloc_.allocate(last-first)) {
         try {
@@ -112,7 +113,7 @@ class circular_vector {
         }
       }
     // @brief  Copy constructor. Constructs a container with a copy of each of the elements in x, in the same order.
-    // @param  x  Another vector object of the same type (with the same class template arguments T and Alloc), whose contents are copied.
+    // @param  x  Another vector object of the same type (with the same class template arguments _T and _Alloc), whose contents are copied.
     // @throws  std::length_error  Upon catching any exception while assigning memory
     circular_vector(const circular_vector &x)
       : size_(0), capacity_(x.capacity()), start_idx_(x.capacity()/2), end_idx_(x.capacity()/2),
@@ -126,7 +127,7 @@ class circular_vector {
         }
       }
     // @brief  Move constructor. Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
-    // @param  x  A vector object of the same type (i.e., with the same template parameters, T and Alloc).
+    // @param  x  A vector object of the same type (i.e., with the same template parameters, _T and _Alloc).
     circular_vector &operator = (const self_type &x) {
       size_ = 0;
       capacity_ = x.capacity();
@@ -140,7 +141,7 @@ class circular_vector {
 
     // DECONSTRUCTORS:
     ~circular_vector() {
-      clear();
+      // clear();
       alloc_.deallocate(array_, capacity_);
     };
 
@@ -165,7 +166,7 @@ class circular_vector {
     // ALLOCATORS:
     // @brief  Returns a copy of the allocator object associated with the @circular_vector
     // @return  Read-only (constant) allocator
-    allocator_type get_allocator() const  { return alloc_; };
+    _Alloc get_allocator() const  { return alloc_; };
 
     // CAPACITIES:
     // @brief  Returns the amount of elements in the %circular_vector
@@ -283,7 +284,8 @@ class circular_vector {
       }
 
       decrement(kStart);
-      array_[start_idx_] = val;
+      // array_[start_idx_] = val;
+      alloc_.construct(array_ + start_idx_, val);
     }
     // @brief  Adds an element to the tail of the %circular_vector
     // @param  val  Element to be added
@@ -294,7 +296,8 @@ class circular_vector {
       if (end_idx_ == start_idx_ && !empty())
         reserve(capacity() * 1.5);
 
-      array_[end_idx_] = val;
+      alloc_.construct(array_ + end_idx_, val);
+      // array_[end_idx_] = val;
       increment(kEnd);
     }
     // @brief  Exchanges the content of the container by the content of x, which is
@@ -312,8 +315,8 @@ class circular_vector {
     // @warn  If the elements themselves are pointers, the pointed-to memory is not
     //        touched in any way. Managing the pointer is the user's responsibility.
     void clear() {
-      for (size_type x = 0; x < capacity(); ++x) {
-        alloc_.destroy(array_ + x);
+      for (size_type x = 0; x < size(); ++x) {
+        alloc_.destroy(array_ + (start_idx_ + x) % capacity());
       }
       start_idx_ = capacity() / 2;
       end_idx_ = capacity() /2;
@@ -387,14 +390,14 @@ class circular_vector {
     // Index of the end of the %circular_vector in array_
     size_type end_idx_;
     // Defined Memory Allocator
-    allocator_type alloc_;
+    _Alloc alloc_;
     // The Data Storage Array
     value_type * array_;
 
     // HELPER FUNCTIONS:
     // @brief  Increments the specified index and changes size appropriately
     // @param  index  The enum representing 0 - start_idx_ or 1 - end_idx_
-    void increment(size_type index) {
+    void increment(const size_type index) {
       switch(index) {
         case kStart:
           start_idx_ = (start_idx_ + 1) % capacity();
@@ -410,7 +413,7 @@ class circular_vector {
     }
     // @brief  Decrements the specified index and changes size appropriately
     // @param  index  The enum representing 0 - start_idx_ or 1 - end_idx_
-    void decrement(size_type index) {
+    void decrement(const size_type index) {
       switch(index) {
         case kStart:
           if (start_idx_ == 0)
@@ -435,40 +438,40 @@ class circular_vector {
     // @return  Read/write reference to data
     // @warn  Calling this function with an argument @a n that is out of range
     //        causes undefined behaviour
-    reference normalize(size_type n) const {
+    reference normalize(const size_type n) const {
       return array_[(start_idx_ + n) % capacity()];
     }
 };
 
 // RELATIONAL OPERATORS:
 // a==b
-template <typename T, typename Alloc>
-bool operator==(const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator==(const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
 }
 // a!=b which is equivalent to !(a==b)
-template <typename T, typename Alloc>
-bool operator != (const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator != (const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return !(a==b);
 }
 // a<b
-template <typename T, typename Alloc>
-bool operator < (const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator < (const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 }
 // a>b
-template <typename T, typename Alloc>
-bool operator > (const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator > (const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return std::lexicographical_compare(b.begin(), b.end(), a.begin(), a.end());
 }
 // a<=b which is equivalent to !(b<a)
-template <typename T, typename Alloc>
-bool operator <= (const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator <= (const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return !(b<a);
 }
 // a>=b which is equivalent to !(a<b)
-template <typename T, typename Alloc>
-bool operator >= (const circular_vector<T, Alloc> &a, const circular_vector<T, Alloc> &b) {
+template <typename _T, typename _Alloc>
+bool operator >= (const circular_vector<_T, _Alloc> &a, const circular_vector<_T, _Alloc> &b) {
   return !(a<b);
 }
 
@@ -478,35 +481,35 @@ bool operator >= (const circular_vector<T, Alloc> &a, const circular_vector<T, A
 //   It is enough to instantiate it using %circular_vector
 //   @sample usage: circular_vector<int>::iterator it = foo.begin();
 //                  foo++... etc.
-template <typename T_noconst, typename T, typename element_type>
+template <typename _T_noconst, typename _T, typename _element_type>
 class circular_vector_iterator {
   public:
-    typedef circular_vector_iterator<T_noconst,T,element_type> self_type;
+    typedef circular_vector_iterator<_T_noconst,_T,_element_type> self_type;
 
     typedef std::random_access_iterator_tag     iterator_category;
-    typedef typename T::value_type              value_type;
-    typedef typename T::size_type               size_type;
-    typedef typename T::pointer                 pointer;
-    typedef typename T::const_pointer           const_pointer;
-    typedef typename T::reference               reference;
-    typedef typename T::const_reference         const_reference;
-    typedef typename T::difference_type         difference_type;
+    typedef typename _T::value_type              value_type;
+    typedef typename _T::size_type               size_type;
+    typedef typename _T::pointer                 pointer;
+    typedef typename _T::const_pointer           const_pointer;
+    typedef typename _T::reference               reference;
+    typedef typename _T::const_reference         const_reference;
+    typedef typename _T::difference_type         difference_type;
 
-    circular_vector_iterator(T * cbuffer, size_type index)
+    circular_vector_iterator(_T * cbuffer, size_type index)
       : carray_(cbuffer), index_(index) {};
 
     // Converting a non-const iterator to a const iterator
-    circular_vector_iterator(const circular_vector_iterator<T_noconst,
-        T_noconst, typename T_noconst::value_type> &other)
+    circular_vector_iterator(const circular_vector_iterator<_T_noconst,
+        _T_noconst, typename _T_noconst::value_type> &other)
       : carray_(other.carray_), index_(other.index_) {};
 
-    friend class circular_vector_iterator<const T, const T, const element_type>;
+    friend class circular_vector_iterator<_T, const _T, const _element_type>;
 
     // Use compiler generated copy constructor, copy assignment operator
     // and destructor
 
-    element_type &operator * ()  { return (*carray_)[index_]; };
-    element_type *operator -> () { return &(operator * ()); };
+    _element_type &operator * ()  { return (*carray_)[index_]; };
+    _element_type *operator -> () { return &(operator * ()); };
 
     self_type &operator ++ () {
       index_++;
@@ -572,7 +575,7 @@ class circular_vector_iterator {
     }
 
   private:
-    T * carray_;
+    _T * carray_;
     size_type  index_;
 };
 
