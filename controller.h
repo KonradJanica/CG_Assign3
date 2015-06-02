@@ -14,6 +14,7 @@
 #include "light_controller.h"
 #include "Skybox.h"
 #include "Water.h"
+#include "rain.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -23,7 +24,7 @@
 #include "glm/gtx/vector_angle.hpp"
 
 #ifdef __APPLE__
-#include <GLUT/glut.h>
+#include <GLUT/glut.h> 
 #else
 #include <GL/glut.h>
 #endif
@@ -63,6 +64,8 @@ class Controller {
     void AddSkybox(const GLuint &program_id);
 
     void AddWater(const GLuint &program_id);
+
+    void AddRain(GLuint program_id);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car = false);
@@ -112,6 +115,8 @@ class Controller {
     Skybox * skybox_;
     // The water object
     Water * water_;
+    // The rain object
+    Rain * rain_;
 
     bool playSound;
 

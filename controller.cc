@@ -13,7 +13,12 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
     is_key_pressed_hash_.resize(256);
     playSound = 1;
 
-  }
+}
+
+void Controller::AddRain(GLuint program_id)
+{
+  rain_ = new Rain(program_id);
+}
 
 void Controller::AddWater(const GLuint &program_id)
 {

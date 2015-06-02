@@ -41,6 +41,8 @@ class Rain {
     // anything but rain.vert and rain.frag to render this rain
     Rain(const GLuint &program_id);
 
+    void Render(Camera * camera);
+
     // Returns the VAO
     inline unsigned int rainvao() const;
 
@@ -54,9 +56,6 @@ class Rain {
 
     // Dynamic array of particles
     Particle * particles_;
-
-    // The camera object
-    Camera * camera_;
 
     // Generate the Mesh (based on functionality provided in lecture slides)
     void GenerateMesh();
@@ -86,7 +85,7 @@ class Rain {
     GLuint particle_colour_buffer_;
 
     // Array that is sent to GPU
-    GLubyte * particle_colour_buffer_data;
+    GLubyte * particle_colour_buffer_data_;
 
     // GLuint to store the shader ID
     GLuint rain_shader_; 
