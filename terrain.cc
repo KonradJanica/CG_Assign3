@@ -6,12 +6,13 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
   generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), prev_spacing_rand_((rand() % 100)*0.003f - 0.15f),
   indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
-  rotation_(0), prev_rotation_(0), z_smooth_max_(5 * length_multiplier_) {
+  rotation_(0), prev_rotation_(0), z_smooth_max_(10 * length_multiplier_) {
     // New Seed
     srand(time(NULL));
     // Setup Vars
     heights_.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
     vertices.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
+    normals.resize(x_length_ * z_length_);  // Initialize to 0 to avoid seg fault during smoothing
     next_tile_start_ = glm::vec2(-10,-10);
     prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from min_position
     // Height randomization vars
@@ -70,7 +71,7 @@ void Terrain::ProceedTiles() {
   // into circular_vector VAO buffer
   // TODO add different chances to prev_rand_
   prev_rand_ = rand() % 3;
-  z_smooth_max_ = (rand() % 3 + 5)*length_multiplier_;
+  z_smooth_max_ = (rand() % 3 + 8)*length_multiplier_;
   RandomizeGeneration();
 }
 
@@ -235,8 +236,8 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
 
     // Generate base model of terrain (X^3 i.e. cubic)
     prev_cliff_x3_rand_ += rand() % 8 - 4; //flucuation of the cliff base height
-    if (prev_cliff_x3_rand_ < 1)
-      prev_cliff_x3_rand_ = 1;
+    if (prev_cliff_x3_rand_ < 5)
+      prev_cliff_x3_rand_ = 5;
     else if (prev_cliff_x3_rand_ > 20)
       prev_cliff_x3_rand_ = 20;
     prev_water_x3_rand_ += rand() % 6 - 3; //flucuation of the water base height
@@ -327,13 +328,19 @@ void Terrain::HelperMakeHeights(const int start, const int end) {
 //   Spreads the load over 2 ticks
 //   @param bool, whether or not this is the first call
 //   @warn requires a last row member
-//   @warn AverageHeights modifies heights_ member
+//   @warn AverageVector modifies heights_ member
 void Terrain::HelperMakeSmoothHeights(const bool is_first_call) {
   if (is_first_call) {
     // EXTEND FLOOR (REMOVES LONG DISTANCE ARTEFACTS)
+    int x = 0; // last is constant
     for (int z = 0; z < z_length_; ++z) {
-      heights_.at(0 + z*x_length_) = -1000000.0f;
+      heights_.at(x + z*x_length_) = -40.0f;
     }
+    // for (int x = 1; x < 4; ++x) {
+    //   for (int z = 0; z < z_length_; ++z) {
+    //     heights_.at(x + z*x_length_) -= 20.0f;
+    //   }
+    // }
 
     // SMOOTH CONNECTIONS
     // Compare connection rows to eachother and smooth new one
@@ -343,77 +350,142 @@ void Terrain::HelperMakeSmoothHeights(const bool is_first_call) {
     }
 
     // SMOOTH WATER TERRAIN
-    AverageHeights(1, x_length_/2-4);
+    AverageVector(1, x_length_/2-4, heights_, temp_last_row_heights_);
     return;
   } 
   // SMOOTH CLIFF TERRAIN
-  AverageHeights((x_length_/2+5), x_length_-1);
-  AverageHeights((x_length_/2+5), x_length_-1);
-  // AverageHeights((x_length_/2+15), x_length_-1);
-  // AverageHeights((x_length_/2+15), x_length_-1);
-  // AverageHeights((x_length_/2+15), x_length_-1);
+  AverageVector((x_length_/2+5), x_length_-1, heights_, temp_last_row_heights_);
+  AverageVector((x_length_/2+5), x_length_-1, heights_, temp_last_row_heights_);
+  // AverageVector((x_length_/2+15), x_length_-1, heights_, temp_last_row_heights_);
+  // AverageVector((x_length_/2+15), x_length_-1, heights_, temp_last_row_heights_);
+  // AverageVector((x_length_/2+15), x_length_-1, heights_, temp_last_row_heights_);
 
 }
 
-// Averages the heights_ member to smooth the terrain
+// Averages the given member to smooth the terrain
 //   Has a range for X but runs through the entire Z plane (for splitting water 
 //   and cliff
-//   @param h, a reference to a vector which contains heightmap values and
-//             will be modified
 //   @param start, the start of the heightmap in the X plane
 //   @param end,   the end of the heightmap in the X plane
-//   @warn @a heights_ member is modified
-//   @warn excludes Z = 0 to ensure height connections don't create visible gaps
-void Terrain::AverageHeights(const int start, const int end) {
-  int z = 1;
-  for (; z < z_length_ - 2; ++z) {
+//   @param vec_t, a reference to a vector which contains heightmap values or vec3 and
+//             will be modified. Infact any vector type with + and /= element operators
+//             should work.
+//   @param vec_other_t, a reference to a vector which contains @vec_t values from the
+//                       previous tile
+//   @warn @a vec_t member is modified
+template<typename T>
+void Terrain::AverageVector(const int start, const int end, std::vector<T> &vec_t, const std::vector<T> &vec_other_t) {
+  int z = 0;
+  int x = start;
+  for (; x < end; ++x) {
+    // Get all elements around center
+    //   Orientation is from car start facing
+    T &center = vec_t.at(x + z*x_length_);
+    const T &left = vec_t.at(x+1 + z*x_length_);
+    const T &right = vec_t.at(x-1 + z*x_length_);
+    const T &bot = vec_other_t.at(x);
+    const T &top = vec_t.at(x + (z+1)*x_length_);
+    const T &top_left = vec_t.at(x+1 + (z+1)*x_length_);
+    const T &top_right = vec_t.at(x-1 + (z+1)*x_length_);
+    const T &bot_left = vec_other_t.at(x+1);
+    const T &bot_right = vec_other_t.at(x-1);
+
+    T average = (center+top+bot+left+right
+        +top_left+top_right+bot_left+bot_right);
+    average /= 9.0f;
+    center = average;  //pass by reference
+  }
+  // new scope
+  {
+    x = end;
+    // Get all elements around center
+    //   Orientation is from car start facing
+    T &center = vec_t.at(x + z*x_length_);
+    const T &left = T();
+    const T &right = vec_t.at(x-1 + z*x_length_);
+    const T &bot = vec_other_t.at(x);
+    const T &top = vec_t.at(x + (z+1)*x_length_);
+    const T &top_left = T();
+    const T &top_right = vec_t.at(x-1 + (z+1)*x_length_);
+    const T &bot_left = T();
+    const T &bot_right = vec_other_t.at(x-1);
+
+    T average = (center+top+bot+left+right
+        +top_left+top_right+bot_left+bot_right);
+    average /= 9.0f;
+    center = average;  //pass by reference
+  }
+
+  z = 1;
+  for (; z < z_length_ - 1; ++z) {
     int x = start;
     for (; x < end; ++x) {
-      // Get all heights around center height
+      // Get all elements around center
       //   Orientation is from car start facing
-      float &center = heights_.at(x + z*x_length_);
-      float left = heights_.at(x+1 + z*x_length_);
-      float right = heights_.at(x-1 + z*x_length_);
-      float bot = heights_.at(x + (z-1)*x_length_);
-      float top = heights_.at(x + (z+1)*x_length_);
-      float top_left = heights_.at(x+1 + (z+1)*x_length_);
-      float top_right = heights_.at(x-1 + (z+1)*x_length_);
-      float bot_left = heights_.at(x+1 + (z-1)*x_length_);
-      float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+      T &center = vec_t.at(x + z*x_length_);
+      const T &left = vec_t.at(x+1 + z*x_length_);
+      const T &right = vec_t.at(x-1 + z*x_length_);
+      const T &bot = vec_t.at(x + (z-1)*x_length_);
+      const T &top = vec_t.at(x + (z+1)*x_length_);
+      const T &top_left = vec_t.at(x+1 + (z+1)*x_length_);
+      const T &top_right = vec_t.at(x-1 + (z+1)*x_length_);
+      const T &bot_left = vec_t.at(x+1 + (z-1)*x_length_);
+      const T &bot_right = vec_t.at(x-1 + (z-1)*x_length_);
 
-      float average = (center+top+bot+left+right
-          +top_left+top_right+bot_left+bot_right)/9.0f;
+      T average = (center+top+bot+left+right
+          +top_left+top_right+bot_left+bot_right);
+      average /= 9.0f;
       center = average;  //pass by reference
     }
     x = end;
-    // Get all heights around center height
+    // Get all elements around center
     //   Orientation is from car start facing
-    float &center = heights_.at(x + z*x_length_);
-    float left = 0;
-    float right = heights_.at(x-1 + z*x_length_);
-    float bot = heights_.at(x + (z-1)*x_length_);
-    float top = heights_.at(x + (z+1)*x_length_);
-    float top_left = 0;
-    float top_right = heights_.at(x-1 + (z+1)*x_length_);
-    float bot_left = 0;
-    float bot_right = heights_.at(x-1 + (z-1)*x_length_);
+    T &center = vec_t.at(x + z*x_length_);
+    const T &left = T();
+    const T &right = vec_t.at(x-1 + z*x_length_);
+    const T &bot = vec_t.at(x + (z-1)*x_length_);
+    const T &top = vec_t.at(x + (z+1)*x_length_);
+    const T &top_left = T();
+    const T &top_right = vec_t.at(x-1 + (z+1)*x_length_);
+    const T &bot_left = T();
+    const T &bot_right = vec_t.at(x-1 + (z-1)*x_length_);
 
-    float average = (center+top+bot+left+right
-        +top_left+top_right+bot_left+bot_right)/9.0f;
+    T average = (center+top+bot+left+right
+        +top_left+top_right+bot_left+bot_right);
+    average /= 9.0f;
     center = average;  //pass by reference
   }
   z = z_length_-1;
-  for (int x = start; x < end; ++x) {
-    // Get all heights around center height
+  for (x = start; x < end; ++x) {
+    // Get all elements around center
     //   Orientation is from car start facing
-    float &center = heights_.at(x + z*x_length_);
-    float left = heights_.at(x+1 + z*x_length_);
-    float right = heights_.at(x-1 + z*x_length_);
-    float bot = heights_.at(x + (z-1)*x_length_);
-    float bot_left = heights_.at(x+1 + (z-1)*x_length_);
-    float bot_right = heights_.at(x-1 + (z-1)*x_length_);
-    float average = (center+bot+left+right
-        +bot_left+bot_right)/6.0f;
+    T &center = vec_t.at(x + z*x_length_);
+    const T &left = vec_t.at(x+1 + z*x_length_);
+    const T &right = vec_t.at(x-1 + z*x_length_);
+    const T &bot = vec_t.at(x + (z-1)*x_length_);
+    const T &bot_left = vec_t.at(x+1 + (z-1)*x_length_);
+    const T &bot_right = vec_t.at(x-1 + (z-1)*x_length_);
+    T average = (center+bot+left+right
+        +bot_left+bot_right);
+    average /= 6.0f;
+    center = average;  //pass by reference
+  }
+  // New scope
+  {
+    x = end;
+    // Get all elements around center
+    //   Orientation is from car start facing
+    T &center = vec_t.at(x + z*x_length_);
+    const T &left = T();
+    const T &right = vec_t.at(x-1 + z*x_length_);
+    const T &bot = vec_t.at(x + (z-1)*x_length_);
+    const T &top_left = T();
+    const T &bot_left = T();
+    const T &bot_right = vec_t.at(x-1 + (z-1)*x_length_);
+
+    T average = (center+bot+left+right
+        +top_left+bot_left+bot_right);
+    average /= 7.0f;
     center = average;  //pass by reference
   }
 }
@@ -534,6 +606,44 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
         break;
       }
   }
+
+  // Make Left side infinite
+  float const cos_rot = cos(DEG2RAD(prev_rotation_)); //optimization
+  float const sin_rot = -sin(DEG2RAD(prev_rotation_)); //optimization
+  prev_rotation_ = rotation_;
+  for (int x = 0; x < 4; ++x) {
+    for (int z = 0; z < z_length_; ++z) {
+      float &vert_x = vertices.at((x_length_-x-1)+z*x_length_).x;
+      vert_x += 40 * cos_rot;
+      float &vert_z = vertices.at((x_length_-x-1)+z*x_length_).z;
+      vert_z += 40 * sin_rot;
+    }
+  }
+  // Make Right side infinite
+  for (int x = 0; x < 4; ++x) {
+    for (int z = 0; z < z_length_; ++z) {
+      float &vert_x = vertices.at(x+z*x_length_).x;
+      vert_x -= 40 * cos_rot;
+      float &vert_z = vertices.at(x+z*x_length_).z;
+      vert_z -= 40 * sin_rot;
+    }
+  }
+  // Give left side structure - RELAX O(4N)
+  for (int x = 0; x < 4; ++x) {
+    // Try to remove first couple layers going too high
+    int z = 0;
+    // while (z <= z_smooth_max_) {
+    //   float &vert_y = vertices.at((x_length_-x-1)+z*x_length_).y;
+    //     vert_y = -20.0f;
+    //   ++z;
+    // }
+    // Randomly decrease slope
+    int r = rand() % 40 + 10;
+    for (; z < z_length_; ++z) {
+      float &vert_y = vertices.at((x_length_-x-1)+z*x_length_).y;
+      vert_y -= r;
+    }
+  }
   // SMOOTH CONNECTIONS
   // Compare connection rows to eachother and smooth new one
   std::vector<glm::vec3> translate_column_by;
@@ -561,77 +671,30 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     vert_y = temp_last_row_vertices.at(x).y;
   }
 
-  // Make Left side infinite
-  for (int z = 0; z < z_length_; ++z) {
-      float &vert_x = vertices.at((x_length_-1)+z*x_length_).x;
-      // vert_x += 1 * cos(DEG2RAD(prev_rotation_)) * vert_x;
-      float &vert_z = vertices.at((x_length_-1)+z*x_length_).z;
-      // vert_z += 1 * -sin(DEG2RAD(prev_rotation_)) * vert_z;
-      vert_x *= 2;
-      vert_z *= 2;
-  }
-  prev_rotation_ = rotation_;
+  // Smooth left side structure LOOKS BAD
+  // AverageVector(x_length_-4,x_length_-1,vertices, temp_last_row_vertices);
+
+  // Fix UV coordinates LOOKS WORSE (LOGIC ERROR)
+  // HelperFixUV(translate_column_by, position_range);
+
 }
 
 // Fixes the UV caused by a changing z_smooth_max_
-//   @warn changes UV for both terrain and road
-void Terrain::HelperFixUV() {
+//   @warn changes UV for terrain
+void Terrain::HelperFixUV(const std::vector<glm::vec3> &translated_by, const float position_range) {
   // FIX TERRAINUV COORDINATES
-  int offset;
-  // First, build the data for the vertex buffer
-  for (int y = 0; y < z_smooth_max_; y++) {
+  for (int z = 0; z < z_smooth_max_; z++) {
     for (int x = 0; x < x_length_; x++) {
-      offset = (y*x_length_)+x;
+      int offset = (z*x_length_)+x;
       float xRatio = x / (float) (x_length_ - 1);
+      float zRatio = (z / (float) (z_length_ - 1));
+      // zRatio /= (x_length_/20)*(40+x_length_/20);
+      zRatio *= 1-(translated_by.at(z).z-position_range/z_length_);
+      xRatio *= 1-(translated_by.at(x).x-position_range/x_length_);
 
-      // Build our heightmap from the top down, so that our triangles are 
-      // counter-clockwise.
-      float yRatio = (y / (float) (z_length_ - 1));
-
-      // Textures need to be more frequent in smoothing spots
-      // float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
-      float stretch_multiplier;
-      if (z_smooth_max_ == 5 * length_multiplier_) {
-        stretch_multiplier = 0.15f / length_multiplier_;
-      } else if (z_smooth_max_ == 6 * length_multiplier_) {
-        stretch_multiplier = 0.20f / length_multiplier_;
-      } else if (z_smooth_max_ == 7 * length_multiplier_) {
-        stretch_multiplier = 0.25f / length_multiplier_;
-      }
-      // float rot = cos(DEG2RAD(prev_rotation_));
-      // float x_rot = cos(DEG2RAD(prev_rotation_)) + 1.0f;
-      // float y_rot = sin(DEG2RAD(prev_rotation_)) + 1.0f;
-      if (y < z_smooth_max_)
-        texture_coordinates_uv.at(offset) = glm::vec2(
-            xRatio*float(z_length_)*0.10f,
-            yRatio*float(z_length_)*stretch_multiplier);
-    }
-  }
-  // prev_rotation_ = rotation_;
-
-  // FIX ROAD UV COORDINATES
-  // int index = (5 * length_multiplier_) * (z_length_ - z_smooth_max_ -1);
-  // for (unsigned int x = 0; x < 5 * length_multiplier_; ++x) {
-  //   for (unsigned int z = 0; z < z_smooth_max_; ++z){
-  //     // The multiplications below change stretch of the texture (ie repeats)
-  //     float stretch_multiplier = z_smooth_max_ * 0.03f / length_multiplier_;
-  //     texture_coordinates_uv_road_.at(index) = (glm::vec2(
-  //           texture_coordinates_uv.at(x + z*x_length_).x * 3.2 * stretch_multiplier,
-  //           texture_coordinates_uv.at(x + z*x_length_).y * 1));
-  //     index++;
-  //   }
-  // }
-
-  // FIX ROAD UV COORDINATES
-  // TODO optimize this using commented code above
-  //   (couldnt get above to work)
-  texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
-    for (unsigned int z = 0; z < z_length_; ++z){
-      // The multiplications below change stretch of the texture (ie repeats)
-      texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
-            texture_coordinates_uv.at(x + z*x_length_).y * 1));
+      texture_coordinates_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f,
+          zRatio*float(z_length_)*0.10f / length_multiplier_);
     }
   }
 }
@@ -670,13 +733,16 @@ void Terrain::HelperMakeIndicesAndUV() {
     for (int x = 0; x < x_length_; x++) {
       offset = (y*x_length_)+x;
       float xRatio = x / (float) (x_length_ - 1);
-
-      // Build our heightmap from the top down, so that our triangles are 
-      // counter-clockwise.
-      // float yRatio = 1.0f - (y / (float) (z_length_ - 1));
       float yRatio = (y / (float) (z_length_ - 1));
+      // Textures need to be less frequent at infinity spots
+      if (x > x_length_ - 5) {
+        yRatio /= (x_length_/20)*(40+x_length_/20);
+        xRatio /= (x_length_/20)*(40+x_length_/20);
+      } else if (x < 4) {
+        yRatio /= (x_length_/20)*(40+x_length_/20);
+        xRatio /= (x_length_/20)*(40+x_length_/20);
+      }
 
-      // Textures need to be more frequent in smoothing spots
       texture_coordinates_uv.at(offset) = glm::vec2(
           xRatio*float(z_length_)*0.10f,
           yRatio*float(z_length_)*0.10f / length_multiplier_);
@@ -687,22 +753,30 @@ void Terrain::HelperMakeIndicesAndUV() {
 // Generates the normals by doing a cross product of neighbouring vertices
 // @warn  No changes can be made to normals_ member until the Road Helpers complete
 void Terrain::HelperMakeNormals() {
-  normals.assign(x_length_*z_length_, glm::vec3());
+  // normals.assign(x_length_*z_length_, glm::vec3());
+  // Reset normals vector but save last X row to start
+  for (int i = 0, x = normals.size()-x_length_-1; 
+      x < normals.size(); ++i, ++x) {
+    normals.at(i) = normals.at(x);
+  }
+  std::fill(normals.begin()+1,normals.end(), glm::vec3()); //fill rest with zero
+  // for ( unsigned int i = z_smooth_max_*x_length_; i < indices.size()-2; i += 3 )  {
   for ( unsigned int i = 0; i < indices.size()-2; i += 3 )  {
     glm::vec3 v0 = vertices[ indices[i + 0] ];
     glm::vec3 v1 = vertices[ indices[i + 1] ];
     glm::vec3 v2 = vertices[ indices[i + 2] ];
 
     glm::vec3 normal = glm::normalize( glm::cross( v1 - v0, v2 - v0 ) );
+    // printf("norm = (%f,%f,%f)\n",normal.x,normal.y,normal.z);
 
     // Remove NaN normals
-    if (normal.x != normal.x) {
-      // printf("Overlapping vertices being crossed\n");
-    } else {
-      normals[ indices[i + 0] ] += normal;
-      normals[ indices[i + 1] ] += normal;
-      normals[ indices[i + 2] ] += normal;
-    }
+    // if (normal.x != normal.x) {
+    // printf("Overlapping vertices being crossed\n");
+    // } else {
+    normals[ indices[i + 0] ] += normal;
+    normals[ indices[i + 1] ] += normal;
+    normals[ indices[i + 2] ] += normal;
+    // }
   }
 
   for ( unsigned int i = 0; i < normals.size(); ++i ) {
@@ -771,14 +845,30 @@ void Terrain::HelperMakeRoadIndicesAndUV() {
   // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
   indices_road_.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
 
+  // CONSTRUCT UV COORDINATES
+  std::vector<glm::vec2> temp_uv;
+  temp_uv.assign(x_length_*z_length_, glm::vec2());
+  int offset;
+  // First, build the data for the vertex buffer
+  for (int y = 0; y < z_length_; y++) {
+    for (int x = 0; x < x_length_; x++) {
+      offset = (y*x_length_)+x;
+      float xRatio = x / (float) (x_length_ - 1);
+      float yRatio = (y / (float) (z_length_ - 1));
+
+      temp_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f * 3.2f / length_multiplier_,
+          yRatio*float(z_length_)*0.10f * 1.0f / length_multiplier_);
+    }
+  }
   // Create UV Data
   texture_coordinates_uv_road_.clear();
   for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
       // The multiplications below change stretch of the texture (ie repeats)
       texture_coordinates_uv_road_.push_back(glm::vec2(
-            texture_coordinates_uv.at(x + z*x_length_).x * 3.2 / length_multiplier_,
-            texture_coordinates_uv.at(x + z*x_length_).y * 1));
+            temp_uv.at(x + z*x_length_).x,
+            temp_uv.at(x + z*x_length_).y));
     }
   }
 

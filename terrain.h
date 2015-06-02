@@ -234,16 +234,19 @@ class Terrain {
     //   @warn requires a last row member
     //   @warn AverageHeights modifies heights_ member
     void HelperMakeSmoothHeights(const bool is_first_call);
-    // Averages the heights_ member to smooth the terrain
+    // Averages the given member to smooth the terrain
     //   Has a range for X but runs through the entire Z plane (for splitting water 
     //   and cliff
-    //   @param h, a reference to a vector which contains heightmap values and
-    //             will be modified
     //   @param start, the start of the heightmap in the X plane
     //   @param end,   the end of the heightmap in the X plane
-    //   @warn @a heights_ member is modified
-    //   @warn excludes Z = 0 to ensure height connections don't create visible gaps
-    void AverageHeights(const int start, const int end);
+    //   @param vec_t, a reference to a vector which contains heightmap values or vec3 and
+    //             will be modified. Infact any vector type with + and /= element operators
+    //             should work.
+    //   @param vec_other_t, a reference to a vector which contains @vec_t values from the
+    //                       previous tile
+    //   @warn @a vec_t member is modified
+    template<typename T>
+    void AverageVector(const int start, const int end, std::vector<T> &vec_t, const std::vector<T> &vec_other_t);
     // Overloaded function to generate a square height map on the X/Z plane. Different
     // road_type parameters can be added to curve the Z coordinates and hence make turning
     // pieces.
@@ -268,8 +271,8 @@ class Terrain {
     // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
     void HelperMakeRoadVertices();
     // Fixes the UV caused by a changing z_smooth_max_
-    //   @warn changes UV for both terrain and road
-    void HelperFixUV();
+    //   @warn changes UV for terrain
+    void HelperFixUV(const std::vector<glm::vec3> &translated_by, const float position_range);
     // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
     // these in the normals_road_ vector
     // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
