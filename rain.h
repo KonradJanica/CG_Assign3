@@ -14,6 +14,7 @@
 
 #include <vector>
 #include "camera.h"
+#include <stdlib.h>
 #include <random>
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -29,9 +30,8 @@
 
 struct Particle {
   glm::vec3 pos;
-  glm::vec3 speed;
+  float speed;
   unsigned char r, g, b, a;
-  float weight;
 };
 
 class Rain {
@@ -52,8 +52,10 @@ class Rain {
     // Maximum number of particles to be rendered
     const int MAX_PARTICLES_;
 
+    // Dynamic array of particles
     Particle * particles_;
 
+    // The camera object
     Camera * camera_;
 
     // Generate the Mesh (based on functionality provided in lecture slides)
@@ -62,14 +64,29 @@ class Rain {
     // Create the VAO
     unsigned int CreateVao();
 
+    // Initialises first set of particles
+    void Init();
+
+    // Updates the position of each particles
+    void UpdatePosition();
+
     // VAO to store the rain 
     unsigned int rain_vao_;  
 
+    // VBO for single particle instance
     GLuint particle_instance_buffer_;
 
+    // VBO of positions for instances
     GLuint particle_position_buffer_;
 
+    // Array that is sent to GPU
+    GLfloat * particle_position_buffer_data_;
+
+    // VBO of colours for instances
     GLuint particle_colour_buffer_;
+
+    // Array that is sent to GPU
+    GLubyte * particle_colour_buffer_data;
 
     // GLuint to store the shader ID
     GLuint rain_shader_; 
@@ -81,12 +98,12 @@ class Rain {
 // =======================================================================//  
 
 // Return the rainVAO
-inline unsigned int rain::rainvao() const {
+inline unsigned int Rain::rainvao() const {
   return rain_vao_;
 }
 
 // Return the rain shader
-inline GLuint rain::rainshader() const {
+inline GLuint Rain::rainshader() const {
   return rain_shader_;
 }
 
