@@ -11,11 +11,6 @@
  * 
  */
 
-// #define VALS_PER_VERT 3
-// #define VALS_PER_COLOUR 4
-// #define CUBE_NUM_TRIS 12      // number of triangles in a cube (2 per face)
-// #define CUBE_NUM_VERTICES 8     // number of vertices in a cube`
-
 #include "rain.h"
 
 Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(10000), rain_shader_(program_id)
@@ -26,6 +21,13 @@ Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(10000), rain_shader_(progr
 
   rain_vao_ = CreateVao();
   Init();
+}
+
+Rain::~Rain()
+{
+  delete [] particles_;
+  delete [] particle_position_buffer_data_;
+  delete [] particle_colour_buffer_data_;
 }
 
 unsigned int Rain::CreateVao()

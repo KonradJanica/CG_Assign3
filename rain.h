@@ -44,6 +44,9 @@ class Rain {
     // anything but rain.vert and rain.frag to render this rain
     Rain(const GLuint &program_id);
 
+    // Destructor - Free memory allocated from constructor
+    ~Rain();
+
     void Render(Camera * camera, Object * car, Skybox * skybox);
     
     // Updates the position of each particles
