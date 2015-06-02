@@ -64,7 +64,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   // If we get rotation about x, water will move up and down when car pivots up and down
   // We also don't want to have the water roll so don't get z
   glm::mat4 object_rotate = glm::mat4(1.0f);
-  object_rotate = glm::rotate(object_rotate, object->rotation().y, glm::vec3(0, 1, 0));
+  object_rotate = glm::rotate(object_rotate, -object->rotation().y, glm::vec3(0, 1, 0));
 
   // Translate to reposition the origin of the water
   glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0f, 0.0f, -50.0f));

@@ -74,31 +74,10 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
   float fogFac;
   float fogZ = abs(fogCoord.z);
   float fogY = abs(fogCoord.y);
-  if (fog_mode == 0)
-  {
-    fogFac = 1.0;
-  }
-  else if(fog_mode == 1)
-  {
-    fogFac = (end - fogZ)/(end - begin);
-  }
-  else if(fog_mode == 2)
-  {
-    fogFac = exp(-density*fogZ); 
-  }
-  else if(fog_mode == 3)
-  {
-    fogFac = exp(-pow(density*fogZ, 2.0)); 
-  }
-  else if(fog_mode == 4) // N.B This is going to look pretty funky because model and view are not detached
-  {
-    // Code from http://in2gpu.com/2014/07/22/create-fog-shader/
-    float be = (10.0 - fogY) * 0.004;
-    float bi = (10.0 - fogY) * 0.001;
-    float ext = exp(-fogZ * be);
-    float insc = exp(-fogZ * bi);
-    fogFac = ext + (1 - insc);
-  }
+
+  fogFac = exp(-pow(density*fogZ, 2.0)); 
+
+
   fogFac = clamp( fogFac, 0.0, 1.0 );
   return fogFac;
 }
@@ -183,5 +162,5 @@ void main(void) {
 
 	//fragColour = litColour * texture(texMap, a_tex_coord);
 
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.01));
+  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
 }

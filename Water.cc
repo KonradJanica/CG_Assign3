@@ -69,7 +69,7 @@ Water::Water(const GLuint &program_id)
   {
     printf("Could not get uniforms for waves \n");
   }
-  glUniform1f(wavesHandle,4);
+  glUniform1f(wavesHandle,8);
 
 
   
@@ -78,7 +78,7 @@ Water::Water(const GLuint &program_id)
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 8; ++i) {
     // Still need to actually SEND the uniforms
 
     char uniformName[256];
@@ -95,7 +95,6 @@ Water::Water(const GLuint &program_id)
     glUniform1f(amplitudeHandle, amplitude);
 
     float wavelength = 8 * M_PI / (i + 1);
-    wavelength/=2;
     printf("wavelength[%d] = %f \n", i, wavelength);
     snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
     int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
@@ -103,7 +102,7 @@ Water::Water(const GLuint &program_id)
     {
       printf("couldnt get wavelength[%d]\n", i);
     }
-    glUniform1f(wavelengthHandle, wavelength/10.0);   
+    glUniform1f(wavelengthHandle, wavelength/2.0f);   
 
     float speed = 1.0f + 2*i;
     printf("speed[%d] = %f \n", i, speed);
@@ -113,7 +112,7 @@ Water::Water(const GLuint &program_id)
     {
       printf("couldnt get speed[%d]\n", i);
     }
-    glUniform1f(speedHandle, speed);
+    glUniform1f(speedHandle, speed * 5.0);
   
     float angle = distr(eng);
     printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
