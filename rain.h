@@ -17,6 +17,7 @@
 #include "camera.h"
 #include "object.h"
 #include <stdlib.h>
+#include <ctime>
 #include <random>
 #include "glm/glm.hpp"
 #include <GL/glew.h>

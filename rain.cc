@@ -28,7 +28,6 @@ Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(10000), rain_shader_(progr
 
   rain_vao_ = CreateVao();
   Init();
-  //UpdatePosition();
 }
 
 unsigned int Rain::CreateVao()
@@ -66,14 +65,14 @@ unsigned int Rain::CreateVao()
   glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES_ * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 
   return vao;
-
- 
 }
 
-// (((rand() % 100) / 100.0f) * i) / maxx
 void Rain::Init()
 {
+  // TODO shouldn't be calling srand() in rain.cc, probably somewhere in main
+  // TODO remember to remove relevant headers for srand, time etc.
   srand(time(NULL));
+
   int maxx = 50.0f;
   int maxy = 20.0f;
   int maxz = 50.0f;
@@ -86,10 +85,6 @@ void Rain::Init()
     float green = (rand() % 77 + 17) / 255.0f;
     float blue = (rand() % 176 + 70) / 255.0f;
     particles_[i].colour = glm::vec4(red, green, blue, 1.0f);
-    // particles_[i].colour.x = 0.0f;
-    // particles_[i].colour.y = 0.0f;
-    // particles_[i].colour.z = 0.3f;
-    // particles_[i].colour.w = 1.0f;
   }
 }
 
@@ -110,8 +105,6 @@ void Rain::UpdatePosition()
       particles_[i].pos.x = 0.0f;
     }
 
-
-
     particle_position_buffer_data_[i*3 + 0] = particles_[i].pos.x;
     particle_position_buffer_data_[i*3 + 1] = particles_[i].pos.y;
     particle_position_buffer_data_[i*3 + 2] = particles_[i].pos.z;
@@ -120,11 +113,6 @@ void Rain::UpdatePosition()
     particle_colour_buffer_data_[i*4 + 1] = particles_[i].colour.y;
     particle_colour_buffer_data_[i*4 + 2] = particles_[i].colour.z;
     particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
-
-    // particle_colour_buffer_data_[i*4 + 0] = 0.0f;
-    // particle_colour_buffer_data_[i*4 + 1] = 0.0f;
-    // particle_colour_buffer_data_[i*4 + 2] = 1.0f;
-    // particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
   }
 }
 
@@ -205,22 +193,4 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
   glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, MAX_PARTICLES_);
 
   glDisable(GL_BLEND);
-
-  // glUseProgram(rain_shader_);
-
-  // int modelviewHandle = glGetUniformLocation(rain_shader_, "modelview_matrix");
-  // if (modelviewHandle == -1)
-  //   exit(1);
-
-  // // We reset the camera for this frame
-  //   glm::mat4 cameraMatrix = camera->view_matrix();
-    
-  //   cameraMatrix = glm::scale(cameraMatrix, glm::vec3(5.0f));
-    
-  // // Set VAO to the square model and draw three in different positions
-  // glBindVertexArray(rain_vao_);
-
-  
-  // glUniformMatrix4fv( modelviewHandle, 1, false, glm::value_ptr(cameraMatrix) );
-  // glDrawElements(GL_TRIANGLES, CUBE_NUM_TRIS * 3, GL_UNSIGNED_INT, 0);  // New call
 }
