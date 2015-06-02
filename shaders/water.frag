@@ -123,6 +123,19 @@ vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
   }
 }
 
+float fogFactor(vec4 fogCoord, float begin, float end, float density)
+{
+  float fogFac;
+  float fogZ = abs(fogCoord.z);
+  float fogY = abs(fogCoord.y);
+
+  fogFac = exp(-pow(density*fogZ, 2.0)); 
+  
+
+  fogFac = clamp( fogFac, 0.0, 1.0 );
+  return fogFac;
+}
+
 void main(void) {
 
   vec3 normal_mv = normalize(a_normal_mv);
@@ -147,8 +160,10 @@ void main(void) {
   //colour.a = 1.0;
 
   vec4 colour = litColour * texture(skybox, R);
-  colour.a = 0.7;
-  fragColour = colour;
+  colour.a = 0.9;
+  //fragColour = colour;
+
+  fragColour = mix(vec4(0.7,0.7,0.9,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
 
   //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
 }
