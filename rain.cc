@@ -11,12 +11,10 @@
  * 
  */
 
- #define DEG2RAD(x) ((x)*M_PI/180.0)
-
-#define VALS_PER_VERT 3
-#define VALS_PER_COLOUR 4
-#define CUBE_NUM_TRIS 12      // number of triangles in a cube (2 per face)
-#define CUBE_NUM_VERTICES 8     // number of vertices in a cube`
+// #define VALS_PER_VERT 3
+// #define VALS_PER_COLOUR 4
+// #define CUBE_NUM_TRIS 12      // number of triangles in a cube (2 per face)
+// #define CUBE_NUM_VERTICES 8     // number of vertices in a cube`
 
 #include "rain.h"
 
@@ -94,7 +92,7 @@ void Rain::UpdatePosition()
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     particles_[i].pos.y -= particles_[i].speed;
-    particles_[i].pos.x += particles_[i].speed;// * sin(DEG2RAD(60));
+    particles_[i].pos.x += particles_[i].speed;
     if(particles_[i].pos.y < -5)
     {
       particles_[i].pos.y = 30.0f - (rand() % 5);
