@@ -42,6 +42,9 @@ class Rain {
     Rain(const GLuint &program_id);
 
     void Render(Camera * camera);
+    
+    // Updates the position of each particles
+    void UpdatePosition();
 
     // Returns the VAO
     inline unsigned int rainvao() const;
@@ -66,8 +69,7 @@ class Rain {
     // Initialises first set of particles
     void Init();
 
-    // Updates the position of each particles
-    void UpdatePosition();
+
 
     // VAO to store the rain 
     unsigned int rain_vao_;  

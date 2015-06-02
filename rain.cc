@@ -26,7 +26,7 @@ Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(500), rain_shader_(program
 
   rain_vao_ = CreateVao();
   Init();
-  UpdatePosition();
+  //UpdatePosition();
 }
 
 unsigned int Rain::CreateVao()
@@ -34,10 +34,10 @@ unsigned int Rain::CreateVao()
   glUseProgram(rain_shader_);
 
   static const GLfloat vertices[] = { 
-   -10.5f, -10.5f, 10.0f,
-    10.5f, -10.5f, 10.0f,
-   -10.5f,  10.5f, 10.0f,
-    10.5f,  10.5f, 10.0f,
+   -0.1f, -0.5f, 0.0f,
+    0.1f, -0.5f, 0.0f,
+   -0.1f,  0.5f, 0.0f,
+    0.1f,  0.5f, 0.0f,
   };
 
   GLuint vao;
@@ -140,11 +140,13 @@ unsigned int Rain::CreateVao()
 
 void Rain::Init()
 {
+  srand(time(NULL));
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
-    particles_[i].pos = glm::vec3(i, 50.0f, i);
+    int rand_val = rand() % 10;
+    particles_[i].pos = glm::vec3(((rand() % 100) / 100.0f) * i, ((rand() % 100) / 100.0f) * i, ((rand() % 100) / 100.0f) * i);
     particles_[i].speed = 0.01f;
-    particles_[i].colour = glm::vec4(0.0f, 0.0f, 0.3f, 1.0f);
+    particles_[i].colour = glm::vec4((rand() % 100) / 100.0f, (rand() % 100) / 100.0f, (rand() % 100) / 100.0f, 1.0f);
     // particles_[i].colour.x = 0.0f;
     // particles_[i].colour.y = 0.0f;
     // particles_[i].colour.z = 0.3f;
@@ -158,6 +160,10 @@ void Rain::UpdatePosition()
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     particles_[i].pos.y -= particles_[i].speed;
+    if(particles_[i].pos.y < 0)
+    {
+      particles_[i].pos.y = 50.0f;
+    }
 
     particle_position_buffer_data_[i*3 + 0] = particles_[i].pos.x;
     particle_position_buffer_data_[i*3 + 1] = particles_[i].pos.y;
@@ -194,9 +200,14 @@ void Rain::Render(Camera * camera)
   GLuint colourHandle = glGetAttribLocation(rain_shader_, "colour");
 
 
-
   glm::mat4 view_matrix = camera->view_matrix();
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix));
+
+  GLuint CameraRight_worldspace_ID  = glGetUniformLocation(rain_shader_, "CameraRight_worldspace");
+  GLuint CameraUp_worldspace_ID  = glGetUniformLocation(rain_shader_, "CameraUp_worldspace");
+
+  glUniform3f(CameraRight_worldspace_ID, view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]);
+  glUniform3f(CameraUp_worldspace_ID   , view_matrix[0][1], view_matrix[1][1], view_matrix[2][1]);
 
   glBindBuffer(GL_ARRAY_BUFFER, particle_instance_buffer_);
   glEnableVertexAttribArray(initialVerticesHandle);

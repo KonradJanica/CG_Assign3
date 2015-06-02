@@ -76,8 +76,9 @@ void Controller::Draw() {
   // renderer_->RenderWater(water_,car_, camera_, skybox_);
   // // Axis
   // // TODO Toggle
-   renderer_->RenderAxis(camera_);
 
+   renderer_->RenderAxis(camera_);
+   rain_->UpdatePosition();
   rain_->Render(camera_);
 
   //car_->UpdateModelMatrix();
