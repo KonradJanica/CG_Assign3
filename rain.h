@@ -31,7 +31,7 @@
 struct Particle {
   glm::vec3 pos;
   float speed;
-  unsigned char r, g, b, a;
+  glm::vec4 colour;
 };
 
 class Rain {
@@ -85,7 +85,7 @@ class Rain {
     GLuint particle_colour_buffer_;
 
     // Array that is sent to GPU
-    GLubyte * particle_colour_buffer_data_;
+    GLfloat * particle_colour_buffer_data_;
 
     // GLuint to store the shader ID
     GLuint rain_shader_; 

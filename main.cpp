@@ -56,7 +56,7 @@ Renderer *g_renderer;
 Controller *g_controller;
 
 // Our shader program
-GLuint g_program_id[5];
+GLuint g_program_id[6];
 
 // Background controls
 enum Colours {
@@ -83,7 +83,7 @@ int g_window_y = 480*2;
 
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(75.0f, float(g_window_x / g_window_y), 0.1f, 100.0f);
-  for (unsigned int i = 0; i < 5; i++) {
+  for (unsigned int i = 0; i < 6; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
     assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
@@ -327,6 +327,10 @@ int main(int argc, char **argv) {
   if (g_program_id[4] == 0)
     return 1;
 
+  g_program_id[5] = LoadShaders("shaders/rain.vert", "shaders/rain.frag");
+  if (g_program_id[5] == 0)
+    return 1;
+
 
   g_renderer = new Renderer();
   // Construct Axis VAO
@@ -345,6 +349,9 @@ int main(int argc, char **argv) {
 
   // Setup Water
   g_controller->AddWater(g_program_id[3]);
+
+  // Setup Rain
+  g_controller->AddRain(g_program_id[5]);
 
   // Add starting models
   g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
