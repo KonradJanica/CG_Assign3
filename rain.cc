@@ -18,7 +18,7 @@
 
 #include "rain.h"
 
-Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(500), rain_shader_(program_id)
+Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(5000), rain_shader_(program_id)
 {
   particles_ = new Particle[MAX_PARTICLES_];
   particle_position_buffer_data_ = new GLfloat[MAX_PARTICLES_ * 3];
