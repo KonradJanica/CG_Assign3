@@ -58,19 +58,11 @@ Controller *g_controller;
 // Our shader program
 GLuint g_program_id[5];
 
-// Background controls
-enum Colours {
-  kBlue = 0,
-  kGrey,
-  kBlack,
-  kOldGold
-};
-int g_background = kOldGold;
-glm::vec3 g_colour = glm::vec3(0.71,0.61,0.23);
-
-
 // Fog global
 int g_fog_mode = 0;
+
+// FOV global
+float g_fov = 75;
 
 // Rendering Toggle Vars
 bool g_coord_axis = true;
@@ -82,7 +74,7 @@ int g_window_x = 640;
 int g_window_y = 480;
 
 void UpdateProjection() {
-  glm::mat4 projection = glm::perspective(75.0f, float(g_window_x / g_window_y), 0.1f, 100.0f);
+  glm::mat4 projection = glm::perspective(g_fov, float(g_window_x / g_window_y), 0.1f, 100.0f);
   for (unsigned int i = 0; i < 5; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
@@ -96,7 +88,6 @@ void UpdateProjection() {
  */
 void render() {
 
-  glClearColor(g_colour.x, g_colour.y, g_colour.z, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   g_controller->Draw();
@@ -229,27 +220,11 @@ void keyboardDown(unsigned char key, int x, int y) {
       g_camera->CycleState();
       break;
     case 'b':
-      g_background++;
-      if (g_background > 3)
-        g_background = 0;
-
-      if (g_background == kBlue) {
-        g_colour.x = 0;
-        g_colour.y = 0;
-        g_colour.z = 1;
-      } else if (g_background == kGrey) {
-        g_colour.x = 0.7;
-        g_colour.y = 0.7;
-        g_colour.z = 0.7;
-      } else if (g_background == kBlack) {
-        g_colour.x = 0;
-        g_colour.y = 0;
-        g_colour.z = 0;
-      } else if (g_background == kOldGold) {
-        g_colour.x = 0.71;
-        g_colour.y = 0.61;
-        g_colour.z = 0.23;
-      }
+      g_fov += 5.0f;
+      std::cout << "FOV = " << g_fov << std::endl;
+      if (g_fov > 120.0f)
+        g_fov = 0.0f;
+      UpdateProjection();
       glutPostRedisplay();
       break;
     case 'p':
@@ -347,9 +322,14 @@ int main(int argc, char **argv) {
   g_controller->AddWater(g_program_id[3]);
 
   // Add starting models
-  g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
-  g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj");
-  g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
+  // g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
+  // g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj", true);
+  // g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
+  g_controller->AddModel(g_program_id[2], "models/Pick-up_Truck/pickup.obj", true);
+  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/60_sign.obj");
+  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_left.obj");
+  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
+  g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
 
   // Here we set a new function callback which is the GLUT handling of keyboard input
   glutKeyboardFunc(keyboardDown);

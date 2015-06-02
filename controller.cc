@@ -35,7 +35,7 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
         glm::vec3(1.12f, 0.3f, 15.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
         // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
         glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
-        glm::vec3(0.3f,  0.3f*1.33f, 0.3f),  // Scale
+        glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
         60, false); // starting speed and debugging mode
     // This block fixes car being moved to the wrong spot initially
     UpdateCollisions();
@@ -45,9 +45,9 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
     last_frame_ = current_frame;
   } else {
     Object * object = new Model(program_id, model_filename,
-        glm::vec3(0.0f, 0.0f, 0.0f), // Translation
-        glm::vec3(0.0f, 0.0f, 0.0f), // Rotation
-        glm::vec3(0.6f, 0.6f, 0.6f)); // Scale
+        glm::vec3(1.4f, 0.0f, 50.0f), // Translation
+        glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
+        glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale
     objects_.push_back(object);
   }
 }
@@ -59,12 +59,12 @@ void Controller::Draw() {
   PositionLights();
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
-  // Spider-man
-  renderer_->Render(objects_.at(0), camera_);
-  // Aventador
-  renderer_->Render(objects_.at(1), camera_);
   // Car with physics
   renderer_->Render(car_, camera_);
+  // Road-signs
+  renderer_->Render(objects_.at(0), camera_);
+  // Aventador
+  // renderer_->Render(objects_.at(1), camera_);
   // Terrain
   renderer_->Render(terrain_, camera_);
 
