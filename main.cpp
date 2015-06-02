@@ -139,6 +139,7 @@ void idle() {
   //printf("sending time %d\n", time);
   glUniform1f(timeHandle, time+1); 
 
+
   UpdateProjection();
 
   glutPostRedisplay();

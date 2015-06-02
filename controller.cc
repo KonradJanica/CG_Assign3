@@ -62,26 +62,28 @@ void Controller::AddModel(const GLuint &program_id, const std::string &model_fil
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
-  // //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  // renderer_->RenderSkybox(skybox_, camera_);
-  // // Spider-man
-  // renderer_->Render(objects_.at(0), camera_);
-  // // Aventador
-  // renderer_->Render(objects_.at(1), camera_);
-  // // Car with physics
-  // renderer_->Render(car_, camera_);
-  // // Terrain
-  // renderer_->Render(terrain_, camera_);
+  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
+  renderer_->RenderSkybox(skybox_, camera_);
 
-  // renderer_->RenderWater(water_,car_, camera_, skybox_);
-  // // Axis
-  // // TODO Toggle
+  
+  // Spider-man
+  renderer_->Render(objects_.at(0), camera_);
+  // Aventador
+  renderer_->Render(objects_.at(1), camera_);
+  // Car with physics
+  renderer_->Render(car_, camera_);
+  // Terrain
+  renderer_->Render(terrain_, camera_);
+
+  renderer_->RenderWater(water_,car_, camera_, skybox_);
+  // Axis
+  // TODO Toggle
 
    renderer_->RenderAxis(camera_);
-   rain_->UpdatePosition();
-  rain_->Render(camera_);
+   rain_->Render(camera_, car_);
+  
 
-  //car_->UpdateModelMatrix();
+  car_->UpdateModelMatrix();
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties
@@ -150,6 +152,7 @@ void Controller::EnableTerrain(const GLuint &program_id) {
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
   // calculate delta time
+  rain_->UpdatePosition();
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
@@ -197,6 +200,8 @@ void Controller::UpdateCamera() {
   camera_->UpdateCarTick(car_);
   // Update camera lookAt
   camera_->UpdateCamera();
+
+
 }
 
 // The animation played when the car falls off the right (water) side

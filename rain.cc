@@ -18,7 +18,7 @@
 
 #include "rain.h"
 
-Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(5000), rain_shader_(program_id)
+Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(10000), rain_shader_(program_id)
 {
   particles_ = new Particle[MAX_PARTICLES_];
   particle_position_buffer_data_ = new GLfloat[MAX_PARTICLES_ * 3];
@@ -34,10 +34,10 @@ unsigned int Rain::CreateVao()
   glUseProgram(rain_shader_);
 
   static const GLfloat vertices[] = { 
-   -0.1f, -0.5f, 0.0f,
-    0.1f, -0.5f, 0.0f,
-   -0.1f,  0.5f, 0.0f,
-    0.1f,  0.5f, 0.0f,
+   -0.005f, -0.05f, 0.0f,
+    0.005f, -0.05f, 0.0f,
+   -0.005f,  0.05f, 0.0f,
+    0.005f,  0.05f, 0.0f,
   };
 
   GLuint vao;
@@ -65,87 +65,21 @@ unsigned int Rain::CreateVao()
 
   return vao;
 
-  // // Cube has 8 vertices at its corners
-  // float cubeVertices[ CUBE_NUM_VERTICES*VALS_PER_VERT ] = {
-  //    -1.0f, -1.0f, 1.0f ,
-  //         1.0f, -1.0f, 1.0f ,
-  //         1.0f,  1.0f, 1.0f ,
-  //        -1.0f,  1.0f, 1.0f ,
-  //        -1.0f, -1.0f, -1.0f ,
-  //         1.0f, -1.0f, -1.0f ,
-  //         1.0f,  1.0f, -1.0f ,
-  //        -1.0f,  1.0f, -1.0f  
-  // };
-
-  // // Colours for each vertex; red, green, blue and alpha
-  // float cubeColours[ CUBE_NUM_VERTICES*VALS_PER_COLOUR ] = {
-  //     1.0f, 0.0f, 0.0f, 1.0f,
-  //     0.0f, 1.0f, 0.0f, 1.0f,
-  //     0.0f, 0.0f, 1.0f, 1.0f,
-  //     1.0f, 1.0f, 0.0f, 1.0f,
-  //     0.0f, 1.0f, 1.0f, 1.0f,
-  //     1.0f, 0.0f, 1.0f, 1.0f,
-  //           1.0f, 1.0f, 1.0f, 1.0f,
-  //           0.0f, 0.0f, 0.0f, 1.0f
-  // };
-
-  //   // Each square face is made up of two triangles
-  //   unsigned int indices[CUBE_NUM_TRIS * 3] = {
-  //       0,1,2, 2,3,0,
-  //       1,5,6, 6,2,1,
-  //       5,4,7, 7,6,5,
-  //       4,0,3, 3,7,4,
-  //       3,2,6, 6,7,3,
-  //       4,5,1, 1,0,4
-  //   };
-    
-
-  // unsigned int vaoHandle;
-  // glGenVertexArrays(1, &vaoHandle);
-  // glBindVertexArray(vaoHandle);
-
-  // int vertLoc = glGetAttribLocation(rain_shader_, "position");
-  // int colourLoc = glGetAttribLocation(rain_shader_, "colour");
-
-  // // Buffers to store position, colour and index data
-  // unsigned int buffer[3];
-  // glGenBuffers(3, buffer);
-
-  // // Set vertex position
-  // glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
-  // glBufferData(GL_ARRAY_BUFFER, 
-  //                sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-  // glEnableVertexAttribArray(vertLoc);
-  // glVertexAttribPointer(vertLoc, VALS_PER_VERT, GL_FLOAT, GL_FALSE, 0, 0);
-
-  // // Colour attributes
-  // glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
-  // glBufferData(GL_ARRAY_BUFFER, 
-  //                sizeof(cubeColours), cubeColours, GL_STATIC_DRAW);
-  // glEnableVertexAttribArray(colourLoc);
-  // glVertexAttribPointer(colourLoc, VALS_PER_COLOUR, GL_FLOAT, GL_FALSE, 0, 0);
-
-  // // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
-  // // We don't attach this to a shader label, instead it controls how rendering is performed
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[2]);
-  // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-  //                sizeof(indices), indices, GL_STATIC_DRAW);   
-  
-  //   // Un-bind
-  // glBindVertexArray(0);
-  // glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
-  // return vaoHandle;
+ 
 }
 
+// (((rand() % 100) / 100.0f) * i) / maxx
 void Rain::Init()
 {
   srand(time(NULL));
+  int maxx = 50.0f;
+  int maxy = 20.0f;
+  int maxz = 50.0f;
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     int rand_val = rand() % 10;
-    particles_[i].pos = glm::vec3(((rand() % 100) / 100.0f) * i, ((rand() % 100) / 100.0f) * i, ((rand() % 100) / 100.0f) * i);
-    particles_[i].speed = 0.01f;
+    particles_[i].pos = glm::vec3(rand() % maxx, rand() % 30,rand() % maxz);
+    particles_[i].speed = 0.1f;
     particles_[i].colour = glm::vec4((rand() % 100) / 100.0f, (rand() % 100) / 100.0f, (rand() % 100) / 100.0f, 1.0f);
     // particles_[i].colour.x = 0.0f;
     // particles_[i].colour.y = 0.0f;
@@ -160,25 +94,33 @@ void Rain::UpdatePosition()
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     particles_[i].pos.y -= particles_[i].speed;
-    if(particles_[i].pos.y < 0)
+    if(particles_[i].pos.y < -5)
     {
-      particles_[i].pos.y = 50.0f;
+      particles_[i].pos.y = 30.0f - (rand() % 5);
     }
 
     particle_position_buffer_data_[i*3 + 0] = particles_[i].pos.x;
     particle_position_buffer_data_[i*3 + 1] = particles_[i].pos.y;
     particle_position_buffer_data_[i*3 + 2] = particles_[i].pos.z;
 
-    particle_colour_buffer_data_[i*4 + 0] = particles_[i].colour.x;
-    particle_colour_buffer_data_[i*4 + 1] = particles_[i].colour.y;
-    particle_colour_buffer_data_[i*4 + 2] = particles_[i].colour.z;
+    // particle_colour_buffer_data_[i*4 + 0] = particles_[i].colour.x;
+    // particle_colour_buffer_data_[i*4 + 1] = particles_[i].colour.y;
+    // particle_colour_buffer_data_[i*4 + 2] = particles_[i].colour.z;
+    // particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
+
+    particle_colour_buffer_data_[i*4 + 0] = 0.0f;
+    particle_colour_buffer_data_[i*4 + 1] = 0.0f;
+    particle_colour_buffer_data_[i*4 + 2] = 1.0f;
     particle_colour_buffer_data_[i*4 + 3] = particles_[i].colour.w;
   }
 }
 
-void Rain::Render(Camera * camera)
+void Rain::Render(Camera * camera, Object * car)
 {
   glUseProgram(rain_shader_);
+
+  glEnable(GL_BLEND);
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
   glBindVertexArray(rain_vao_);
 
@@ -201,6 +143,12 @@ void Rain::Render(Camera * camera)
 
 
   glm::mat4 view_matrix = camera->view_matrix();
+
+  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
+      glm::vec3(car->translation().x - 25.0f, 1.0f , car->translation().z - 15.0f));
+
+  view_matrix = view_matrix * object_translate;
+
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix));
 
   GLuint CameraRight_worldspace_ID  = glGetUniformLocation(rain_shader_, "CameraRight_worldspace");
@@ -228,6 +176,8 @@ void Rain::Render(Camera * camera)
 
   // Equivalent to looping over all particles (with 4 vertices)
   glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, MAX_PARTICLES_);
+
+  glDisable(GL_BLEND);
 
   // glUseProgram(rain_shader_);
 

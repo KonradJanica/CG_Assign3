@@ -14,6 +14,7 @@
 
 #include <vector>
 #include "camera.h"
+#include "object.h"
 #include <stdlib.h>
 #include <random>
 #include "glm/glm.hpp"
@@ -41,7 +42,7 @@ class Rain {
     // anything but rain.vert and rain.frag to render this rain
     Rain(const GLuint &program_id);
 
-    void Render(Camera * camera);
+    void Render(Camera * camera, Object * car);
     
     // Updates the position of each particles
     void UpdatePosition();
