@@ -13,7 +13,12 @@ Controller::Controller(const Renderer * r, const bool &debug_flag)
     is_key_pressed_hash_.resize(256);
     playSound = 1;
 
-  }
+}
+
+void Controller::AddRain(GLuint program_id)
+{
+  rain_ = new Rain(program_id);
+}
 
 void Controller::AddWater(const GLuint &program_id)
 {
@@ -59,6 +64,8 @@ void Controller::Draw() {
   PositionLights();
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
+
+  
   // Spider-man
   renderer_->Render(objects_.at(0), camera_);
   // Aventador
@@ -71,7 +78,10 @@ void Controller::Draw() {
   renderer_->RenderWater(water_,car_, camera_, skybox_);
   // Axis
   // TODO Toggle
-  renderer_->RenderAxis(camera_);
+
+   renderer_->RenderAxis(camera_);
+   rain_->Render(camera_, car_, skybox_);
+  
 
   car_->UpdateModelMatrix();
 }
@@ -144,6 +154,7 @@ void Controller::EnableTerrain(const GLuint &program_id) {
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
   // calculate delta time
+  rain_->UpdatePosition();
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
@@ -193,6 +204,8 @@ void Controller::UpdateCamera() {
   camera_->UpdateCarTick(car_);
   // Update camera lookAt
   camera_->UpdateCamera();
+
+
 }
 
 // The animation played when the car falls off the right (water) side
