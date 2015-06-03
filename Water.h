@@ -36,6 +36,9 @@ class Water {
     // anything but water.vert and water.frag to render this water
     Water(const GLuint &program_id);
 
+    // Send the delat time
+    void SendTime(float dt);
+
     // Returns the VAO
     inline unsigned int watervao() const;
 
