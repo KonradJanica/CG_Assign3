@@ -184,32 +184,30 @@ unsigned int Water::CreateVao()
 // @warn - stores to class variables
 void Water::GenerateMesh()
 {
- 
-
   // Define vertex data
-  int plane_width = 200;      // amount of columns
-  int plane_height = 200;     // amount of rows
-  int total_vertices = (plane_width + 1) * (plane_height + 1);
+  plane_width_ = 200;      // amount of columns
+  plane_height_ = 200;     // amount of rows
+  int total_vertices = (plane_width_ + 1) * (plane_height_ + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
   
   // define indices
-  int numIndPerRow = plane_width * 2 + 2;
-  int numIndDegensReq = (plane_height - 1) * 2;
-  int numIndices = numIndPerRow * plane_height + numIndDegensReq;
+  int numIndPerRow = plane_width_ * 2 + 2;
+  int numIndDegensReq = (plane_height_ - 1) * 2;
+  int numIndices = numIndPerRow * plane_height_ + numIndDegensReq;
   indices_ = new unsigned int[numIndices];
   water_num_indices_ = numIndices;
   
-  int width = plane_width+1;
-  int height = plane_height+1;
+  int width = plane_width_+1;
+  int height = plane_height_+1;
   // set up mesh points
   int idxFlag = 0;
   for (int y=0;y < height;y++){
       for (int x=0;x < width;x++){
           // The addition of (y*0.1) stretches the mesh out
-          vertices_[idxFlag++] = (float)y + (y*0.1)/height;
+          vertices_[idxFlag++] = (float)y; //+ (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
-          vertices_[idxFlag++] = (float)x + (x*0.01)/width;
+          vertices_[idxFlag++] = (float)x;// + (x*0.01)/width;
       }
   }
 

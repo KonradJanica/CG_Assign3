@@ -55,6 +55,12 @@ class Water {
     // Return the amount of Vertices 
     inline unsigned int water_vertex_count() const;
 
+    // Return the Water width
+    inline unsigned int width() const;
+
+    // Return the Water height
+    inline unsigned int height() const;
+
   private:
     
     // Generate the Mesh (based on functionality provided in lecture slides)
@@ -75,11 +81,17 @@ class Water {
     // Total number of indicies
     unsigned int water_num_indices_;
 
-    // TOtal number of vertices
+    // Total number of vertices
     unsigned int water_num_vertices_;
 
+    // Length of width
+    unsigned int plane_width_;
+
+    // Length of height
+    unsigned int plane_height_;
+
     // Vector to hold Vertex data
-    float * vertices_;   
+    float * vertices_;
 };
 
 // =======================================================================// 
@@ -104,6 +116,16 @@ inline unsigned int Water::water_vertex_count() const {
 // Return the Water shader
 inline GLuint Water::watershader() const {
   return water_shader_;
+}
+
+// Return the Water width
+inline unsigned int Water::width() const {
+  return plane_width_;
+}
+
+// Return the Water height
+inline unsigned int Water::height() const {
+  return plane_height_;
 }
 
 #endif
