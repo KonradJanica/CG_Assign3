@@ -75,8 +75,6 @@ class Rain {
     // Initialises first set of particles
     void Init();
 
-
-
     // VAO to store the rain 
     unsigned int rain_vao_;  
 
@@ -97,6 +95,11 @@ class Rain {
 
     // GLuint to store the shader ID
     GLuint rain_shader_; 
+
+    // Store the max positions we want the rain to be located in
+    int maxx_;
+    int maxy_;
+    int maxz_;
 
 };
 

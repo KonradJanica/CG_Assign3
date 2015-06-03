@@ -121,14 +121,14 @@ void idle() {
   // Physics movement tick
   g_controller->UpdateGame();
 
-  glUseProgram(g_program_id[3]);
-  int timeHandle = glGetUniformLocation(g_program_id[3], "time");
-  if(timeHandle == -1)
-  {
-    printf("Could not get handle for time var \n");
-  }
-  //printf("sending time %d\n", time);
-  glUniform1f(timeHandle, time+1); 
+  // glUseProgram(g_program_id[3]);
+  // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
+  // if(timeHandle == -1)
+  // {
+  //   printf("Could not get handle for time var \n");
+  // }
+  // //printf("sending time %d\n", time);
+  // glUniform1f(timeHandle, time+1); 
 
 
   UpdateProjection();

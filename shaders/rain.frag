@@ -6,7 +6,9 @@ out vec4 fragColour;
 
 void main()
 {
-	vec4 newcol = colour_f;
-	newcol.a = 0.99;
-  	fragColour = newcol;
+	// Set the colour as the apssed in vertex colour
+	vec4 out_colour = colour_f;
+	// Set the transparency to be low so the rain does not completely obscure view
+	out_colour.a = 0.2;
+  	fragColour = out_colour;
 }

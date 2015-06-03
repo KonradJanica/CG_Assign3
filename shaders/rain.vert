@@ -7,8 +7,8 @@ in vec3 initial_vertices;
 in vec3 displaced_vertices;
 in vec4 colour;
 
-uniform vec3 CameraRight_worldspace;
-uniform vec3 CameraUp_worldspace;
+uniform vec3 cam_right;
+uniform vec3 cam_up;
 
 out vec4 colour_f;
 
@@ -16,10 +16,7 @@ void main()
 {
   colour_f = colour;
 
-  vec3 vertexPosition_worldspace = 
-		displaced_vertices
-		+ CameraRight_worldspace * initial_vertices.x
-		+ CameraUp_worldspace * initial_vertices.y;
+  vec3 vertexpos_world = displaced_vertices + cam_right * initial_vertices.x + cam_up * initial_vertices.y;
 
-  gl_Position = projection_matrix * modelview_matrix * vec4(vertexPosition_worldspace, 1.0);
+  gl_Position = projection_matrix * modelview_matrix * vec4(vertexpos_world, 1.0);
 }

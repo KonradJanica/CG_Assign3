@@ -133,6 +133,7 @@ void Controller::PositionLights() {
   light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  //dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
   light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
   light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);
@@ -152,11 +153,17 @@ void Controller::EnableTerrain(const GLuint &program_id) {
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
   // calculate delta time
+
+  // Update the position of the rain
   rain_->UpdatePosition();
+
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
 
+
+  // Send time for water
+  water_->SendTime(current_frame);
   terrain_->GenerationTick();
 
   // printf("mid = (%f,%f,%f)\n",left_lane_midpoint_.x,left_lane_midpoint_.y,left_lane_midpoint_.z);

@@ -92,7 +92,7 @@ class Camera {
     // Access X and Y previous positions of Mouse
     inline int prev_mouse_x() const;
     inline int prev_mouse_y() const;
-
+    
   private:
     // The viewing state of the camera
     State state_;
