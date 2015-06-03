@@ -11,6 +11,7 @@
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/vector_angle.hpp"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -168,6 +169,8 @@ class Object {
 
     // The speed of the object in the direction it is facing
     float speed_;
+    // The centripetal speed of the object (for optimizing roll)
+    float centri_speed_;
     // The default speed of the object
     const float default_speed_;
     // The centripetal velocitites of the object

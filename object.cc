@@ -7,7 +7,7 @@ Object::Object(const glm::vec3 &translation,
                float default_speed, bool debugging_on)
   : kDefaultHeight(translation.y),
   translation_(translation), rotation_(rotation), scale_(scale),
-  displacement_(0), speed_(default_speed), default_speed_(default_speed), 
+  displacement_(0), speed_(default_speed), centri_speed_(0), default_speed_(default_speed), 
   centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
@@ -127,12 +127,12 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
   }
 
   // CALCULATE CENTRE OF GRAVITY (PITCH OF CAR)
-  // float weight_front = 0.5*WEIGHT - HEIGHT/LENGTH*MASS*acceleration_combined;
   float weight_rear = 0.5*WEIGHT + HEIGHT/LENGTH*MASS*acceleration_combined;
   float pitch = WEIGHT/2 - weight_rear;
   pitch /= WEIGHT/2; //normalize pitch [-1,1]
-  // printf("pitch = %f\n", pitch);
-  set_rotation(glm::vec3(pitch, rotation().y, 0));
+  if (is_debugging_)
+    printf("pitch = %f\n", pitch);
+  set_rotation(glm::vec3(pitch, rotation().y, rotation().z));
 
   // CALCULATE WHEEL SPINS
   if (is_key_pressed_hash.at('w')) {
@@ -152,6 +152,7 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
     }
   }
 
+  // CALCULATE CENTRIPETAL FORCE (Add to the centri velo)
   float v = sqrt(velocity_x_*velocity_x_ + velocity_z_*velocity_z_);
   if (v < 45) {
     v = 45;
@@ -169,22 +170,25 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
   // Increase drifitng on W (oversteer)
   if (is_key_pressed_hash.at('w')) {
     a *= 3;
-  // Decrease drifinting on S (understeer)
+    // Decrease drifinting on S (understeer)
   } else if (is_key_pressed_hash.at('s')) {
     a *= -1;
   }
 
+  // APPLY CENTRIPETAL FORCE AND ROLL CAR
   float centripeta_acc_x = 0.0f;
-  float centripeta_acc_z_ = 0.0f;
+  float centripeta_acc_z = 0.0f;
   bool is_turn = false;
   if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
       const float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
+      centri_speed_ += a;
       centripeta_acc_x = centre_of_circle_vector.x * a;
-      centripeta_acc_z_ = centre_of_circle_vector.z * a;
-      set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
+      centripeta_acc_z = centre_of_circle_vector.z * a;
+      const float z_rot = centri_speed_ * delta_time / 3;
+      set_rotation(glm::vec3(rotation().x, rotation().y + rot, z_rot));
       is_turn = true;
     }
     if (is_key_pressed_hash.at('d')) {
@@ -192,9 +196,11 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
       a *= -1;
+      centri_speed_ += a;
       centripeta_acc_x = centre_of_circle_vector.x * a;
-      centripeta_acc_z_ = centre_of_circle_vector.z * a;
-      set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
+      centripeta_acc_z = centre_of_circle_vector.z * a;
+      const float z_rot = centri_speed_ * delta_time / 3;
+      set_rotation(glm::vec3(rotation().x, rotation().y - rot, z_rot));
       is_turn = true;
     }
   }
@@ -202,10 +208,14 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
   if (!is_turn) {
     // centripeta_velocity_x_ *= 124.8f * delta_time; //122.5f comes from my (Konrads) laptop .98f (98%, i.e. 2% decrease per tick)
     // centripeta_velocity_z_ *= 124.8f * delta_time;
+    centri_speed_ *= 0.9f;
+    const float z_rot = centri_speed_ * delta_time / 3;
+    set_rotation(glm::vec3(rotation().x, rotation().y, z_rot));
     centripeta_velocity_x_ *= 0.9f;
     centripeta_velocity_z_ *= 0.9f;
   }
-  // printf("dt=%f\n",delta_time);
+  if (is_debugging_)
+    printf("centri_speed_ = %f\n",centri_speed_*delta_time);
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x_ += delta_time * acceleration_x;
@@ -217,7 +227,7 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
   } else {
     speed_ = sqrt(velocity_x_ * velocity_x_ + velocity_z_ * velocity_z_);
     centripeta_velocity_x_ += delta_time * centripeta_acc_x;
-    centripeta_velocity_z_ += delta_time * centripeta_acc_z_;
+    centripeta_velocity_z_ += delta_time * centripeta_acc_z;
     velocity_x_ += centripeta_velocity_x_;
     velocity_z_ += centripeta_velocity_z_;
   }

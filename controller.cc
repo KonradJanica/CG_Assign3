@@ -62,7 +62,8 @@ void Controller::Draw() {
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
   // Car with physics
-  renderer_->Render(car_, camera_);
+  if (camera_->state() != camera_->kFirstPerson)
+    renderer_->Render(car_, camera_);
   // Road-signs
   renderer_->Render(objects_.at(0), camera_);
   // Aventador
