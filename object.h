@@ -30,7 +30,10 @@
 //  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
+    const float kDefaultHeight;
+
     // Construct with position setting parameters
+    //   The Y translation becomes kDefaultHeight
     Object(const glm::vec3 &translation,
            const glm::vec3 &rotation,
            const glm::vec3 &scale,
@@ -158,7 +161,7 @@ class Object {
 
     // glm::scale transformation
     //   The scale of the object
-    glm::vec3 scale_;
+    const glm::vec3 scale_;
 
     // The amount moved from last tick
     glm::vec3 displacement_;
@@ -167,8 +170,6 @@ class Object {
     float speed_;
     // The default speed of the object
     const float default_speed_;
-    // The speed of the object at 90 degrees towards turning center
-    float centri_speed_;
     // The centripetal velocitites of the object
     float centripeta_velocity_x_;
     float centripeta_velocity_z_;
@@ -177,7 +178,7 @@ class Object {
     float velocity_z_;
 
     // Verbose debugging - prints physics variables
-    bool is_debugging_;
+    const bool is_debugging_;
 
     // Works out the maximum speed achieveable per gear
     //   @param  the gear ratio
@@ -255,7 +256,8 @@ inline void Object::set_displacement(glm::vec3 new_displacement) {
 // Reset speed and acceleration to 0
 inline void Object::ResetPhysics() {
   speed_ = default_speed();
-  centri_speed_ = 0;
+  // centripeta_velocity_x_ = 0.0f;
+  // centripeta_velocity_z_ = 0.0f;
 }
 // Reduce speed by amount
 //   Corrects speed < 0 to 0

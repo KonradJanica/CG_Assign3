@@ -37,7 +37,7 @@ void Controller::AddSkybox(const GLuint program_id)
 void Controller::AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename,
-        glm::vec3(1.12f, 0.3f, 15.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
+        glm::vec3(1.12f, 0.55f, 35.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
         // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
         glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
         glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
@@ -160,6 +160,8 @@ void Controller::UpdateGame() {
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
+  // printf("delt = %f\n", delta_time_);
+  // delta_time_ = 20;
 
 
   // Send time for water
@@ -360,8 +362,7 @@ void Controller::CrashAnimationCliff() {
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
       // Reset car
-      // TODO constant for y translation
-      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, car_->kDefaultHeight, left_lane_midpoint_.z));
       car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
       car_->ResetPhysics();
       // Reset game state
@@ -466,8 +467,7 @@ void Controller::CrashAnimationFall() {
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
       // Reset car
-      // TODO constant for y translation
-      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, car_->kDefaultHeight, left_lane_midpoint_.z));
       car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
       car_->ResetPhysics();
       // Reset game state
@@ -617,14 +617,16 @@ void Controller::UpdateCollisions() {
   glm::vec3 direction = next_point - first_point;
   road_direction_ = glm::normalize(direction);
   road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+  
+  // BLOCK BELOW IS UNUSED BUT COULD BE USED FOR BLOCKING TURNING AROUND
   // Find angle between car dir and road dir
   //   Angle is clockwise from direction of road
-  glm::vec2 dir = glm::vec2(car_->direction().x, car_->direction().z);
+  // glm::vec2 dir = glm::vec2(car_->direction().x, car_->direction().z);
   // TODO remove top line (saved for getting facing angle not velo angle)
-  dir = glm::vec2(car_->velocity_x(), car_->velocity_z());
-  dir = glm::normalize(dir);
-  glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
-  car_angle_ = -glm::orientedAngle(dir, road_dir);
+  // dir = glm::vec2(car_->velocity_x(), car_->velocity_z());
+  // dir = glm::normalize(dir);
+  // glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+  // car_angle_ = -glm::orientedAngle(dir, road_dir);
   // printf("ang = %f\n",car_angle_);
 
   // Find collision point closest to car
