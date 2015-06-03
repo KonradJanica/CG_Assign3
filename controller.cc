@@ -37,7 +37,7 @@ void Controller::AddSkybox(const GLuint &program_id)
 void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename,
-        glm::vec3(1.12f, 0.55f, 15.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
+        glm::vec3(1.12f, 0.55f, 35.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
         // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
         glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
         glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale

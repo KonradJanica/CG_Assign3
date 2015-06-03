@@ -41,18 +41,21 @@ Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
 
     // Generate Starting Terrain
     // This is the amount of tiles that will be in the circular_vector at all times
-    // Always start with 2 straight pieces so car is on 2nd tile road
+    // Always start with 3 straight pieces so car is on 3rd tile road
     //   and so can't see first tile being popped off
     GenerateStartingTerrain(kStraight);
-
-    // Pop off first collision map which is already behind car
-    col_pop();
     GenerateStartingTerrain(kStraight);
-    for (int x = 0; x < 5; ++x) {
+    GenerateStartingTerrain(kStraight);
+
+    for (int x = 0; x < 4; ++x) {
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
       RandomizeGeneration(true);
     }
+
+    // Pop off first and second collision map which is already behind car
+    col_pop();
+    col_pop();
   }
 
 // Generates next tile and removes first one
