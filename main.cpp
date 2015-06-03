@@ -62,7 +62,7 @@ GLuint g_program_id[6];
 int g_fog_mode = 0;
 
 // FOV global
-float g_fov = 75;
+float g_fov = 75.0f;
 
 // Rendering Toggle Vars
 bool g_coord_axis = true;
@@ -75,7 +75,7 @@ int g_window_y = 480;
 
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(g_fov, float(g_window_x / g_window_y), 0.1f, 100.0f);
-  for (unsigned int i = 0; i < 5; i++) {
+  for (unsigned int i = 0; i < 6; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
     assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
