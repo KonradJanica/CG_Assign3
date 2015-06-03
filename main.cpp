@@ -101,10 +101,7 @@ void idle() {
 }
 
 void timer(int t) {
-  // Physics movement tick
-  g_controller->UpdateGame();
-  long time = glutGet(GLUT_ELAPSED_TIME);
-
+  unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter, only print FPS in terminal when it is not 60
   g_frames += 1;
   if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
@@ -129,10 +126,10 @@ void timer(int t) {
   // glUniform1f(timeHandle, time+1); 
 
 
-  UpdateProjection();
+  // UpdateProjection();
 
 
-  glutTimerFunc(12, timer, 0);
+  glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
 }
 

@@ -17,10 +17,10 @@ Object::Object(const glm::vec3 &translation,
 //   @param  the gear ratio
 //   @return  the max speed of given gear ratio
 float Object::MaxSpeedPerGear(float g_num) {
-  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
-  float WHEELRADIUS = 0.33; //metres  radius of tire
-  float WHEELROTATIONDISTANCE = 2.14; //metres
-  float MAXRPM = 4400;
+  const float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  const float WHEELRADIUS = 0.33; //metres  radius of tire
+  const float WHEELROTATIONDISTANCE = 2.14; //metres
+  const float MAXRPM = 4400;
   float MAXSPEEDCONVERT = MAXRPM/g_num/DIFFERENTIALRATIO/60*WHEELROTATIONDISTANCE*3.6;
   return MAXSPEEDCONVERT;
 };
@@ -30,37 +30,37 @@ float Object::MaxSpeedPerGear(float g_num) {
 //   @return  the maximum force per gear
 float Object::MaxEngineForcePerGear(float g_num, float max_torque) {
   // float MAXTORQUE = 475; //N.m  depending on MAXRPM
-  float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
-  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
-  float WHEELRADIUS = 0.33; //metres  radius of tire
+  const float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
+  const float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  const float WHEELRADIUS = 0.33; //metres  radius of tire
   float ENGINEFORCE = MAXTORQUE*g_num*DIFFERENTIALRATIO*TRANSMISSIONEFFICIENCY/WHEELRADIUS;
   return ENGINEFORCE;
 };
 
 // Updates the all the movement data for the object
 // @warn should be called in controller tick
-void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
+void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool> &is_key_pressed_hash) {
   // Convert delta_time to ticks per second
   //   Currently ticks per milisecond
-  delta_time /= 1000;
-  // TODO put into separate constants class
+  const float delta_time = delta_time_in / 1000;
   float TURNRATE = 100 * delta_time;
-  float MASS = 1500; //kg
   float ENGINEFORCE = 9000; //newtons (real 1st Gear value is 9000)
-  float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
-  float AIRRESSISTANCE = 0.4257;  //proportional constant
-  float FRICTION = AIRRESSISTANCE * 30;
-  float SPEEDSCALE = 10; //the conversions from real speed to game movement
-  float WEIGHT = MASS * 9.8; // m * g
-  float LENGTH = 4.8; //metres  length of car
-  float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
+  // TODO put into separate constants class
+  const float MASS = 1500; //kg
+  const float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
+  const float AIRRESSISTANCE = 0.4257;  //proportional constant
+  const float FRICTION = AIRRESSISTANCE * 30;
+  const float SPEEDSCALE = 10; //the conversions from real speed to game movement
+  const float WEIGHT = MASS * 9.8; // m * g
+  const float LENGTH = 4.8; //metres  length of car
+  const float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
 
   // GEAR RATIOS
   //   @warn dummy gear[0]
-  float GEAR_RATIOS[] = { -1, 2.66, 1.78, 1.30, 1.00, 0.74, 0.50 };
+  const float GEAR_RATIOS[] = { -1, 2.66, 1.78, 1.30, 1.00, 0.74, 0.50 };
   // Max torque per gear
   //   @warn dummy gear[0]
-  float GEAR_TORQUE[] = { -1, 4400, 2900, 2200, 1650, 1250, 700 };
+  const float GEAR_TORQUE[] = { -1, 4400, 2900, 2200, 1650, 1250, 700 };
 
   // SETUP VARS
   // Used to update camera
@@ -260,8 +260,10 @@ void Object::UpdateModelMatrix() {
 // Accessor for the direction vector
 //   @warn the roll (z rotation) is not calculated
 glm::vec3 Object::direction() const {
-  float direction_x = sin(DEG2RAD(rotation().y));
-  float direction_y = -sin(DEG2RAD(rotation().x));
-  float direction_z = cos(DEG2RAD(rotation().y));
-  return glm::vec3(direction_x, direction_y, direction_z);
+  glm::vec3 direction = glm::vec3(
+      sin(DEG2RAD(rotation().y)),  //dir.x
+      -sin(DEG2RAD(rotation().x)), //dir.y
+      cos(DEG2RAD(rotation().y))); //dir.z
+  direction = glm::normalize(direction);
+  return direction;
 }

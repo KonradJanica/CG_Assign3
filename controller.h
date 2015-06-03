@@ -164,7 +164,13 @@ class Controller {
     // @warn Pretty inefficent way of checking for collisions but it's only
     //       calculated during this state.
     void CrashAnimationFall();
-    // TODO comment
+    // The animation played when the car drives off the road on left (cliff) side
+    //   Is calculated using 1 row of vertices stored by terrain
+    //   Finds the closest vertice to car and calculates determinate, when determinate
+    //     of middle of road and car position are opposite there is a colisn
+    //   A recovery occurs when both determinates are opposite but closest dis is too far
+    // @warn This collision can fall through if delta time makes the car velocity larger
+    //       than the catch dis, may be an issue for systems with poor performance
     void CrashAnimationCliff();
 
     // The light controller
@@ -179,14 +185,16 @@ class Controller {
     // The position of the Light for lighting
     glm::vec4 light_pos_;
 
-    float delta_time_;
-    float last_frame_;
+    // FPS and Smoothing Vars
+    int frames_count_;
+    unsigned long long frames_past_;
+    GLfloat delta_time_;
 
     // Hash representing keys pressed
     std::vector<bool> is_key_pressed_hash_;
 
     // Verbose Debugging mode
-    bool is_debugging_;
+    const bool is_debugging_;
 };
 
 // Set the position of the Light
