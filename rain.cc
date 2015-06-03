@@ -122,9 +122,6 @@ void Rain::UpdatePosition()
     // Reduce x so rain appears to be sweeping across the scene
     particles_[i].pos.x += particles_[i].speed;
 
-    // Boundary cases so that the rain particles 'reset' with a smal amount of randomization
-    particles_[i].pos.x += particles_[i].speed;
-
     if(particles_[i].pos.y < -5)
     {
       particles_[i].pos.y = maxy_ - (rand() % 5);
