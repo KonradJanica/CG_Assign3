@@ -69,7 +69,7 @@ Water::Water(const GLuint program_id)
   {
     printf("Could not get uniforms for waves \n");
   }
-  glUniform1f(wavesHandle,4);
+  glUniform1f(wavesHandle,8);
 
 
   
@@ -78,7 +78,7 @@ Water::Water(const GLuint program_id)
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 8; ++i) {
     // Still need to actually SEND the uniforms
 
     char uniformName[256];
