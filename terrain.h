@@ -28,6 +28,7 @@
 
 class Terrain {
   public:
+    GLuint cliff_nrm_texture_;
     // These are used for collisions and it's helper functions
     typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
     typedef std::vector<boundary_pair> colisn_vec;
@@ -302,7 +303,7 @@ class Terrain {
     unsigned int CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
-    GLuint LoadTexture(const std::string &filename);
+    GLuint LoadTexture(const std::string &filename, int num);
 
     // Verbose Debugging mode
     bool is_debugging_;

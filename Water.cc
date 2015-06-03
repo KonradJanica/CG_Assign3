@@ -92,7 +92,7 @@ Water::Water(const GLuint program_id)
     {
       printf("couldnt get amplitude[%d]\n", i);
     }
-    glUniform1f(amplitudeHandle, amplitude*5.0);
+    glUniform1f(amplitudeHandle, amplitude);
 
     float wavelength = 8 * M_PI / (i + 1);
     printf("wavelength[%d] = %f \n", i, wavelength);
@@ -102,7 +102,7 @@ Water::Water(const GLuint program_id)
     {
       printf("couldnt get wavelength[%d]\n", i);
     }
-    glUniform1f(wavelengthHandle, wavelength);   
+    glUniform1f(wavelengthHandle, wavelength/2.0f);   
 
     float speed = 1.0f + 2*i;
     printf("speed[%d] = %f \n", i, speed);

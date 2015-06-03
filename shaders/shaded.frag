@@ -54,6 +54,7 @@ uniform vec3 mtl_specular;
 uniform float shininess;
 
 uniform sampler2D texMap;
+uniform sampler2D normMap;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
@@ -147,6 +148,12 @@ void main(void) {
   // Cannot trust pipeline interpolation to generate normalized normals
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
+
+
+
+  //vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
+  //normal_mv  =  normal_mv + normalize(2.0*NN.xyz-1.0);
+
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 

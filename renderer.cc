@@ -359,6 +359,14 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   float mtlshininess = 0.8f; 
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
+  int texHandle2 = glGetUniformLocation(program_id, "normMap");
+  if(texHandle2 == -1)
+  {
+    printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
+  }
+  glBindTexture(GL_TEXTURE_2D, terrain->cliff_nrm_texture_);
+  glUniform1i(texHandle2, 1);
+
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
