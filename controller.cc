@@ -135,6 +135,7 @@ void Controller::PositionLights() {
   light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
   light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
   light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);

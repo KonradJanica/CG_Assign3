@@ -58,7 +58,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   // Translation to put water where car is
   // Y component is fixed at -3.0f so that it does not follow car falling down
   glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
-      glm::vec3(object->translation().x, -3.0f, object->translation().z));
+      glm::vec3(object->translation().x, -3.0f, camera->cam_pos().z));
 
   // Only get rotation about y
   // If we get rotation about x, water will move up and down when car pivots up and down

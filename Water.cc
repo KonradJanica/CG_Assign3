@@ -112,7 +112,7 @@ Water::Water(const GLuint &program_id)
     {
       printf("couldnt get speed[%d]\n", i);
     }
-    glUniform1f(speedHandle, speed * 5.0);
+    glUniform1f(speedHandle, speed * 2.0);
   
     float angle = distr(eng);
     printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
