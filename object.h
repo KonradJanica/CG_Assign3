@@ -30,7 +30,10 @@
 //  @usage Object * car = new model(program_id, "car-n.obj")
 class Object {
   public:
+    const float kDefaultHeight;
+
     // Construct with position setting parameters
+    //   The Y translation becomes kDefaultHeight
     Object(const glm::vec3 &translation,
            const glm::vec3 &rotation,
            const glm::vec3 &scale,

@@ -360,8 +360,7 @@ void Controller::CrashAnimationCliff() {
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
       // Reset car
-      // TODO constant for y translation
-      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, car_->kDefaultHeight, left_lane_midpoint_.z));
       car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
       car_->ResetPhysics();
       // Reset game state
@@ -466,8 +465,7 @@ void Controller::CrashAnimationFall() {
         || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')
         || colisn_anim_ticks_ > 2000) {
       // Reset car
-      // TODO constant for y translation
-      car_->set_translation(glm::vec3(left_lane_midpoint_.x, 0.3f, left_lane_midpoint_.z));
+      car_->set_translation(glm::vec3(left_lane_midpoint_.x, car_->kDefaultHeight, left_lane_midpoint_.z));
       car_->set_rotation(glm::vec3(0.0f,road_y_rotation_,0.0f));
       car_->ResetPhysics();
       // Reset game state

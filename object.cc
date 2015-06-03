@@ -2,11 +2,11 @@
 
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &translation,
-    const glm::vec3 &rotation,
-    const glm::vec3 &scale,
-    float default_speed,
-    bool debugging_on)
-  : translation_(translation), rotation_(rotation), scale_(scale),
+               const glm::vec3 &rotation,
+               const glm::vec3 &scale,
+               float default_speed, bool debugging_on)
+  : kDefaultHeight(translation.y),
+  translation_(translation), rotation_(rotation), scale_(scale),
   displacement_(0), speed_(default_speed), default_speed_(default_speed), centri_speed_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
