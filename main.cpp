@@ -327,7 +327,6 @@ int main(int argc, char **argv) {
   // g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj", true);
   // g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
   g_controller->AddModel(g_program_id[2], "models/Pick-up_Truck/pickup.obj", true);
-  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/60_sign.obj");
   // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_left.obj");
   // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
   g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
@@ -342,7 +341,7 @@ int main(int argc, char **argv) {
   // glutSpecialFunc(SpecialPressed); // arrow keys etc.
   // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);
-  glutTimerFunc(16,timer,0);
+  glutTimerFunc(1,timer,0);
   glutDisplayFunc(render);
   glutMainLoop();
 
