@@ -317,5 +317,9 @@ int main(int argc, char **argv) {
   glutDisplayFunc(render);
   glutMainLoop();
 
+  delete g_renderer;
+  delete g_controller;
+  delete g_camera;
+
   return 0;
 }
