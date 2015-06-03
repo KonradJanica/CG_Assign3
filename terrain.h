@@ -59,7 +59,7 @@ class Terrain {
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
     //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline std::queue<colisn_vec> collision_queue_hash() const;
+    inline circular_vector<colisn_vec> collision_queue_hash() const;
     // Accessor for the water collision checking data structure
     //   See this func implementation for details
     inline std::list<std::vector<glm::vec3> > colisn_lst_water() const;
@@ -74,7 +74,10 @@ class Terrain {
     // Generates next tile and removes first one
     //   Uses the circular_vector data structure to do this in O(1)
     //   TODO merge col_pop or something
+    //   TODO comment spread over ticks
     void ProceedTiles();
+    // Generates the next part of tile for spreading over multiple ticks
+    void GenerationTick();
 
   private:
     // CONSTANTS
@@ -87,22 +90,45 @@ class Terrain {
       kTurnLeft = 1,
       kTurnRight = 2,
     };
+    // The amount of ticks to spread height generation over
+    const signed char kHeightGenerationTicks = 50;
+    // The amount of ticks to spread VAO creation over
+    const signed char kVaoGenerationTicks = 5;
     // Width of the heightmap
-    int x_length_;
+    const unsigned char x_length_;
     // Height of the heightmap
-    int z_length_;
+    const unsigned char z_length_;
     // The multiplier for all magic numbers
     //   @warn this requires a square heightmap
     //   @warn dimensions should be multiples of 32
-    int length_multiplier_;
+    const char length_multiplier_;
+    // The maximum number of randomizing height generation iterations
+    const int kRandomIterations;
 
     // RENDER DATA
+    // The amount of ticks generated so far
+    //   Used to spread iterations over multiple ticks
+    //   Spread over $kGenerationTicks ticks
+    signed char generated_ticks_;
+    // The x and y positions of the height randomization for the (left) cliff part
+    int x_cliff_position_;
+    int z_cliff_position_;
+    // The x and y positions of the height randomization for the (right) water part
+    int x_water_position_;
+    int z_water_position_;
     // The previous random value used to calculate next turn type
+    //   Next turn rand is generated in proceedTiles
     char prev_rand_;
+    // The previous random value used to generate the cliff and water (X^3 i.e. cubic) base heights
+    //   Used to ensure there are no sudden peaks and for extra feel
+    char prev_cliff_x3_rand_;
+    char prev_water_x3_rand_;
+    // The previous random value used to generate next spacing of tile
+    float prev_spacing_rand_;
     // The amount of indices, used to render terrain efficiently
-    int indice_count_;
+    unsigned int indice_count_;
     // The amount of indices in a straight road piece, used to render efficiently
-    int road_indice_count_;
+    unsigned int road_indice_count_;
     // The shader to use to render heightmap
     //   Road uses the same shader
     GLuint terrain_program_id_;
@@ -117,7 +143,7 @@ class Terrain {
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //     pair.first = min_x, pair.second = max_x
-    std::queue<colisn_vec> collision_queue_hash_;
+    circular_vector<colisn_vec> collision_queue_hash_;
     // The collisions for the right (water) side
     std::list<std::vector<glm::vec3> > colisn_lst_water_;
     // The collisions for the left (cliff) side
@@ -170,12 +196,25 @@ class Terrain {
     // The amount of (tile relative) Z rows from the back to smooth
     //   Is needed to connect rotated rows
     unsigned int z_smooth_max_;
+    // The last row used for smoothing
+    std::vector<float> temp_last_row_heights_;
 
     // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
-    void RandomizeGeneration();
+    //   Starting terrain is generated all at once but flowing terrain generation is spread
+    //   over $kGenerationTicks ticks
+    //   @param Whether or not the terrain is the starting terrain
+    void RandomizeGeneration(const bool is_start = false);
     // Generate Terrain tile piece with road
     //   Mutates the input members, (e.g. vertices, indicies etc.) and then
     //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
+    //   @warn creates and pushes back a road VAO based on the terrain middle section
+    //   @warn pushes next road collision map into member queue
+    void GenerateStartingTerrain(RoadType road_type);
+    // Generate Terrain tile piece with road
+    //   Mutates the input members, (e.g. vertices, indicies etc.) and then
+    //   calls CreateVAO and pushes the result back to the terrain_vao_handle_
+    //   The members are mutated over $kGenerationTicks to spread load
     //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     //   @warn pushes next road collision map into member queue
@@ -184,8 +223,30 @@ class Terrain {
     // TERRAIN GENERATION HELPERS
     // Model the heights using an X^3 mathematical functions, then randomize heights
     // for all vertices in heightmap
+    //   @param  start  Index to start looping from
+    //   @param  end    Index to finish the loop
     //   @warn pretty expensive operation 10000*2 loops
-    void HelperMakeHeights();
+    //   @warn spread over a couple of loops
+    void HelperMakeHeights(int start, const int end);
+    // Smooths the terrain at the connections
+    //   Spreads the load over 2 ticks
+    //   @param bool, whether or not this is the first call
+    //   @warn requires a last row member
+    //   @warn AverageHeights modifies heights_ member
+    void HelperMakeSmoothHeights(const bool is_first_call);
+    // Averages the given member to smooth the terrain
+    //   Has a range for X but runs through the entire Z plane (for splitting water 
+    //   and cliff
+    //   @param start, the start of the heightmap in the X plane
+    //   @param end,   the end of the heightmap in the X plane
+    //   @param vec_t, a reference to a vector which contains heightmap values or vec3 and
+    //             will be modified. Infact any vector type with + and /= element operators
+    //             should work.
+    //   @param vec_other_t, a reference to a vector which contains @vec_t values from the
+    //                       previous tile
+    //   @warn @a vec_t member is modified
+    template<typename T>
+    void AverageVector(const int start, const int end, std::vector<T> &vec_t, const std::vector<T> &vec_other_t);
     // Overloaded function to generate a square height map on the X/Z plane. Different
     // road_type parameters can be added to curve the Z coordinates and hence make turning
     // pieces.
@@ -194,8 +255,8 @@ class Terrain {
     // @param  min_position    The relative start position of the heightmap over X/Z
     // @param  position_range  The spread of the heightmap over X/Z 
     // @warn  No changes can be made to vertices_ member until the Road Helpers complete
-    void HelperMakeVertices(RoadType road_type = kStraight, TileType tile_type = kTerrain,
-        float min_position = 0.0f, float position_range = 20.0f);
+    void HelperMakeVertices(const RoadType road_type = kStraight, const TileType tile_type = kTerrain,
+        const float min_position = 0.0f, const float position_range = 20.0f);
     // Generates the indices and UV texture coordinates to be used by the tile
     // @note  These don't change for the same x_length_ * z_length_ height maps
     // @warn  No changes can be made to indices or UV member until the Road Helpers complete
@@ -210,8 +271,8 @@ class Terrain {
     // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
     void HelperMakeRoadVertices();
     // Fixes the UV caused by a changing z_smooth_max_
-    //   @warn changes UV for both terrain and road
-    void HelperFixUV();
+    //   @warn changes UV for terrain
+    void HelperFixUV(const std::vector<glm::vec3> &translated_by, const float position_range);
     // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
     // these in the normals_road_ vector
     // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
@@ -291,7 +352,7 @@ inline int Terrain::road_indice_count() const {
 // A queue representing each road tile for collision checking
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline std::queue<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
+inline circular_vector<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
   return collision_queue_hash_;
 }
 // Accessor for the water collision checking data structure
@@ -309,7 +370,7 @@ inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_cliff() const {
 //   TODO remove and replace in circular buffer instead
 //   @warn this is a test function (shouldn't be inline either)
 inline void Terrain::col_pop() {
-  collision_queue_hash_.pop();
+  collision_queue_hash_.pop_front();
   colisn_lst_water_.pop_front();
   colisn_lst_cliff_.pop_front();
 }

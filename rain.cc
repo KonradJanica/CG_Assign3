@@ -29,6 +29,15 @@ Rain::Rain(const GLuint &program_id) : MAX_PARTICLES_(100000), rain_shader_(prog
   // Run initialization
   rain_vao_ = CreateVao();
   Init();
+
+}
+
+Rain::~Rain()
+{
+  delete [] particles_;
+  delete [] particle_position_buffer_data_;
+  delete [] particle_colour_buffer_data_;
+
 }
 
 unsigned int Rain::CreateVao()
@@ -69,12 +78,11 @@ unsigned int Rain::CreateVao()
   glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES_ * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 
   return vao;
-
- 
 }
 
 void Rain::Init()
 {
+
   // Random generation engines to generate uniform floats between a range 
   std::random_device rd; 
   std::mt19937 eng(rd()); 
@@ -83,6 +91,12 @@ void Rain::Init()
   std::uniform_real_distribution<> ygen(0,maxy_);
   std::uniform_real_distribution<> zgen(0,maxz_);
   // Initialize the position/speed/colour for all particles
+
+
+  int maxx = 50.0f;
+  int maxy = 20.0f;
+  int maxz = 50.0f;
+
   for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
   {
     // Randomly generate the positions of the particle
@@ -104,10 +118,13 @@ void Rain::UpdatePosition()
   {
     // Reduce y so the rain travels towards the ground
     particles_[i].pos.y -= particles_[i].speed;
+
     // Reduce x so rain appears to be sweeping across the scene
     particles_[i].pos.x += particles_[i].speed;
 
     // Boundary cases so that the rain particles 'reset' with a smal amount of randomization
+    particles_[i].pos.x += particles_[i].speed;
+
     if(particles_[i].pos.y < -5)
     {
       particles_[i].pos.y = maxy_ - (rand() % 5);
@@ -206,4 +223,6 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
 
   glDisable(GL_BLEND);
 
+
 }
+

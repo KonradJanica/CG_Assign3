@@ -17,6 +17,7 @@
 #include "camera.h"
 #include "object.h"
 #include <stdlib.h>
+#include <ctime>
 #include <random>
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -42,6 +43,9 @@ class Rain {
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but rain.vert and rain.frag to render this rain
     Rain(const GLuint &program_id);
+
+    // Destructor - Free memory allocated from constructor
+    ~Rain();
 
     void Render(Camera * camera, Object * car, Skybox * skybox);
     
