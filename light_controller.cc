@@ -1,3 +1,15 @@
+/**
+ * Computer Graphics Assignment 3 - 
+ * Mitchell Anderson, Andrew Pham, Konrad Janica
+ *
+ * light_controller.cc,  implementation of phong lighting models in openGL
+ * 
+ * This file is a simple implementation of phong lighting models in openGL
+ * including spotlights, point lights and directional lights
+ *
+ * 
+ */
+
 #include "light_controller.h"
 
 void LightController::SetDirectionalLight(GLuint program_id, const DirectionalLight& light)
@@ -14,8 +26,7 @@ void LightController::SetDirectionalLight(GLuint program_id, const DirectionalLi
       dirSpecularHandle == -1 ||
       dirDirectionHandle == -1) 
   {
-    fprintf(stderr, "Could not locate uniforms required for directional light\n");
-    exit(0);
+    fprintf(stderr,"Could not find uniforms required for a directional light In: Light_Controller - SetDirectionalLight\n This may cause unexpected behaviour in the program\n");
   }
 
 
@@ -33,8 +44,7 @@ void LightController::SetPointLights(GLuint program_id, unsigned int numLights, 
   
   int numPointLightsHandle = glGetUniformLocation(program_id, "gNumPointLights");
   if (numPointLightsHandle == -1) {
-    fprintf(stderr, "Unable to locate uniform 'gNumPointLights'\n");
-    exit(0);
+    fprintf(stderr,"Could not find uniform: 'gNumPointLights' Light_Controller - SetPointLights\n This may cause unexpected behaviour in the program\n");
   }
 
   glUniform1i(numPointLightsHandle, numLights);
@@ -69,8 +79,7 @@ void LightController::SetPointLights(GLuint program_id, unsigned int numLights, 
         pointPositionHandle == -1 || pointAttenConstantHandle == -1 || 
         pointAttenLinearHandle == -1 || pointAttenExpHandle == -1) 
     {
-      fprintf(stderr, "Could not locate uniforms required for point light\n");
-      exit(0);
+      fprintf(stderr,"Could not find uniforms required for a point light In: Light_Controller - SetPointLights\n This may cause unexpected behaviour in the program\n");
     }
 
     glUniform3fv(pointAmbientHandle, 1, glm::value_ptr(lights[i].AmbientIntensity));
@@ -91,7 +100,7 @@ void LightController::SetSpotLights(GLuint program_id, unsigned int numLights, c
 
   int numSpotLightsHandle = glGetUniformLocation(program_id, "gNumSpotLights");
   if (numSpotLightsHandle == -1) {
-    fprintf(stderr, "Unable to locate uniform 'gNumSpotLights'\n");
+     fprintf(stderr,"Could not find uniform: 'gNumSpotLights' Light_Controller - SetSpotLights\n This may cause unexpected behaviour in the program\n");
     exit(0);
   }
 
@@ -134,8 +143,7 @@ void LightController::SetSpotLights(GLuint program_id, unsigned int numLights, c
         spotAttenLinearHandle == -1 || spotAttenExpHandle == -1 ||
         spotDirectionHandle == -1 || spotCosineHandle == -1)
     {
-      fprintf(stderr, "Could not locate uniforms required for point light\n");
-      exit(0);
+      fprintf(stderr,"Could not find uniforms required for a spoy light In: Light_Controller - SetSpotLights\n This may cause unexpected behaviour in the program\n");
     }
 
     glUniform3fv(spotAmbientHandle, 1, glm::value_ptr(lights[i].AmbientIntensity));

@@ -1,3 +1,15 @@
+/**
+ * Computer Graphics Assignment 3 - 
+ * Mitchell Anderson, Andrew Pham, Konrad Janica
+ *
+ * light_controller.h, definition of phong lighting models in openGL
+ * 
+ * This file is a definition of phong lighting models in openGL
+ * including spotlights, point lights and directional lights
+ *
+ * 
+ */
+
 #ifndef ASSIGN3_LIGHT_CONTROLLER_H_
 #define ASSIGN3_LIGHT_CONTROLLER_H_
 

@@ -168,7 +168,7 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
   // Get the handle for the Model * View Matrix
   GLint mvHandle = glGetUniformLocation(rain_shader_, "modelview_matrix");
   if (mvHandle == -1) {
-    fprintf(stderr,"Could not find uniform: modelview_matrix In: Rain - Render\n");
+    fprintf(stderr,"Could not find uniform: modelview_matrix In: Rain - Render\n This may cause unexpected behaviour in the program\n");
   }
 
   GLuint initialVerticesHandle = glGetAttribLocation(rain_shader_, "initial_vertices");

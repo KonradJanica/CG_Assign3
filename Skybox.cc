@@ -48,7 +48,7 @@ unsigned int Skybox::CreateVao()
 {
 	glUseProgram(skybox_shader_);
 
-	// 
+	// Create the actual vertices that will be used for the skybox
 	float cubeVertices[] = {
         
     -1.0f,  1.0f, -1.0f,
@@ -94,8 +94,7 @@ unsigned int Skybox::CreateVao()
      1.0f, -1.0f,  1.0f
 	};
 
-
-
+  // Create a VAO
 	unsigned int vaoHandle;
 	glGenVertexArrays(1, &vaoHandle);
 	glBindVertexArray(vaoHandle);
@@ -104,7 +103,7 @@ unsigned int Skybox::CreateVao()
 
 	if(vertLoc == -1)
 	{
-		printf("Couldnt get vertex location for skybox\n");
+		  fprintf(stderr,"Could not find uniform: 'a_vertex' In: Skybox - CreateVao\n This may cause unexpected behaviour in the program\n");
 	}
 
 	// Buffers to store position, colour and index data
@@ -145,7 +144,6 @@ GLuint Skybox::loadCubeTex(std::vector<const GLchar*> faces)
   		
   		data = stbi_load(
       faces[i], /*char* filepath */
-      // "crate.jpg",
       &x, /*The address to store the width of the image*/
       &y, /*The address to store the height of the image*/
       &n  /*Number of channels in the image*/,

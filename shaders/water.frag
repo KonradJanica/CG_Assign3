@@ -1,7 +1,5 @@
 #version 130
 
-
-
 struct BaseLight
 {
   vec3 AmbientIntensity;
@@ -57,7 +55,6 @@ uniform samplerCube skybox;
 uniform vec3 cameraPos;
 
 in vec4 a_vertex_mv;
-in vec4 colour;
 in vec3 a_normal_mv;
 out vec4 fragColour;
 
@@ -81,7 +78,7 @@ vec4 phongLight(in BaseLight light, in vec3 lightDirection, in vec3 normal)
 
     if (specularFactor > 0)
     {
-      specularColour = vec4(pow(specularFactor, shininess) * light.SpecularIntensity, 1.0); 
+      specularColour = vec4(pow(specularFactor, shininess) * light.SpecularIntensity * mtl_specular, 1.0); 
     }
   }
 
@@ -139,9 +136,17 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
 void main(void) {
 
   vec3 normal_mv = normalize(a_normal_mv);
+
+  // Refractive index of water
+  // Water refractions
   float ratio = 1.00 / 1.33;
   vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
   vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
+
+  // Uncomment for water reflections
+  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
+  // vec3 R = reflect(I, normalize(normal_mv));
+  
 
   vec4 litColour = calcDirectionalLight(normal_mv);
   for (int i = 0; i < gNumPointLights; i++)
@@ -154,16 +159,11 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
- // vec4 colour = litColour * vec4(1.0, 0.0, 1.0, 1.0);
-  //fragColour = colour;
-  //colour = mix(colour,vec4(0.0, 0.0, 1.0, 1.0), 0.1);
-  //colour.a = 1.0;
-
   vec4 colour = litColour * texture(skybox, R);
+  // Set transparency
   colour.a = 0.9;
-  //fragColour = colour;
 
   fragColour = mix(vec4(0.7,0.7,0.9,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
 
-  //fragColour = vec4(1.0, 1.0, 1.0, 1.0);
+
 }

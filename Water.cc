@@ -25,102 +25,95 @@ Water::Water(const GLuint program_id)
   // Create the VAO based on the index and vertex data 
   water_vao_ = CreateVao();
 
-  // SEND WAVE PROPERTIES
+  // Handles for wave properties
   int mtlambientHandle = glGetUniformLocation(water_shader_, "mtl_ambient");
   int mtldiffuseHandle = glGetUniformLocation(water_shader_, "mtl_diffuse");
   int mtlspecularHandle = glGetUniformLocation(water_shader_, "mtl_specular");
   int shininessHandle = glGetUniformLocation(water_shader_, "shininess");
-  // if ( mtlambientHandle == -1 ||
-  //     mtldiffuseHandle == -1 ||
-  //     mtlspecularHandle == -1 ||
-  //     shininessHandle == -1) {
-  //     printf("Couldnt get handles for water material properties\n");
-  // }
+
   if( mtlambientHandle == -1)
   {
-    printf("Couldnt get ambient handles for water material properties\n");
+    fprintf(stderr,"Could not find uniform: 'mtl_ambient' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
   }
 
   if( mtldiffuseHandle == -1)
   {
-    printf("Couldnt get diff handles for water material properties\n");
+    fprintf(stderr,"Could not find uniform: 'mtl_diffuse' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
   }
 
-    if( mtlspecularHandle== -1)
+  if( mtlspecularHandle == -1)
   {
-    printf("Couldnt get specular handles for water material properties\n");
+    fprintf(stderr,"Could not find uniform: 'mtl_specular' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
   }
-  float mtlambient[3] = { 0.5, 0.5, 0.5 };  // ambient material
-  float mtldiffuse[3] = { 0.5, 0.5, 0.5};  // diffuse material
-  float mtlspecular[3] = { 0.5, 0.5, 0.5 };  // specular material
+
+  // Create and send material properties for the water
+  float mtlambient[3] = { 0.5, 0.5, 0.5 };          // ambient material
+  float mtldiffuse[3] = { 0.5, 0.5, 0.5};           // diffuse material
+  float mtlspecular[3] = { 1.0, 1.0, 1.0 };         // specular material MITCH - maybe change
   glUniform3fv(mtlambientHandle, 1, mtlambient);
   glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
   glUniform3fv(mtlspecularHandle, 1, mtlspecular);
-  float mtlshininess = 0.8f; 
+  float mtlshininess = 32.0f;
   glUniform1fv(shininessHandle, 1, &mtlshininess);
 
-  // SEND OUR WAVE DATA
-
-  // Send number of waves
+  // Determine the number of waves we want, and send over to the shader
   int wavesHandle = glGetUniformLocation(water_shader_ , "numWaves");
-
-
+  int numWaves = 15;
   if(wavesHandle == -1 )
   {
-    printf("Could not get uniforms for waves \n");
+    fprintf(stderr,"Could not find uniform: 'numWaves' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
   }
-  glUniform1f(wavesHandle,4);
-
-
-  
+  glUniform1f(wavesHandle,numWaves);  
    
+  // Generate a random device used to randomly generate waves
+  // N.B - It is not particularly important what the values for the distr are
   std::random_device rd; 
-  std::mt19937 eng(rd()); // seed the generator
-  std::uniform_real_distribution<> distr(-M_PI/3, M_PI/3);
+  std::mt19937 eng(rd()); 
+  std::uniform_real_distribution<> distr(-1, 1);
 
-  for (int i = 0; i < 4; ++i) {
-    // Still need to actually SEND the uniforms
+  for (int i = 0; i < numWaves; ++i) {
 
+    // Create a small buffer, as we have dynamic uniform names
     char uniformName[256];
     memset(uniformName, 0, sizeof(uniformName));
 
     float amplitude = 0.5f / (i + 1);
-    printf("amplitude[%d] = %f \n", i, amplitude);
+    //printf("amplitude[%d] = %f \n", i, amplitude);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
     int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
     if(amplitudeHandle == -1 )
     {
-      printf("couldnt get amplitude[%d]\n", i);
+      fprintf(stderr,"Could not find uniform: amplitude[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform1f(amplitudeHandle, amplitude*5.0);
+    glUniform1f(amplitudeHandle, amplitude);
 
     float wavelength = 8 * M_PI / (i + 1);
-    printf("wavelength[%d] = %f \n", i, wavelength);
+    //printf("wavelength[%d] = %f \n", i, wavelength);
     snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
     int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
     if(wavelengthHandle == -1)
     {
-      printf("couldnt get wavelength[%d]\n", i);
+      fprintf(stderr,"Could not find uniform: wavelength[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
     glUniform1f(wavelengthHandle, wavelength);   
 
     float speed = 1.0f + 2*i;
-    printf("speed[%d] = %f \n", i, speed);
+    //printf("speed[%d] = %f \n", i, speed);
     snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
     int speedHandle = glGetUniformLocation(water_shader_, uniformName);
     if(speedHandle == -1)
     {
-      printf("couldnt get speed[%d]\n", i);
+      fprintf(stderr,"Could not find uniform: speed[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform1f(speedHandle, speed * 5.0);
+    glUniform1f(speedHandle, speed);
   
     float angle = distr(eng);
-    printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
+    //printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
     snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
     int directionHandle = glGetUniformLocation(water_shader_, uniformName);
     if(directionHandle == -1)
     {
-      printf("couldnt get direction[%d]\n", i);
+      fprintf(stderr,"Could not find uniform: direction[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
     glUniform2f(directionHandle, cos(angle), sin(angle));
     
@@ -129,6 +122,14 @@ Water::Water(const GLuint program_id)
 
 }
 
+// Deallocate the memory we allocated from the heap
+Water::~Water()
+{
+  delete[] vertices_;
+  delete[] indices_;
+}
+
+// Send the updated time variable so the waves actually move
 void Water::SendTime(float dt)
 {
   glUseProgram(water_shader_);
@@ -136,18 +137,15 @@ void Water::SendTime(float dt)
   int timeHandle = glGetUniformLocation(water_shader_, "time");
   if(timeHandle == -1)
   {
-    printf("Could not get handle for time var \n");
+    fprintf(stderr,"Could not find uniform: 'time' In: Water - SendTime\n This may cause unexpected behaviour in the program\n");
   }
-  //printf("sending time %d\n", time);
   glUniform1f(timeHandle, dt); 
 }
 
 unsigned int Water::CreateVao()
 {
-
+  // Switch to out water shader program and create a VAO 
   glUseProgram(water_shader_);
-
-
   unsigned int vaoHandle;
   glGenVertexArrays(1, &vaoHandle);
   glBindVertexArray(vaoHandle);
@@ -156,7 +154,7 @@ unsigned int Water::CreateVao()
 
   if(vertLoc == -1)
   {
-    printf("Couldnt get vertex location for water\n");
+    fprintf(stderr,"Could not find uniform: 'a_vertex' In: Water - CreateVao\n This may cause unexpected behaviour in the program\n");
   }
 
   // Two buffer [vertex, index]
@@ -169,11 +167,11 @@ unsigned int Water::CreateVao()
   glEnableVertexAttribArray(vertLoc);
   glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    // Index
+  // Index
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*water_num_indices_, indices_, GL_STATIC_DRAW);
     
-    // Un-bind
+  // Un-bind
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
     
@@ -186,12 +184,11 @@ unsigned int Water::CreateVao()
 // @warn - stores to class variables
 void Water::GenerateMesh()
 {
-  // This Number will define how detailed the mesh will be
-  unsigned int N = 3;
+ 
 
   // Define vertex data
-  int plane_width = 200; // amount of columns
-  int plane_height = 200; // amount of rows
+  int plane_width = 200;      // amount of columns
+  int plane_height = 200;     // amount of rows
   int total_vertices = (plane_width + 1) * (plane_height + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
@@ -209,8 +206,7 @@ void Water::GenerateMesh()
   int idxFlag = 0;
   for (int y=0;y < height;y++){
       for (int x=0;x < width;x++){
-        // Fiddle with this to stretch (the y*0.1 part)
-        //vertices_[idxFlag++] = (float)y+(y*0.1)/height;
+          // The addition of (y*0.1) stretches the mesh out
           vertices_[idxFlag++] = (float)y + (y*0.1)/height;
           vertices_[idxFlag++] = 0.0f;
           vertices_[idxFlag++] = (float)x + (x*0.01)/width;
@@ -224,7 +220,6 @@ void Water::GenerateMesh()
   {
       int base = y * width;
       
-      //indices[i++] = (uint16)base;
       for(int x = 0; x < width; x++)
       {
           indices_[i++] = (base + x);

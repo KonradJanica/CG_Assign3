@@ -1,3 +1,17 @@
+/**
+ * Computer Graphics Assignment 3 - 
+ * Mitchell Anderson, Andrew Pham, Konrad Janica
+ *
+ * camera.cc, implementation of multiple camera types in openGL
+ * 
+ * This file is an implementation of different camera types in openGL
+ * including a chase cam, first person cam and a freeview cam
+ *
+ * Refer to the comments describing each function for further detail
+ *
+ * 
+ */
+
 #include "camera.h"
 
 // Default Constructor sets starting position of Camera at 0,5,-10 (Above Road)

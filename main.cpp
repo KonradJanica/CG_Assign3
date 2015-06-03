@@ -1,36 +1,26 @@
-/*********************************************************
-  Version 1.100
-
-  Code provided by Gustavo Carneiro, Anthony Dick
-  for the course 
-  COMP SCI 3014/7090 Computer Graphics
-  School of Computer Science
-  University of Adelaide
-
-  Permission is granted for anyone to copy, use, modify, or distribute this
-  program and accompanying programs and documents for any purpose, provided
-  this copyright notice is retained and prominently displayed, along with
-  a note saying that the original programs are available from the aforementioned 
-  course web page. 
-
-  The programs and documents are distributed without any warranty, express or
-  implied.  As the programs were written for research purposes only, they have
-  not been tested to the degree that would be advisable in any important
-  application.  All use of these programs is entirely at the user's own risk.
- *********************************************************/
-
 /**
- * Draws a single cube in front of the camera.
- * Toggles Projection matrix, and depth buffer.
- */
+ * Computer Graphics Assignment 3 - 
+ * Mitchell Anderson, Andrew Pham, Konrad Janica
+ *
+ * This is the 3rd (group) assignment for Computer Graphics 3014 
+ * University of Adelaide
+ * 
+ * This is a cliff driving game with procedurally generated terrain,
+ * dynamic lighting, skybox, multi-texturing, physics, sound
+ * collision detection, water, 
+
+ * main.cpp - Driver function for assignment 3
+ * 
+ * 
+**/
 
 #include <iostream>
 #include <stdlib.h>
 #include <iomanip>
 #include <stdio.h>
 #include <fstream>
-
 #include <GL/glew.h>
+
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -52,58 +42,59 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image/stb_image.h"
 
-Renderer *g_renderer;
-Controller *g_controller;
+// Renderer, Controller and Camera objects
+Renderer    *g_renderer;
+Controller  *g_controller;
+Camera      *g_camera;
 
-// Our shader program
-GLuint g_program_id[6];
-
-// Fog global
-int g_fog_mode = 0;
+// Array for the shader programs
+GLuint      g_program_id[6];
 
 // FOV global
-float g_fov = 75.0f;
+float       g_fov = 75.0f;
 
 // Rendering Toggle Vars
-bool g_coord_axis = true;
+bool        g_coord_axis = true;
+  
+// Default window properies
+int         g_window_x = 640;
+int         g_window_y = 480;
 
-// Camera object
-Camera * g_camera;
+// FPS Counter Vars
+long        g_past = 0;
+int         g_frames = 0;
 
-int g_window_x = 640;
-int g_window_y = 480;
-
+// Send the projection matrix to all shaders
+// NB - Make sure to update this loop every time we add a new shader
 void UpdateProjection() {
   glm::mat4 projection = glm::perspective(g_fov, float(g_window_x / g_window_y), 0.1f, 100.0f);
   for (unsigned int i = 0; i < 6; i++) {
     glUseProgram(g_program_id[i]);
     int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
-    assert(projHandle != -1 && "Uniform: projection_matrix was not an active uniform label - See EnableAxis in Renderer");
+    if(projHandle == -1) {
+      fprintf(stderr,"Could not find uniform: 'projection_matrix' In: Main - UpdateProjection\n This may cause unexpected behaviour in the program\n");
+    }
     glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
   }
 }
 
-/**
- * Renders a frame of the state and shaders we have set up to the window
- */
+// Render a frame
 void render() {
 
+  // Clear the buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // Call the daw function of the controller which handles drawing the objects
   g_controller->Draw();
 
+  // Unbind
   glUseProgram(0);
-
   glBindVertexArray(0);
 
+  // Swap buffers + flush
   glutSwapBuffers();
   glFlush();
-
 }
-
-// FPS Counter Vars
-long g_past = 0;
-int g_frames = 0;
 
 void idle() {
   long time = glutGet(GLUT_ELAPSED_TIME);
@@ -118,20 +109,9 @@ void idle() {
     g_past = time;
   }
 
-  // Physics movement tick
+  // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
-
-  // glUseProgram(g_program_id[3]);
-  // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
-  // if(timeHandle == -1)
-  // {
-  //   printf("Could not get handle for time var \n");
-  // }
-  // //printf("sending time %d\n", time);
-  // glUniform1f(timeHandle, time+1); 
-
-
-  UpdateProjection();
+  
 
   glutPostRedisplay();
 }
@@ -204,16 +184,7 @@ void keyboardDown(unsigned char key, int x, int y) {
     case 'l':
     case 'h':
       g_controller->KeyPressed(key);
-      break;
-    case 'f':
-      {    
-        g_fog_mode = (g_fog_mode + 1) % 5;
-        glUseProgram(g_program_id[2]);
-        int fogModeHandle = glGetUniformLocation(g_program_id[2], "fog_mode");
-        glUniform1i(fogModeHandle, g_fog_mode);
-        glutPostRedisplay(); 
-        break;
-      }    
+      break;  
     case 27: // escape key pressed
       exit(0);
       break;
@@ -246,16 +217,11 @@ void keyboardDown(unsigned char key, int x, int y) {
  */
 int main(int argc, char **argv) {
 
-  // assert(argc > 1 && "provide Arg1 of .obj file");
-
-  std::cout << "Movement: Arrow keys move forward/backward and strafe left/right\n";
-  std::cout << "Movement: Hold left mouse button to change direction\n";
-  std::cout << "Movement: Hold right mouse button to zoom\n";
-  std::cout << "Controls: 'b' key to change Background Colour\n";
-  std::cout << "Controls: 'd' key to toggle Depth Testing\n";
-  std::cout << "Controls: 'c' key to toggle Axis Coordinates\n";
-  // std::cout << "Controls: 'l' key to Cycle Lighting\n\n";
-  // std::cout << "Controls: 's' key to toggle Wireframe\n\n";
+  std::cout << "Movement: WASD keys to control the car\n";
+  std::cout << "Movement: IJKL keys to control the camera when in free mode\n";
+  std::cout << "Gameplay: H key to beep horn\n";
+  std::cout << "Movement: Hold and drag left mouse to change camera direction in free mode\n";
+  std::cout << "Controls: 'c' key to toggle Camera mode\n";
   std::cout << "Controls: 'Esc' key to Quit\n\n";
 
   // Set up GLUT window
@@ -277,12 +243,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  // GL stateglUseProgram(g_program_id[i]);
-  ;
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glFrontFace(GL_CCW);
 
+  // Load in all the shaders
   g_program_id[0] = LoadShaders("shaders/wireframe.vert", "shaders/wireframe.frag");
   if (g_program_id[0] == 0)
     return 1;
@@ -339,7 +304,9 @@ int main(int argc, char **argv) {
   // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
   g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
 
-  // Here we set a new function callback which is the GLUT handling of keyboard input
+  UpdateProjection();
+
+  // Set our GLUT window handler callback functions
   glutKeyboardFunc(keyboardDown);
   glutKeyboardUpFunc(KeyboardUp);
   glutMotionFunc(MotionFunc);

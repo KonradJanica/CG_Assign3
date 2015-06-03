@@ -15,10 +15,11 @@
 #define ASSIGN3_Water_H_
 
 #include <vector>
-#include "camera.h"
-#include <random>
-#include "glm/glm.hpp"
 #include <GL/glew.h>
+#include <random>
+
+#include "camera.h"
+#include "glm/glm.hpp"
 #include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -35,6 +36,9 @@ class Water {
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but water.vert and water.frag to render this water
     Water(const GLuint program_id);
+
+    // Destructor
+    ~Water();
 
     // Send the delat time
     void SendTime(float dt);

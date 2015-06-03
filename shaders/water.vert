@@ -7,20 +7,20 @@ uniform mat3 normal_matrix;
 in vec3 a_vertex;
 out vec4 a_vertex_mv;
 out vec3 a_normal_mv;
-out vec4 colour;
 
 
-// Variables from http://jayconrod.com/posts/34/water-simulation-in-glsl
+
+// Wave equations from http://jayconrod.com/posts/34/water-simulation-in-glsl
 
 
 const float pi = 3.14159;
 uniform float waterHeight;
 uniform float time;
 uniform float numWaves;
-uniform float amplitude[8];
-uniform float wavelength[8];
-uniform float speed[8];
-uniform vec2 direction[8];
+uniform float amplitude[20];
+uniform float wavelength[20];
+uniform float speed[20];
+uniform vec2 direction[20];
 
 
 float wave(int i, float x, float y) {
@@ -70,11 +70,7 @@ void main()
 {
 	// Z for more random waves, Y for more rolling waves
 
-	float h = a_vertex.y + 0.25 * ( waveHeight(a_vertex.x, a_vertex.z) );// + (0.5 * waveHeight(a_vertex.x, a_vertex.z));
-	
-
-	colour = vec4(0.0, 0.0, 1.0, 1.0);
-
+	float h = a_vertex.y + 0.25 * ( waveHeight(a_vertex.x, a_vertex.z) );	
 
 	// Create the MV normals, normals need to be generated in this shader
 	vec3 normals = waveNormal(a_vertex.x, a_vertex.z);

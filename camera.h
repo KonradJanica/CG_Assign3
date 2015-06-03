@@ -1,3 +1,17 @@
+/**
+ * Computer Graphics Assignment 3 - 
+ * Mitchell Anderson, Andrew Pham, Konrad Janica
+ *
+ * camera.h, definition of multiple camera types in openGL
+ * 
+ * This file is a definition of different camera types in openGL
+ * including a chase cam, first person cam and a freeview cam
+ *
+ * Refer to the comments describing each function for further detail
+ *
+ * 
+ */
+
 #ifndef ASSIGN3_CAMERA_H_
 #define ASSIGN3_CAMERA_H_
 
@@ -125,6 +139,11 @@ class Camera {
     // Right Button Status
     bool is_right_button_;
 };
+
+// =======================================================================// 
+// The following functions are simple accessor/mutator functions          //        
+// =======================================================================//  
+
 // Changes the current state of the camera to the specified state
 //   @param State, the mode and orientation state of the camera
 inline void Camera::ChangeState(State state) {
