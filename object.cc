@@ -200,8 +200,10 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   }
   // GRADUAL CENTRIPETAL SPEED RELAX
   if (!is_turn) {
-    centripeta_velocity_x_ *= 124.8f * delta_time; //122.5f comes from my (Konrads) laptop .98f (98%, i.e. 2% decrease per tick)
-    centripeta_velocity_z_ *= 124.8f * delta_time;
+    // centripeta_velocity_x_ *= 124.8f * delta_time; //122.5f comes from my (Konrads) laptop .98f (98%, i.e. 2% decrease per tick)
+    // centripeta_velocity_z_ *= 124.8f * delta_time;
+    centripeta_velocity_x_ *= 0.9f;
+    centripeta_velocity_z_ *= 0.9f;
   }
   // printf("dt=%f\n",delta_time);
 

@@ -106,6 +106,11 @@ long g_past = 0;
 int g_frames = 0;
 
 void idle() {
+}
+
+void timer(int t) {
+  // Physics movement tick
+  g_controller->UpdateGame();
   long time = glutGet(GLUT_ELAPSED_TIME);
 
   // FPS counter, only print FPS in terminal when it is not 60
@@ -118,8 +123,6 @@ void idle() {
     g_past = time;
   }
 
-  // Physics movement tick
-  g_controller->UpdateGame();
 
   // glUseProgram(g_program_id[3]);
   // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
@@ -133,6 +136,8 @@ void idle() {
 
   UpdateProjection();
 
+
+  glutTimerFunc(15, timer, 0);
   glutPostRedisplay();
 }
 
@@ -347,6 +352,7 @@ int main(int argc, char **argv) {
   // glutSpecialFunc(SpecialPressed); // arrow keys etc.
   // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);
+  glutTimerFunc(16,timer,0);
   glutDisplayFunc(render);
   glutMainLoop();
 

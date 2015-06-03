@@ -160,6 +160,8 @@ void Controller::UpdateGame() {
   GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
   delta_time_ = current_frame - last_frame_;
   last_frame_ = current_frame;
+  // printf("delt = %f\n", delta_time_);
+  // delta_time_ = 16;
 
 
   // Send time for water
