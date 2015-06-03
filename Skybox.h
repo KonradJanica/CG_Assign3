@@ -34,7 +34,7 @@ class Skybox {
     // Constructor - Take the shader ID you want the skybox to be rendered to
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but sky.vert and sky.frag to render this skybox
-    Skybox(const GLuint &program_id);
+    Skybox(const GLuint program_id);
 
     // Returns the VAO
     inline unsigned int skyboxvao() const;

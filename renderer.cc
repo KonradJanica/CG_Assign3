@@ -252,7 +252,7 @@ void Renderer::RenderAxis(const Camera * camera) const {
 //   Render() checks if the VAO is created and then draws it
 //   @param program_id, a shader program with different colours for x,y,z
 //   @warn should only be called once, duplicate calls are irrelevant
-void Renderer::EnableAxis(const GLuint &program_id) {
+void Renderer::EnableAxis(const GLuint program_id) {
   axis_program_id = program_id;
   //  Build coordinate lines
   std::vector<unsigned int> coord_indices;

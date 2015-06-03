@@ -13,7 +13,7 @@
 
 #include "Water.h"
 
-Water::Water(const GLuint &program_id)
+Water::Water(const GLuint program_id)
 {
   water_shader_ = program_id;
   glUseProgram(water_shader_);

@@ -42,7 +42,7 @@ class Rain {
     // Constructor - Take the shader ID you want the rain to be rendered to
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but rain.vert and rain.frag to render this rain
-    Rain(const GLuint &program_id);
+    Rain(const GLuint program_id);
 
     // Destructor - Free memory allocated from constructor
     ~Rain();

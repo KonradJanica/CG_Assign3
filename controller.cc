@@ -20,12 +20,12 @@ void Controller::AddRain(GLuint program_id)
   rain_ = new Rain(program_id);
 }
 
-void Controller::AddWater(const GLuint &program_id)
+void Controller::AddWater(const GLuint program_id)
 {
   water_ = new Water(program_id);
 }
 
-void Controller::AddSkybox(const GLuint &program_id)
+void Controller::AddSkybox(const GLuint program_id)
 {
   skybox_ = new Skybox(program_id);
 }
@@ -34,7 +34,7 @@ void Controller::AddSkybox(const GLuint &program_id)
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
 //   TODO split Car into it's own
-void Controller::AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car) {
+void Controller::AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car) {
   if (is_car) {
     car_ = new Model(program_id, model_filename,
         glm::vec3(1.12f, 0.3f, 15.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
@@ -143,7 +143,7 @@ void Controller::PositionLights() {
 // Creates the Terrain object for RenderTerrain()
 //   Creates Terrain VAOs
 //   @warn terrain_ on heap, must be deleted after
-void Controller::EnableTerrain(const GLuint &program_id) {
+void Controller::EnableTerrain(const GLuint program_id) {
   terrain_ = new Terrain(program_id);
   // Initialize Dummy Index for first equilavence check in collisions
   prev_colisn_pair_idx_ = 0;

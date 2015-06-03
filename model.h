@@ -38,7 +38,7 @@ class Model : public Object {
       kMax = 3,
     };  
 
-    Model(const GLuint &program_id, const std::string &model_filename, 
+    Model(const GLuint program_id, const std::string &model_filename, 
         // Below are optional variables for object (parent) construction
         const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &rotation = glm::vec3(0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1),
         float starting_speed = 0, bool debugging_on = false);

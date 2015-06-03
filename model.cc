@@ -1,6 +1,6 @@
 #include "model.h"
 
-Model::Model(const GLuint &program_id, const std::string &model_filename,
+Model::Model(const GLuint program_id, const std::string &model_filename,
     // Next line of parameters are optional variables for object (parent) construction
     const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale,
     float speed, bool debug)

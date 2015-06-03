@@ -34,7 +34,7 @@ class Water {
     // Constructor - Take the shader ID you want the Water to be rendered to
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but water.vert and water.frag to render this water
-    Water(const GLuint &program_id);
+    Water(const GLuint program_id);
 
     // Send the delat time
     void SendTime(float dt);

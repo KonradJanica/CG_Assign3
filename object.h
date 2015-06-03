@@ -190,7 +190,7 @@ class Object {
     float MaxEngineForcePerGear(float g_num, float max_torque);
 
     // Add a wireframe model from .obj file to the scene
-    void AddModel(GLuint &program_id, const std::string &model_filename);
+    void AddModel(GLuint program_id, const std::string &model_filename);
 };
 
 // ACCESSORS:

@@ -49,21 +49,21 @@ class Controller {
     // Construct with verbose debugging mode
     Controller(const Renderer * r, const bool &debug_flag = false);
 
-    void AddSkybox(const GLuint &program_id);
+    void AddSkybox(const GLuint program_id);
 
-    void AddWater(const GLuint &program_id);
+    void AddWater(const GLuint program_id);
 
     void AddRain(GLuint program_id);
 
     // Add a wireframe model from .obj file to the scene
-    void AddModel(const GLuint &program_id, const std::string &model_filename, const bool &is_car = false);
+    void AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car = false);
     // Render the scene (all member models)
     //   @warn uses the renderer object
     void Draw();
     // Creates the Terrain object for RenderTerrain()
     //   Creates Terrain VAOs
     //   @warn terrain_ on heap, must be deleted after
-    void EnableTerrain(const GLuint &program_id);
+    void EnableTerrain(const GLuint program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
     // Accessor for Camera Object

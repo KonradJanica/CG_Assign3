@@ -13,7 +13,7 @@
 
 #include "Skybox.h"
 
-Skybox::Skybox(const GLuint &program_id)
+Skybox::Skybox(const GLuint program_id)
 {
 	// Set the class shader variable
 	skybox_shader_ = program_id;

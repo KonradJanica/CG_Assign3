@@ -33,7 +33,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint &program_id, const int &width = 96, const int &height = 96);
+    Terrain(const GLuint program_id, const int &width = 96, const int &height = 96);
     
     // Accessor for the VAO
     // TODO comment
@@ -294,7 +294,7 @@ class Terrain {
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   The parameters are self explanatory.
     //   @return vao_handle, the vao handle
-    unsigned int CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+    unsigned int CreateVao(const GLuint program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param  tile_type  An enum representing the proper members to use

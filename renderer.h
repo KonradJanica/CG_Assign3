@@ -43,7 +43,7 @@ class Renderer {
     //   @warn requires VAO from EnableAxis
     void RenderAxis(const Camera * camera) const;
     // Enable x,y,z axis coordinates
-    void EnableAxis(const GLuint &program_id);
+    void EnableAxis(const GLuint program_id);
 
     void RenderWater(const Water * water, const Object * object, const Camera * camera, const Skybox * Sky) const;
 

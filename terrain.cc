@@ -2,7 +2,7 @@
 
 #include "glm/gtx/rotate_vector.hpp"
 
-Terrain::Terrain(const GLuint &program_id, const int &width, const int &height)
+Terrain::Terrain(const GLuint program_id, const int &width, const int &height)
   : x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
   generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), prev_spacing_rand_((rand() % 100)*0.003f - 0.15f),
   indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
@@ -919,7 +919,7 @@ void Terrain::HelperMakeRoadCollisionMap() {
 // Creates a new vertex array object and loads in data into a vertex attribute buffer
 //   The parameters are self explanatory.
 //   @return vao_handle, the vao handle
-unsigned int Terrain::CreateVao(const GLuint &program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+unsigned int Terrain::CreateVao(const GLuint program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
     const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices) {
 
   glUseProgram(program_id);
