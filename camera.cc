@@ -114,11 +114,11 @@ void Camera::UpdateCarTick(const Object * car) {
     case kChase:
     {
       cam_front_ = car->translation();
-      glm::vec3 direction;
-      float y = car->rotation().y;
-      direction.x = -sin(DEG2RAD(y));
-      direction.y = 0.5f;
-      direction.z = -cos(DEG2RAD(y));
+
+      glm::vec2 dir_raw = glm::vec2(-car->velocity_x(), -car->velocity_z());
+      dir_raw = glm::normalize(dir_raw);
+      glm::vec3 direction = glm::vec3(dir_raw.x, 0.5f, dir_raw.y);
+
       cam_pos_ = car->translation();
       cam_pos_ += 6.5f*direction;
       cam_pos_ += car->displacement();
@@ -127,18 +127,19 @@ void Camera::UpdateCarTick(const Object * car) {
     case kFirstPerson:
     {
       glm::vec3 direction;
-      float y = car->rotation().y;
-      direction.x = sin(DEG2RAD(y));
+      direction.x = car->direction().x;
       direction.y = 0;
-      direction.z = cos(DEG2RAD(y));
+      direction.z = car->direction().z;
       cam_front_ = direction;
       cam_pos_ = car->translation();
-      cam_pos_.y += 0.12f;
+      cam_pos_.x += 0.14f * direction.x;
+      cam_pos_.z += 0.14f * direction.z;
+      cam_pos_.y += 0.22f;
       break;
     }
     case kFreeView:
-      //do nothing
-      break;
+    //do nothing
+    break;
   }
 }
 

@@ -2,12 +2,13 @@
 
 // Construct with position setting parameters
 Object::Object(const glm::vec3 &translation,
-    const glm::vec3 &rotation,
-    const glm::vec3 &scale,
-    float default_speed,
-    bool debugging_on)
-  : translation_(translation), rotation_(rotation), scale_(scale),
-  displacement_(0), speed_(default_speed), default_speed_(default_speed), centri_speed_(0.0f),
+               const glm::vec3 &rotation,
+               const glm::vec3 &scale,
+               float default_speed, bool debugging_on)
+  : kDefaultHeight(translation.y),
+  translation_(translation), rotation_(rotation), scale_(scale),
+  displacement_(0), speed_(default_speed), default_speed_(default_speed), 
+  centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
   }
@@ -16,10 +17,10 @@ Object::Object(const glm::vec3 &translation,
 //   @param  the gear ratio
 //   @return  the max speed of given gear ratio
 float Object::MaxSpeedPerGear(float g_num) {
-  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
-  float WHEELRADIUS = 0.33; //metres  radius of tire
-  float WHEELROTATIONDISTANCE = 2.14; //metres
-  float MAXRPM = 4400;
+  const float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  const float WHEELRADIUS = 0.33; //metres  radius of tire
+  const float WHEELROTATIONDISTANCE = 2.14; //metres
+  const float MAXRPM = 4400;
   float MAXSPEEDCONVERT = MAXRPM/g_num/DIFFERENTIALRATIO/60*WHEELROTATIONDISTANCE*3.6;
   return MAXSPEEDCONVERT;
 };
@@ -29,37 +30,37 @@ float Object::MaxSpeedPerGear(float g_num) {
 //   @return  the maximum force per gear
 float Object::MaxEngineForcePerGear(float g_num, float max_torque) {
   // float MAXTORQUE = 475; //N.m  depending on MAXRPM
-  float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
-  float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
-  float WHEELRADIUS = 0.33; //metres  radius of tire
+  const float MAXTORQUE = max_torque; //N.m  depending on MAXRPM
+  const float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
+  const float WHEELRADIUS = 0.33; //metres  radius of tire
   float ENGINEFORCE = MAXTORQUE*g_num*DIFFERENTIALRATIO*TRANSMISSIONEFFICIENCY/WHEELRADIUS;
   return ENGINEFORCE;
 };
 
 // Updates the all the movement data for the object
 // @warn should be called in controller tick
-void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash) {
+void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool> &is_key_pressed_hash) {
   // Convert delta_time to ticks per second
   //   Currently ticks per milisecond
-  delta_time /= 1000;
-  // TODO put into separate constants class
+  const float delta_time = delta_time_in / 1000;
   float TURNRATE = 100 * delta_time;
-  float MASS = 1500; //kg
   float ENGINEFORCE = 9000; //newtons (real 1st Gear value is 9000)
-  float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
-  float AIRRESSISTANCE = 0.4257;  //proportional constant
-  float FRICTION = AIRRESSISTANCE * 30;
-  float SPEEDSCALE = 10; //the conversions from real speed to game movement
-  float WEIGHT = MASS * 9.8; // m * g
-  float LENGTH = 4.8; //metres  length of car
-  float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
+  // TODO put into separate constants class
+  const float MASS = 1500; //kg
+  const float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
+  const float AIRRESSISTANCE = 0.4257;  //proportional constant
+  const float FRICTION = AIRRESSISTANCE * 30;
+  const float SPEEDSCALE = 10; //the conversions from real speed to game movement
+  const float WEIGHT = MASS * 9.8; // m * g
+  const float LENGTH = 4.8; //metres  length of car
+  const float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
 
   // GEAR RATIOS
   //   @warn dummy gear[0]
-  float GEAR_RATIOS[] = { -1, 2.66, 1.78, 1.30, 1.00, 0.74, 0.50 };
+  const float GEAR_RATIOS[] = { -1, 2.66, 1.78, 1.30, 1.00, 0.74, 0.50 };
   // Max torque per gear
   //   @warn dummy gear[0]
-  float GEAR_TORQUE[] = { -1, 4400, 2900, 2200, 1650, 1250, 700 };
+  const float GEAR_TORQUE[] = { -1, 4400, 2900, 2200, 1650, 1250, 700 };
 
   // SETUP VARS
   // Used to update camera
@@ -173,38 +174,38 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
     a *= -1;
   }
 
-  float centripetal_ax = 0.0f;
-  float centripetal_az = 0.0f;
-  centripeta_velocity_x_ = 0.0f;
-  centripeta_velocity_z_ = 0.0f;
+  float centripeta_acc_x = 0.0f;
+  float centripeta_acc_z_ = 0.0f;
   bool is_turn = false;
   if (speed() > 0) {
     if (is_key_pressed_hash.at('a')) {
-      float rot = 30*TURNRATE/v;
+      const float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
-      centripetal_ax = centre_of_circle_vector.x * a;
-      centripetal_az = centre_of_circle_vector.z * a;
+      centripeta_acc_x = centre_of_circle_vector.x * a;
+      centripeta_acc_z_ = centre_of_circle_vector.z * a;
       set_rotation(glm::vec3(rotation().x, rotation().y + rot, rotation().z));
       is_turn = true;
     }
     if (is_key_pressed_hash.at('d')) {
-      float rot = 30*TURNRATE/v;
+      const float rot = 30*TURNRATE/v;
       glm::vec3 centre_of_circle_vector = glm::cross(glm::vec3(direction_x,0.0f,direction_z),glm::vec3(0.0f,1.0f,0.0f));
       centre_of_circle_vector = glm::normalize(centre_of_circle_vector);
-      centripeta_velocity_x_ = centre_of_circle_vector.x * centri_speed_;
-      centripeta_velocity_z_ = centre_of_circle_vector.z * centri_speed_;
       a *= -1;
-      centripetal_ax = centre_of_circle_vector.x * a;
-      centripetal_az = centre_of_circle_vector.z * a;
+      centripeta_acc_x = centre_of_circle_vector.x * a;
+      centripeta_acc_z_ = centre_of_circle_vector.z * a;
       set_rotation(glm::vec3(rotation().x, rotation().y - rot, rotation().z));
       is_turn = true;
     }
   }
-  if (!is_turn)
-    centri_speed_ = 0.0f;
+  // GRADUAL CENTRIPETAL SPEED RELAX
+  if (!is_turn) {
+    // centripeta_velocity_x_ *= 124.8f * delta_time; //122.5f comes from my (Konrads) laptop .98f (98%, i.e. 2% decrease per tick)
+    // centripeta_velocity_z_ *= 124.8f * delta_time;
+    centripeta_velocity_x_ *= 0.9f;
+    centripeta_velocity_z_ *= 0.9f;
+  }
+  // printf("dt=%f\n",delta_time);
 
   // CALCULATE VELOCITY => v = v+dt*a 
   velocity_x_ += delta_time * acceleration_x;
@@ -213,15 +214,10 @@ void Object::ControllerMovementTick(float delta_time, const std::vector<bool> &i
   // CALCULATE SPEED
   if (velocity_x_ * direction_x < 0 && velocity_z_ * direction_z < 0) {
     speed_ = 0.0f;
-    centri_speed_ = 0.0f;
   } else {
     speed_ = sqrt(velocity_x_ * velocity_x_ + velocity_z_ * velocity_z_);
-    centripeta_velocity_x_ += delta_time * centripetal_ax;
-    centripeta_velocity_z_ += delta_time * centripetal_az;
-    centri_speed_ += delta_time * a;
-    if (is_debugging_) {
-      printf("centripetal velocity = %f\n", centri_speed_);
-    }
+    centripeta_velocity_x_ += delta_time * centripeta_acc_x;
+    centripeta_velocity_z_ += delta_time * centripeta_acc_z_;
     velocity_x_ += centripeta_velocity_x_;
     velocity_z_ += centripeta_velocity_z_;
   }
@@ -264,8 +260,10 @@ void Object::UpdateModelMatrix() {
 // Accessor for the direction vector
 //   @warn the roll (z rotation) is not calculated
 glm::vec3 Object::direction() const {
-  float direction_x = sin(DEG2RAD(rotation().y));
-  float direction_y = -sin(DEG2RAD(rotation().x));
-  float direction_z = cos(DEG2RAD(rotation().y));
-  return glm::vec3(direction_x, direction_y, direction_z);
+  glm::vec3 direction = glm::vec3(
+      sin(DEG2RAD(rotation().y)),  //dir.x
+      -sin(DEG2RAD(rotation().x)), //dir.y
+      cos(DEG2RAD(rotation().y))); //dir.z
+  direction = glm::normalize(direction);
+  return direction;
 }

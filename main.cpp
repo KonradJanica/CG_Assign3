@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <GL/glew.h>
+// #include <GL/glx.h> //vsync glx
 
 
 #ifdef __APPLE__
@@ -97,8 +98,10 @@ void render() {
 }
 
 void idle() {
-  long time = glutGet(GLUT_ELAPSED_TIME);
+}
 
+void timer(int t) {
+  unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter, only print FPS in terminal when it is not 60
   g_frames += 1;
   if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
@@ -113,6 +116,20 @@ void idle() {
   g_controller->UpdateGame();
   
 
+  // glUseProgram(g_program_id[3]);
+  // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
+  // if(timeHandle == -1)
+  // {
+  //   printf("Could not get handle for time var \n");
+  // }
+  // //printf("sending time %d\n", time);
+  // glUniform1f(timeHandle, time+1); 
+
+
+  // UpdateProjection();
+
+
+  glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
 }
 
@@ -242,6 +259,17 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Failed to initialize GLEW\n");
     return -1;
   }
+  // glXSwapIntervalEXT(1); //linux vsync
+  // wglSwapIntervalEXT(1); //windows vsync
+  // glXSwapIntervalMESA(1); //doesnt work but should
+
+  // std::cout << glGetString(GL_EXTENSIONS) << std::endl;
+
+  // #if defined(WIN32)
+  //   wglSwapIntervalEXT(1); //1 for on
+  // #else
+  //   glXSwapIntervalSGI(1);
+  // #endif
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
@@ -314,6 +342,7 @@ int main(int argc, char **argv) {
   // glutSpecialFunc(SpecialPressed); // arrow keys etc.
   // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);
+  glutTimerFunc(16,timer,0);
   glutDisplayFunc(render);
   glutMainLoop();
 
