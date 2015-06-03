@@ -31,6 +31,7 @@
 #include <fstream>
 
 #include <GL/glew.h>
+// #include <GL/glx.h> //vsync glx
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -137,7 +138,7 @@ void timer(int t) {
   UpdateProjection();
 
 
-  glutTimerFunc(15, timer, 0);
+  glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
 }
 
@@ -281,6 +282,17 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Failed to initialize GLEW\n");
     return -1;
   }
+  // glXSwapIntervalEXT(1); //linux vsync
+  // wglSwapIntervalEXT(1); //windows vsync
+  // glXSwapIntervalMESA(1); //doesnt work but should
+
+  // std::cout << glGetString(GL_EXTENSIONS) << std::endl;
+
+  // #if defined(WIN32)
+  //   wglSwapIntervalEXT(1); //1 for on
+  // #else
+  //   glXSwapIntervalSGI(1);
+  // #endif
 
   // GL stateglUseProgram(g_program_id[i]);
   ;
