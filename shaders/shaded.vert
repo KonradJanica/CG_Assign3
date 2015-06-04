@@ -12,6 +12,11 @@ out vec4 a_vertex_mv;
 out vec3 a_normal_mv;
 out vec2 a_tex_coord;
 
+mat4 bias = mat4(0.5,0.0,0.0,0.0,
+                 0.0,0.5,0.0,0.0,
+                 0.0,0.0,0.5,0.0,
+                 0.5,0.5,0.5,1.0);
+
 void main()
 {
   // Pass pipeline the vertex position and normal in eye coordinates for light computation

@@ -8,6 +8,53 @@ Renderer::Renderer(const bool &debug_flag)
   : coord_vao_handle(0), is_debugging_(debug_flag) {
 }
 
+void Renderer::SetFrame(const GLuint &program_id)
+{
+  unsigned int windowX = 1024, windowY = 1024;
+  glUseProgram(program_id);
+
+  
+  glActiveTexture(GL_TEXTURE1);
+
+  // generate namespace for the frame buffer 
+  glGenFramebuffers(1, &frame_buffer_name_);
+  //switch to our fbo so we can bind stuff to it
+  glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
+
+  // and depthbuffer
+  glGenTextures(1, &depth_texture_);
+  // create the depth texture and attach it to the frame buffer.
+  glBindTexture(GL_TEXTURE_2D, depth_texture_);
+  
+  // Give an empty image to OpenGL ( the last "0" )
+  //TODO ANDREW MITCH KONRAD - FIX 1280x
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  // Set "renderedTexture" as our depth attachement
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture_, 0);
+  
+  // Instruct openGL that we won't bind a color texture with the currently binded FBO
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+
+  // Always check that our framebuffer is ok
+  GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  
+  if (Status != GL_FRAMEBUFFER_COMPLETE) {
+      printf("FB error, status: 0x%x\n", Status);
+      exit(-1);
+  }
+
+  // TODO put in after
+  // glBindTexture(GL_TEXTURE_2D, 0);
+  // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 //   Renders the passed in water to the scene
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
@@ -142,7 +189,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 //   @param Object * object, an object to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera * camera) const {
+void Renderer::Render(const Object * object, const Camera * camera, const bool is_frame) const {
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -179,13 +226,33 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
     }
   }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  int projection_handle;
+  glm::mat4 view_matrix;
+  if (is_frame) {
+    projection_handle = glGetUniformLocation(program_id, "projection_matrix");
+    glm::mat4 projection = glm::ortho<float> (-40,40,-40,40,-1,100);
+    glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
+    view_matrix = glm::lookAt(glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+  } else {
+    view_matrix = camera->view_matrix();
+  }
+
+  // int depth_proj_handle;
+  // int depth_view_matrix;
+  // if (is_frame) {
+  //   // SHADOWS UNIFORMS
+  //   depth_proj_handle = glGetUniformLocation(program_id, "depth_projection_matrix");
+  //   depth_view_matrix = glGetUniformLocation(program_id, "depth_view_matrix");
+  // }
+
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  normMatrix = glm::mat3(view_matrix);
+  // normMatrix = glm::mat3(view_matrix);
   const glm::mat4 &model_matrix = object->model_matrix();
   glm::mat4 modelview_matrix = view_matrix * model_matrix;
+  // TODO try otherway later
+  normMatrix = glm::inverse(glm::transpose(glm::mat3(modelview_matrix)));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
@@ -303,7 +370,7 @@ void Renderer::EnableAxis(const GLuint program_id) {
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
+void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool is_frame) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
   // glLineWidth(1.0f);
@@ -334,11 +401,22 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     }
   }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  int projection_handle;
+  glm::mat4 view_matrix;
+  if (is_frame) {
+    projection_handle = glGetUniformLocation(program_id, "projection_matrix");
+    glm::mat4 projection = glm::ortho<float> (-40,40,-40,40,-1,100);
+    glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
+    view_matrix = glm::lookAt(glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+  } else {
+    view_matrix = camera->view_matrix();
+  }
+
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(view_matrix);
+  // normMatrix = glm::mat3(view_matrix);
+  normMatrix = glm::inverse(glm::transpose(glm::mat3(view_matrix)));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
