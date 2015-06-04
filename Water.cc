@@ -85,7 +85,7 @@ Water::Water(const GLuint program_id)
     {
       fprintf(stderr,"Could not find uniform: amplitude[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform1f(amplitudeHandle, amplitude);
+    glUniform1f(amplitudeHandle, amplitude * 5.0);
 
     float wavelength = 8 * M_PI / (i + 1);
     //printf("wavelength[%d] = %f \n", i, wavelength);
@@ -95,7 +95,7 @@ Water::Water(const GLuint program_id)
     {
       fprintf(stderr,"Could not find uniform: wavelength[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform1f(wavelengthHandle, wavelength);   
+    glUniform1f(wavelengthHandle, wavelength * 2.0);   
 
     float speed = 1.0f + 2*i;
     //printf("speed[%d] = %f \n", i, speed);
