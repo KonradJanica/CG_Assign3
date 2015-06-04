@@ -401,16 +401,44 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool
     }
   }
 
-  int projection_handle;
+  // SHADOWs
+  int depthBiasMVPHandle = glGetUniformLocation(program_id, "DepthBiasMVP");
+  if (depthBiasMVPHandle == -1) {
+      assert(0 && "Error: can't find depth bias matrix uniform\n");
+  }
+    int shadowHandle = glGetUniformLocation(program_id, "shadow");
+  if (shadowHandle == -1) {
+      assert(0 && "Error: can't find shadow uniform\n");
+  }
+    // set the shadow variable in frag shader
+    glUniform1i(shadowHandle, is_frame);
+
   glm::mat4 view_matrix;
+  glm::mat4 viewLightMatrix;
+  glm::mat4 projLightMatrix = glm::ortho<float> (-40,40,-40,40,-1,100);
+  glm::mat4 mvLightMatrix;
   if (is_frame) {
-    projection_handle = glGetUniformLocation(program_id, "projection_matrix");
+    int projection_handle = glGetUniformLocation(program_id, "projection_matrix");
     glm::mat4 projection = glm::ortho<float> (-40,40,-40,40,-1,100);
     glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
     view_matrix = glm::lookAt(glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
   } else {
     view_matrix = camera->view_matrix();
+    viewLightMatrix = glm::lookAt(glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    // glViewport(0,0,640,480);
+  glm::mat4 projection = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+    glUseProgram(program_id);
+    int projHandle = glGetUniformLocation(program_id, "projection_matrix");
+    if(projHandle == -1) {
+      fprintf(stderr,"Could not find uniform: 'projection_matrix' In: Main - UpdateProjection\n This may cause unexpected behaviour in the program\n");
+    }
+    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
   }
+
+    glm::mat4 biasMatrix(0.5, 0.0, 0.0, 0.0,
+                         0.0, 0.5, 0.0, 0.0,
+                         0.0, 0.0, 0.5, 0.0,
+                         0.5, 0.5, 0.5, 1.0);
 
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
@@ -443,6 +471,13 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
+    // TODO move out of loop later
+    if (is_frame == 0){
+        // mvLightMatrix = glm::rotate(viewLightMatrix,rotationSpheres, glm::vec3(0.0f, 1.0f, 0.0f));
+        mvLightMatrix = viewLightMatrix;
+        glm::mat4 depthBiasMVP = biasMatrix*projLightMatrix*mvLightMatrix;
+        glUniformMatrix4fv(depthBiasMVPHandle, 1, false, glm::value_ptr(depthBiasMVP) );
+    }
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
@@ -461,6 +496,13 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
+    // TODO move out of loop later
+    if (is_frame == 0){
+        // mvLightMatrix = glm::rotate(viewLightMatrix,rotationSpheres, glm::vec3(0.0f, 1.0f, 0.0f));
+        mvLightMatrix = viewLightMatrix;
+        glm::mat4 depthBiasMVP = biasMatrix*projLightMatrix*mvLightMatrix;
+        glUniformMatrix4fv(depthBiasMVPHandle, 1, false, glm::value_ptr(depthBiasMVP) );
+    }
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 }

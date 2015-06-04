@@ -59,18 +59,43 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
+
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_->RenderSkybox(skybox_, camera_);
+
+  // DRAW TO THE SHADOW BUFFER
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->frame_buffer_name_);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
+  glViewport(0,0,1024,1024);
+
   // Car with physics
   if (camera_->state() != camera_->kFirstPerson)
-    renderer_->Render(car_, camera_);
+    renderer_->Render(car_, camera_, true);
   // Road-signs
-  renderer_->Render(objects_.at(0), camera_);
-  // Aventador
-  // renderer_->Render(objects_.at(1), camera_);
+  renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
-  renderer_->Render(terrain_, camera_);
+  renderer_->Render(terrain_, camera_, true);
 
+    // binds the shadow mapping for reading
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0,0,640,480);
+    glBindTexture( GL_TEXTURE_2D, renderer_->depth_texture_ );
+    
+  // Car with physics
+  if (camera_->state() != camera_->kFirstPerson)
+    renderer_->Render(car_, camera_, false);
+  // Road-signs
+  renderer_->Render(objects_.at(0), camera_, false);
+  // Terrain
+  renderer_->Render(terrain_, camera_, false);
+
+	// glBindVertexArray(0);
+	// glutSwapBuffers();
+	// glFlush();
+
+  // DONE SHADOWS
   renderer_->RenderWater(water_,car_, camera_, skybox_);
   // Axis
   // TODO Toggle

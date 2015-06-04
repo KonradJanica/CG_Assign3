@@ -58,8 +58,13 @@ uniform sampler2D texMap;
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 in vec2 a_tex_coord;
+in vec4 ShadowCoord;
 
 out vec4 fragColour;
+out float fragmentdepth;
+
+uniform sampler2D gShadowMap;
+uniform int shadow;
 
 // @author - Mitch
 // Use different fog calculations to determine how fog is
@@ -143,6 +148,7 @@ vec4 calcSpotLight(in SpotLight light, in vec4 position, in vec3 normal)
 }
 
 void main(void) {
+  if (shadow == 0) {
 
   // Cannot trust pipeline interpolation to generate normalized normals
   vec4 vertex_mv = a_vertex_mv;
@@ -163,4 +169,13 @@ void main(void) {
 	//fragColour = litColour * texture(texMap, a_tex_coord);
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+            float visibility = 1.0;
+            if ( texture( gShadowMap, ShadowCoord.xy ).x  <  ShadowCoord.z){
+                visibility = 0.5;
+            }
+            fragColour = visibility*vec4(1.0,1.0,1.0,1.0);
+
+  } else {
+        fragmentdepth = gl_FragCoord.z;
+    }
 }
