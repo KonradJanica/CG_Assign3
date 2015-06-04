@@ -6,7 +6,7 @@
 //   @warn assert will end program prematurely
 Controller::Controller(const Renderer * r, const bool &debug_flag) 
   : renderer_(r), game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
-  frames_count_(0), delta_time_(14), is_debugging_(debug_flag) {
+  frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
     camera_ = new Camera();
     light_controller_ = new LightController();
     is_key_pressed_hash_.reserve(256);
@@ -156,16 +156,20 @@ void Controller::UpdateGame() {
   rain_->UpdatePosition();
 
 
-  GLfloat current_frame = glutGet(GLUT_ELAPSED_TIME);
+  long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter - also determine delta time
   frames_count_ += 1;
-  if ((current_frame - GLfloat(frames_past_))/1000.0f >= 1.0f) {
+  if ((current_frame - frames_past_) > 1000) {
+    const int fps = frames_count_ * 1000.0f / (current_frame - frames_past_);
       std::cout << "FPS: " << frames_count_ << std::endl;
     frames_count_ = 0;
     frames_past_ = current_frame;
 
     // Work out average miliseconds per tick
-    delta_time_ = 1.0f/frames_count_ * 1000;
+    const GLfloat delta_time = 1.0f/fps * 1000.0f;
+    if (abs(delta_time_ - delta_time) < 5)
+      delta_time_ = delta_time;
+    // printf("dt = %f\n",delta_time_);
   }
 
   // Send time for water

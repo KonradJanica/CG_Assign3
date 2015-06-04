@@ -101,16 +101,16 @@ void idle() {
 }
 
 void timer(int t) {
-  unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
-  // FPS counter, only print FPS in terminal when it is not 60
-  g_frames += 1;
-  if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
-    if (g_frames != 60) {
-      std::cout << "FPS: " << g_frames << std::endl;
-    }
-    g_frames = 0;
-    g_past = time;
-  }
+  // unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
+  // // FPS counter, only print FPS in terminal when it is not 60
+  // g_frames += 1;
+  // if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
+  //   if (g_frames != 60) {
+  //     std::cout << "FPS: " << g_frames << std::endl;
+  //   }
+  //   g_frames = 0;
+  //   g_past = time;
+  // }
 
   // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
