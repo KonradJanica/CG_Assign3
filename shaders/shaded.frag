@@ -39,6 +39,27 @@ struct SpotLight
 
 const int MAX_POINT_LIGHTS = 10;
 const int MAX_SPOT_LIGHTS = 10;
+// Bias for trimming shadow acne
+const float bias = 0.005;
+// Poisson Sampling constants used for Shadows
+vec2 poissonDisk[16] = vec2[](
+   vec2( -0.94201624, -0.39906216 ),
+   vec2( 0.94558609, -0.76890725 ),
+   vec2( -0.094184101, -0.92938870 ),
+   vec2( 0.34495938, 0.29387760 ),
+   vec2( -0.91588581, 0.45771432 ),
+   vec2( -0.81544232, -0.87912464 ),
+   vec2( -0.38277543, 0.27676845 ),
+   vec2( 0.97484398, 0.75648379 ),
+   vec2( 0.44323325, -0.97511554 ),
+   vec2( 0.53742981, -0.47373420 ),
+   vec2( -0.26496911, -0.41893023 ),
+   vec2( 0.79197514, 0.19090188 ),
+   vec2( -0.24188840, 0.99706507 ),
+   vec2( -0.81409955, 0.91437590 ),
+   vec2( 0.19984126, 0.78641367 ),
+   vec2( 0.14383161, -0.14100790 )
+);
 
 // Light properties
 uniform int gNumPointLights;
@@ -54,10 +75,12 @@ uniform vec3 mtl_specular;
 uniform float shininess;
 
 uniform sampler2D texMap;
+uniform sampler2DShadow shadowMap;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 in vec2 a_tex_coord;
+in vec4 a_shadow_coord;
 
 out vec4 fragColour;
 
@@ -80,6 +103,13 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
 
   fogFac = clamp( fogFac, 0.0, 1.0 );
   return fogFac;
+}
+
+// Returns a random number based on a vec3 and an int.
+float random(vec3 seed, int i){
+	vec4 seed4 = vec4(seed,i);
+	float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
+	return fract(sin(dot_product) * 43758.5453);
 }
 
 // lightDirection is the vector from the light source to the target point
@@ -160,7 +190,12 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
   }
 
-	//fragColour = litColour * texture(texMap, a_tex_coord);
+  // Material properties
+  vec3 MaterialDiffuseColor = texture2D(texMap, a_tex_coord).rgb;
 
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+  float visibility = texture(shadowMap, vec3(a_shadow_coord.xy, (a_shadow_coord.z)/a_shadow_coord.w) );
+  visibility = visibility / 2 + 0.5; //Fit range between [0,0.5]
+
+  fragColour = mix(vec4(0.7,0.7,0.7,1.0), visibility * litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+  //fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
 }

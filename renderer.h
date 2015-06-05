@@ -26,8 +26,8 @@
 
 class Renderer {
   public:
-    // Construct with verbose debugging mode
-    Renderer(const bool &debug_flag = false);
+    // Construct with a depth buffer shader and verbose debugging mode
+    Renderer(const GLuint depth_program_id, const GLuint axis_program_id = 0, const bool &debug_flag = false);
 
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
@@ -38,6 +38,8 @@ class Renderer {
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
     void Render(const Terrain * terrain, const Camera * camera) const;
+    // TODO
+    void RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const;
     // Render Coordinate Axis 
     //   @param Camera * camera, to get the camera matrix and correctly position world
     //   @warn requires VAO from EnableAxis
@@ -51,11 +53,17 @@ class Renderer {
 
     void RenderSkybox(const Skybox * Sky, const Camera * camera) const;
 
+    GLuint depth_texture_;
+    GLuint frame_buffer_name_;
+
   private:
     // The VAO Handle for the Axis Coordinates
     unsigned int coord_vao_handle;
     // The shader to use to render Axis Coordinates
     GLuint axis_program_id;
+
+    // The shader the depth buffer uses
+    GLuint depth_program_id_;
 
     // Verbose Debugging mode
     bool is_debugging_;

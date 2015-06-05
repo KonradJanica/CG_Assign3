@@ -927,17 +927,9 @@ void Terrain::HelperMakeRoadCollisionMap() {
 unsigned int Terrain::CreateVao(const GLuint program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
     const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices) {
 
-  glUseProgram(program_id);
-
-  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
-
   unsigned int VAO_handle;
   glGenVertexArrays(1, &VAO_handle);
   glBindVertexArray(VAO_handle);
-
-  int vertLoc = glGetAttribLocation(program_id, "a_vertex");
-  int normLoc = glGetAttribLocation(program_id, "a_normal");
-  int textureLoc = glGetAttribLocation(program_id, "a_texture");
 
   // Buffers to store position, colour and index data
   unsigned int buffer[4];
@@ -945,30 +937,31 @@ unsigned int Terrain::CreateVao(const GLuint program_id, const std::vector<glm::
 
   // Set vertex position
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
-  glBufferData(GL_ARRAY_BUFFER, 
+  glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec3)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertLoc);
-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
   // Normal attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(normLoc);
-  glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
   // Texture attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(textureLoc);
-  glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(2);
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[3]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
       sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);   
-  // sizeof(iIndices), iIndices, GL_STATIC_DRAW);   
+
   // Un-bind
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
   return VAO_handle;
 }
 

@@ -273,6 +273,8 @@ int main(int argc, char **argv) {
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
 
   // Load in all the shaders
@@ -300,10 +302,12 @@ int main(int argc, char **argv) {
   if (g_program_id[5] == 0)
     return 1;
 
+  g_program_id[6] = LoadShaders("shaders/depthbuffer.vert", "shaders/depthbuffer.frag");
+  if (g_program_id[6] == 0)
+    return 1;
 
-  g_renderer = new Renderer();
-  // Construct Axis VAO
-  g_renderer->EnableAxis(g_program_id[1]);
+  // Make renderer with Axis
+  g_renderer = new Renderer(g_program_id[6], g_program_id[1], false);
 
   g_controller = new Controller(g_renderer);
 
@@ -331,7 +335,8 @@ int main(int argc, char **argv) {
   // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
   g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
 
-  UpdateProjection();
+  // TODO fix this - removed and hardcoded for shadows
+  // UpdateProjection();
 
   // Set our GLUT window handler callback functions
   glutKeyboardFunc(keyboardDown);

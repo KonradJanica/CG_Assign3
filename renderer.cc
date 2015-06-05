@@ -1,11 +1,65 @@
 #include "renderer.h"
 
-// Constructor, initializes an empty axis coordinate VAO to optimize Render()
+// Construct with a depth buffer shader and verbose debugging mode
+//   Creates a depth buffer (used for shadows)
 //   Allows for Verbose Debugging Mode
+//   @param depth_program_id, a depth buffer shader (used for shadows)
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely with debugging enabled
-Renderer::Renderer(const bool &debug_flag) 
-  : coord_vao_handle(0), is_debugging_(debug_flag) {
+Renderer::Renderer(const GLuint depth_program_id, const GLuint axis_program_id, const bool &debug_flag) 
+  : coord_vao_handle(0), axis_program_id(axis_program_id),
+  depth_program_id_(depth_program_id),
+  is_debugging_(debug_flag) {
+
+    // if (axis_program_id != 0 && is_debugging_)
+      EnableAxis(axis_program_id);
+
+  // Setup depth buffer //TODO FIX THIS!
+  unsigned int windowX = 1024, windowY = 1024;
+
+  // generate namespace for the frame buffer 
+  glGenFramebuffers(1, &frame_buffer_name_);
+  //switch to our fbo so we can bind stuff to it
+  glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
+
+  // and depthbuffer
+  glGenTextures(1, &depth_texture_);
+  // create the depth texture and attach it to the frame buffer.
+  glBindTexture(GL_TEXTURE_2D, depth_texture_);
+  
+  // Give an empty image to OpenGL ( the last "0" )
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+
+  // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  // Set "renderedTexture" as our depth attachement
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_texture_, 0);
+  
+  // Instruct openGL that we won't bind a color texture with the currently binded FBO
+  glDrawBuffer(GL_NONE);
+  // glReadBuffer(GL_NONE);
+
+  // Always check that our framebuffer is ok
+  GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  
+  if (Status != GL_FRAMEBUFFER_COMPLETE) {
+      printf("FB error, status: 0x%x\n", Status);
+      exit(-1);
+  }
+
+  // Unbind buffer
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 //   Renders the passed in water to the scene
@@ -143,6 +197,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
 void Renderer::Render(const Object * object, const Camera * camera) const {
+  bool is_frame = false;
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -179,13 +234,53 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
     }
   }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  // SHADOWs
+  int depthBiasMVPHandle = glGetUniformLocation(program_id, "DepthBiasMVP");
+  if (depthBiasMVPHandle == -1) {
+      assert(0 && "Error: can't find depth bias matrix uniform\n");
+  }
+    int shadowHandle = glGetUniformLocation(program_id, "shadow");
+  if (shadowHandle == -1) {
+      assert(0 && "Error: can't find shadow uniform\n");
+  }
+    // set the shadow variable in frag shader
+    glUniform1i(shadowHandle, is_frame);
+
+  glm::mat4 view_matrix;
+  glm::mat4 viewLightMatrix;
+  glm::mat4 projLightMatrix = glm::ortho<float> (-00,00,-40,40,-00,00);
+  glm::mat4 mvLightMatrix;
+  if (is_frame) {
+    int projection_handle = glGetUniformLocation(program_id, "projection_matrix");
+    glm::mat4 projection = glm::ortho<float> (-40,40,-40,40,-1,100);
+    glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
+    view_matrix = glm::lookAt(glm::vec3(-5.0f,0.5f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+  } else {
+    // view_matrix = camera->view_matrix();
+    viewLightMatrix = glm::lookAt(glm::vec3(-5.0f,0.5f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    glViewport(0,0,640,480);
+  glm::mat4 projection = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+    // glUseProgram(program_id);
+    int projHandle = glGetUniformLocation(program_id, "projection_matrix");
+    if(projHandle == -1) {
+      fprintf(stderr,"Could not find uniform: 'projection_matrix' In: Main - UpdateProjection\n This may cause unexpected behaviour in the program\n");
+    }
+    // glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
+  }
+
+    glm::mat4 biasMatrix(0.5, 0.0, 0.0, 0.0,
+                         0.0, 0.5, 0.0, 0.0,
+                         0.0, 0.0, 0.5, 0.0,
+                         0.5, 0.5, 0.5, 1.0);
+
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  normMatrix = glm::mat3(view_matrix);
+  // normMatrix = glm::mat3(view_matrix);
   const glm::mat4 &model_matrix = object->model_matrix();
   glm::mat4 modelview_matrix = view_matrix * model_matrix;
+  // TODO try otherway later
+  normMatrix = glm::inverse(glm::transpose(glm::mat3(modelview_matrix)));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
@@ -212,6 +307,13 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
     // We are using texture unit 0 (the default)
     glUniform1i(texHandle, 0);
 
+    // TODO move out of loop later
+    if (is_frame == 0){
+        // mvLightMatrix = glm::rotate(viewLightMatrix,rotationSpheres, glm::vec3(0.0f, 1.0f, 0.0f));
+        mvLightMatrix = viewLightMatrix * object->model_matrix();
+        glm::mat4 depthBiasMVP = biasMatrix*projLightMatrix*mvLightMatrix;
+        glUniformMatrix4fv(depthBiasMVPHandle, 1, false, glm::value_ptr(depthBiasMVP) );
+    }
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
 
@@ -306,17 +408,24 @@ void Renderer::EnableAxis(const GLuint program_id) {
 void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
+  glCullFace(GL_BACK);
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   // Setup Handles
-  int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
-  int normHandle = glGetUniformLocation(program_id, "normal_matrix");
-  int texHandle = glGetUniformLocation(program_id, "texMap");
-  if (mvHandle == -1 || normHandle==-1 || texHandle == -1) {
+  int mvp_handle = glGetUniformLocation(program_id, "mvp_matrix");
+  int norm_handle = glGetUniformLocation(program_id, "normal_matrix");
+  int tex_handle = glGetUniformLocation(program_id, "texMap");
+  if (mvp_handle == -1 || norm_handle==-1 || tex_handle == -1) {
     if (is_debugging_) {
       assert(0 && "Error: can't find matrix uniforms\n");
     }
+  }
+  int modelview_handle = glGetUniformLocation(program_id, "modelview_matrix");
+  int depth_bias_mvp_handle = glGetUniformLocation(program_id, "depth_bias_mvp_matrix");
+  GLuint ShadowMapHandle = glGetUniformLocation(program_id, "shadowMap");
+  if (ShadowMapHandle == -1) {
+    assert(0 && "Error: cant find shadowMap");
   }
 
   // Uniform variables defining material colours
@@ -325,22 +434,58 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
   int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
   int shininessHandle = glGetUniformLocation(program_id, "shininess");
-  if ( mtlambientHandle == -1 ||
-      mtldiffuseHandle == -1 ||
-      mtlspecularHandle == -1 ||
-      shininessHandle == -1) {
+  if(0)
+    //TODO TODO mtlspecuar not even being used in shader wtaf
     if (is_debugging_) {
-      assert(0 && "Error: can't find material uniform variables\n");
+      if (mtlambientHandle = -1) {
+        assert(0 && "Error: mtl_ambient handle not found\n");
+      }
+      if (mtlambientHandle = -1) {
+        assert(0 && "Error: mtl_ambient handle not found\n");
+      }
+      if (mtlambientHandle = -1) {
+        assert(0 && "Error: mtl_ambient handle not found\n");
+      }
     }
-  }
 
-  const glm::mat4 &view_matrix = camera->view_matrix();
+  glm::mat4 view_matrix;
+  glm::mat4 viewLightMatrix;
+  glm::mat4 projLightMatrix = glm::ortho<float> (-100,100,-40,40,-100,100);
+  glm::mat4 mvLightMatrix;
+
+  const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+  const glm::mat4 VIEW = camera->view_matrix();
+  const glm::mat4 MODEL = glm::mat4(1.0f);
+  const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
+  const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
+                                   0.0f, 0.5f, 0.0f, 0.0f,
+                                   0.0f, 0.0f, 0.5f, 0.0f,
+                                   0.5f, 0.5f, 0.5f, 1.0f);
+
+  // Compute the MVP matrix from the light's point of view
+  const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
+  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  const glm::vec3 snapped_cam_pos = glm::vec3(
+      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      float(),
+      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
+  const glm::mat4 D_MODEL = glm::mat4(1.0);
+  const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
+
+  const glm::mat4 DEPTH_BIAS_MVP = BIAS * DEPTH_MVP;
+
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  glm::mat3 normMatrix;
-  normMatrix = glm::mat3(view_matrix);
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) ); // Middle
-  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+  glm::mat3 NORMAL;
+  // NORMAL = glm::mat3(view_matrix);
+  NORMAL = glm::inverse(glm::transpose(glm::mat3(VIEW)));
+  glUniformMatrix4fv(modelview_handle, 1, false, glm::value_ptr(VIEW * MODEL));
+  glUniformMatrix4fv(mvp_handle, 1, false, glm::value_ptr(MVP));
+  glUniformMatrix4fv(depth_bias_mvp_handle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
+  glUniformMatrix3fv(norm_handle, 1, false, glm::value_ptr(NORMAL));
 
   // Pass Surface Colours to Shader
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
@@ -358,31 +503,107 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
-    glBindVertexArray(terrain_vao_handle.at(x)); 
-    glBindTexture(GL_TEXTURE_2D, terrain->texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-    // We are using texture unit 0 (the default)
-    glUniform1i(texHandle, 0);
+      // We are using texture unit 0 (the default)
+      glActiveTexture(GL_TEXTURE0);
+      glUniform1i(tex_handle, 0);
 
+      glBindTexture(GL_TEXTURE_2D, terrain->texture());
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+
+      // // TODO move out of loop later
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, depth_texture_);
+      glUniform1i(ShadowMapHandle, 1);
+
+    // Populate Shader
+    glBindVertexArray(terrain_vao_handle.at(x));
+    // glBindAttribLocation(program_id, 0, "a_vertex");
+    // glBindAttribLocation(program_id, 1, "a_normal");
+    // glBindAttribLocation(program_id, 2, "a_texture");
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+    // Un-bind
+    glBindVertexArray(0);
   }
 
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  //////////////////////////
   // ROADS
+  glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();
   const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
-    // Bind VAO Road
-    glBindVertexArray(road_vao_handle.at(x)); 
-    glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-    // We are using texture unit 0 (the default)
-    glUniform1i(texHandle, 0);
+      // We are using texture unit 0 (the default)
+      glActiveTexture(GL_TEXTURE0);
+      glUniform1i(tex_handle, 0);
+      // Bind VAO Road
+      glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
+      // // TODO move out of loop later
+      // glActiveTexture(GL_TEXTURE1);
+      // glBindTexture(GL_TEXTURE_2D, depth_texture_);
+      // glUniform1i(ShadowMapHandle, 1);
+      // // mvLightMatrix = glm::rotate(viewLightMatrix,rotationSpheres, glm::vec3(0.0f, 1.0f, 0.0f));
+      // mvLightMatrix = viewLightMatrix;
+      // glm::mat4 depthBiasMVP = biasMatrix*projLightMatrix*mvLightMatrix;
+      // glUniformMatrix4fv(depthBiasMVPHandle, 1, false, glm::value_ptr(depthBiasMVP) );
+
+    // Populate shader
+    glBindVertexArray(road_vao_handle.at(x));
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
+    // Un-bind
+    glBindVertexArray(0);
+  }
+}
+
+// Draws/Renders the passed in terrain to the scene
+//   @param Terrain * terrain, a terrain (cliffs/roads) to render
+//   @param Camera * camera, to get the camera matrix and correctly position world
+//   @param vec4 light_pos, The position of the Light for lighting
+//   TODO this is depth buffer
+//   @warn Not responsible for NULL PTRs
+void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const {
+  glUseProgram(depth_program_id_);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // Remove shadow acne
+  glCullFace(GL_FRONT);
+  // Setup Handles
+  int depth_mvp_handle = glGetUniformLocation(depth_program_id_, "depth_mvp");
+  if (depth_mvp_handle == -1) {
+      assert(0 && "Error: can't find depth bias matrix uniform\n");
+  }
+  // Compute the MVP matrix from the light's point of view
+  const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
+  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  const glm::vec3 snapped_cam_pos = glm::vec3(
+      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      float(),
+      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
+  const glm::mat4 MODEL = glm::mat4(1.0);
+  const glm::mat4 DEPTH_MVP = PROJECTION * VIEW * MODEL;
+
+  // Send our transformation to the currently bound shader,
+  // in the "MVP" uniform
+  glUniformMatrix4fv(depth_mvp_handle, 1, GL_FALSE, glm::value_ptr(DEPTH_MVP));
+
+  // Bind VAO and texture - Terrain
+  const int amount_terrain = terrain->indice_count();
+  const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
+  for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
+    glBindVertexArray(terrain_vao_handle.at(x));
+    glDrawElements(GL_TRIANGLES, amount_terrain, GL_UNSIGNED_INT, 0);
+  }
+
+  // ROADS
+  glCullFace(GL_BACK); //Road is rendererd reverse facing
+  const int amount_road = terrain->road_indice_count();
+  const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
+  for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
+    glBindVertexArray(road_vao_handle.at(x));
+    glDrawElements(GL_TRIANGLES, amount_road, GL_UNSIGNED_INT, 0);
   }
 }

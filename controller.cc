@@ -59,24 +59,52 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
+
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  renderer_->RenderSkybox(skybox_, camera_);
+  // renderer_->RenderSkybox(skybox_, camera_);
+
+  // DRAW TO THE SHADOW BUFFER
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->frame_buffer_name_);
+	glClear(GL_DEPTH_BUFFER_BIT);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
+  glViewport(0,0,1024,1024);
+
+  // renderer_->Render(terrain_, camera_, true);
   // Car with physics
-  if (camera_->state() != camera_->kFirstPerson)
-    renderer_->Render(car_, camera_);
+  // if (camera_->state() != camera_->kFirstPerson)
+    // renderer_->Render(car_, camera_, true);
   // Road-signs
-  renderer_->Render(objects_.at(0), camera_);
-  // Aventador
-  // renderer_->Render(objects_.at(1), camera_);
+  // renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
+  renderer_->RenderDepthBuffer(terrain_, camera_);
+
+  // binds the shadow mapping for reading
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0,0,640,480);
+  glBindTexture( GL_TEXTURE_2D, renderer_->depth_texture_ );
   renderer_->Render(terrain_, camera_);
 
-  renderer_->RenderWater(water_,car_, camera_, skybox_);
+  // Car with physics
+  // if (camera_->state() != camera_->kFirstPerson)
+    // renderer_->Render(car_, camera_, false);
+  // Road-signs
+  // renderer_->Render(objects_.at(0), camera_, false);
+  // Terrain
+  // renderer_->Render(terrain_, camera_, false);
+
+	// glBindVertexArray(0);
+	// glutSwapBuffers();
+	// glFlush();
+
+  // DONE SHADOWS
+  // renderer_->RenderWater(water_,car_, camera_, skybox_);
   // Axis
   // TODO Toggle
 
-   renderer_->RenderAxis(camera_);
-   rain_->Render(camera_, car_, skybox_);
+   // renderer_->RenderAxis(camera_);
+   // rain_->Render(camera_, car_, skybox_);
   
 
   car_->UpdateModelMatrix();
@@ -140,6 +168,7 @@ void Controller::PositionLights() {
 
 // Creates the Terrain object for RenderTerrain()
 //   Creates Terrain VAOs
+//   @param The shader used for terrain rendering
 //   @warn terrain_ on heap, must be deleted after
 void Controller::EnableTerrain(const GLuint program_id) {
   terrain_ = new Terrain(program_id);
@@ -154,7 +183,6 @@ void Controller::UpdateGame() {
 
   // Update the position of the rain
   rain_->UpdatePosition();
-
 
   long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter - also determine delta time
