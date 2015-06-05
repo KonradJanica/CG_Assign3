@@ -33,11 +33,13 @@ class Renderer {
     //   @param Object * object, an object to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
     //   @warn this function is not responsible for NULL PTRs
-    void Render(const Object * object, const Camera * camera, const bool is_frame = false) const;
+    void Render(const Object * object, const Camera * camera, const bool is_frame = false, 
+        glm::mat4 lightViewMatrix = glm::mat4(), glm::mat4 lightProjMatrix = glm::mat4()) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @param Camera * camera, to get the camera matrix and correctly position world
-    void Render(const Terrain * terrain, const Camera * camera, const bool is_frame = false) const;
+    void Render(const Terrain * terrain, const Camera * camera, const bool is_frame = false,
+        glm::mat4 lightViewMatrix = glm::mat4(), glm::mat4 lightProjMatrix = glm::mat4()) const;
     // Render Coordinate Axis 
     //   @param Camera * camera, to get the camera matrix and correctly position world
     //   @warn requires VAO from EnableAxis

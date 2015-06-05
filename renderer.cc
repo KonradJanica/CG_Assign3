@@ -122,6 +122,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   // Send the cubemap (for reflections)
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(texHandle, 0);
 
@@ -189,7 +190,9 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 //   @param Object * object, an object to render
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera * camera, const bool is_frame) const {
+void Renderer::Render(const Object * object, const Camera * camera, const bool is_frame, 
+   glm::mat4 lightViewMatrix, glm::mat4 lightProjMatrix) const {
+
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -204,8 +207,9 @@ void Renderer::Render(const Object * object, const Camera * camera, const bool i
     }
   }
   int mvHandle = glGetUniformLocation(program_id, "modelview_matrix");
+  int projHandle = glGetUniformLocation(program_id, "projection_matrix");
   int normHandle = glGetUniformLocation(program_id, "normal_matrix");
-  if (mvHandle == -1 || normHandle==-1) {
+  if (mvHandle == -1 || projHandle == -1 || normHandle == -1) {
     if (is_debugging_) {
       assert(0 && "Error: can't find matrix uniforms\n");
     }
@@ -226,24 +230,16 @@ void Renderer::Render(const Object * object, const Camera * camera, const bool i
     }
   }
 
-  int projection_handle;
+  // Shadow
   glm::mat4 view_matrix;
   if (is_frame) {
-    projection_handle = glGetUniformLocation(program_id, "projection_matrix");
-    glm::mat4 projection = glm::ortho<float> (-40,40,-40,40,-1,100);
-    glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
-    view_matrix = glm::lookAt(glm::vec3(-5.0f,5.0f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    glUniformMatrix4fv(projHandle, 1, false, glm::value_ptr(lightProjMatrix));
+    view_matrix = lightViewMatrix;
   } else {
+    glm::mat4 projection_matrix = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+    glUniformMatrix4fv(projHandle, 1, false, glm::value_ptr(lightProjMatrix));
     view_matrix = camera->view_matrix();
   }
-
-  // int depth_proj_handle;
-  // int depth_view_matrix;
-  // if (is_frame) {
-  //   // SHADOWS UNIFORMS
-  //   depth_proj_handle = glGetUniformLocation(program_id, "depth_projection_matrix");
-  //   depth_view_matrix = glGetUniformLocation(program_id, "depth_view_matrix");
-  // }
 
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
@@ -272,6 +268,7 @@ void Renderer::Render(const Object * object, const Camera * camera, const bool i
     glUniform1fv(shininessHandle, 1, &mtlshininess);
 
     // Bind VAO
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture( GL_TEXTURE_2D, vao_texture_handle.at(y).second );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
@@ -370,7 +367,9 @@ void Renderer::EnableAxis(const GLuint program_id) {
 //   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool is_frame) const {
+void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool is_frame,
+   glm::mat4 lightViewMatrix, glm::mat4 lightProjMatrix) const {
+
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
   // glLineWidth(1.0f);
@@ -465,6 +464,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
     glBindVertexArray(terrain_vao_handle.at(x)); 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, terrain->texture());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
@@ -489,7 +489,8 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera, const bool
   const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
     // Bind VAO Road
-    glBindVertexArray(road_vao_handle.at(x)); 
+    glBindVertexArray(road_vao_handle.at(x));
+    glActiveTexture(GL_TEXTURE0); 
     glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	

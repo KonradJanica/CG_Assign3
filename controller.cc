@@ -59,30 +59,52 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
 void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
-
-  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  renderer_->RenderSkybox(skybox_, camera_);
-
-  // DRAW TO THE SHADOW BUFFER
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->frame_buffer_name_);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
+
+  /***************************
+   * Shadow render pass
+   ***************************/
+
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->frame_buffer_name_);
+  glClear(GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,1024,1024);
+
+  // Calculate view and projection matrix from the perspective of directional light
+  glm::mat4 lightViewMatrix = glm::lookAt(glm::vec3(-20.0f, 0.0f, 35.0f),    // Position 
+                                          glm::vec3(0.0f, 0.0f, 35.0f),    // Target
+                                          glm::vec3(0.0f, 1.0f, 0.0f));   // Up
+  glm::mat4 lightProjMatrix = glm::ortho<float> (-40,40,-40,40,-1,100);;
 
   // Car with physics
   if (camera_->state() != camera_->kFirstPerson)
-    renderer_->Render(car_, camera_, true);
+    renderer_->Render(car_, camera_, true, lightViewMatrix, lightProjMatrix);
   // Road-signs
-  renderer_->Render(objects_.at(0), camera_, true);
+  renderer_->Render(objects_.at(0), camera_, true, lightViewMatrix, lightProjMatrix);
   // Terrain
-  renderer_->Render(terrain_, camera_, true);
+  renderer_->Render(terrain_, camera_, true, lightViewMatrix, lightProjMatrix);
 
-    // binds the shadow mapping for reading
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0,0,640,480);
-    glBindTexture( GL_TEXTURE_2D, renderer_->depth_texture_ );
+  /***************************
+   * Normal draw pass
+   ***************************/
+
+  // Binds the shadow mapping for reading
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0, 0, 640, 480);
+  
+  // Bind and send texture
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, renderer_->depth_texture_);
+  int shadowMapHandle = glGetUniformLocation(car_->program_id(), "gShadowMap");
+  if (shadowMapHandle == -1) {
+    printf("Unable to get gShadowMap uniform handle\n");
+  }
+
+  glUniform1i(shadowMapHandle, 1);
     
+  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
+  renderer_->RenderSkybox(skybox_, camera_);
+
   // Car with physics
   if (camera_->state() != camera_->kFirstPerson)
     renderer_->Render(car_, camera_, false);
@@ -100,8 +122,8 @@ void Controller::Draw() {
   // Axis
   // TODO Toggle
 
-   renderer_->RenderAxis(camera_);
-   rain_->Render(camera_, car_, skybox_);
+  renderer_->RenderAxis(camera_);
+  rain_->Render(camera_, car_, skybox_);
   
 
   car_->UpdateModelMatrix();
