@@ -180,8 +180,8 @@ class Controller {
     glm::vec4 light_pos_;
 
     // FPS and Smoothing Vars
-    int frames_count_;
     unsigned long long frames_past_;
+    int frames_count_;
     GLfloat delta_time_;
 
     // Hash representing keys pressed

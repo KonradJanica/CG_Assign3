@@ -10,7 +10,7 @@ Renderer::Renderer(const Camera * camera, const bool debug_flag) :
   shaders_(Shaders(debug_flag)), camera_(camera), coord_vao_handle(0), is_debugging_(debug_flag) {
 
     if (debug_flag)
-      EnableAxis(shaders_.AxisDebug);
+      EnableAxis();
 
   // Setup depth buffer //TODO FIX THIS!
   unsigned int windowX = 1024, windowY = 1024;
@@ -321,7 +321,7 @@ void Renderer::Render(const Object * object) const {
 void Renderer::RenderAxis() const {
   //Render Axis if VAO exists
   if (coord_vao_handle != 0) {
-    GLuint axis_program_id = shaders_.AxisDebug;
+    GLuint axis_program_id = shaders_.AxisDebug->Id;
     glUseProgram(axis_program_id);
     glDisable(GL_DEPTH_TEST);
 
@@ -344,9 +344,8 @@ void Renderer::RenderAxis() const {
 
 // Creates a VAO for x,y,z axis and binds it to a given shader for proper colouring
 //   Render() checks if the VAO is created and then draws it
-//   @param program_id, a shader program with different colours for x,y,z
 //   @warn should only be called once, duplicate calls are irrelevant
-void Renderer::EnableAxis(const GLuint program_id) {
+void Renderer::EnableAxis() {
   //  Build coordinate lines
   std::vector<unsigned int> coord_indices;
   coord_indices.push_back(0);
@@ -364,6 +363,7 @@ void Renderer::EnableAxis(const GLuint program_id) {
   coord_vertices.push_back(glm::vec3(0.0,0.0,100000.0));
 
   //Create axis VAO
+  GLuint program_id = shaders_.AxisDebug->Id;
   glUseProgram(program_id);
 
   assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
@@ -552,13 +552,13 @@ void Renderer::Render(const Terrain * terrain) const {
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
 void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
-  GLuint depth_program_id = shaders_.DepthBuffer;
+  GLuint depth_program_id = shaders_.DepthBuffer.Id;
   glUseProgram(depth_program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Remove shadow acne
   glCullFace(GL_FRONT);
   // Setup Handles
-  int depth_mvp_handle = glGetUniformLocation(depth_program_id, "depth_mvp");
+  int depth_mvp_handle = glGetUniformLocation(depth_program_id, "depth_mvp_matrix");
   if (depth_mvp_handle == -1) {
       assert(0 && "Error: can't find depth bias matrix uniform\n");
   }

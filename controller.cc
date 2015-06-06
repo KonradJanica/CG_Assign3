@@ -21,17 +21,17 @@ Controller::Controller(const bool debug_flag) :
     // Initialize Dummy Index for first equilavence check in collisions
     prev_colisn_pair_idx_ = 0;
 
-    rain_ = new Rain(shaders_->RainGeneric);
-    water_ = new Water(shaders_->WaterGeneric);
-    skybox_ = new Skybox(shaders_->SkyboxGeneric);
-    terrain_ = new Terrain(shaders_->LightMappedGeneric);
+    rain_ = new Rain(shaders_->RainGeneric.Id);
+    water_ = new Water(shaders_->WaterGeneric.Id);
+    skybox_ = new Skybox(shaders_->SkyboxGeneric.Id);
+    terrain_ = new Terrain(shaders_->LightMappedGeneric.Id);
 
   // Add starting models
-  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
-  // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
-  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
-  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
-  AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
+  AddModel(shaders_->LightMappedGeneric.Id, "models/Pick-up_Truck/pickup.obj", true);
+  // AddModel(shaders_->LightMappedGeneric.Id, "models/Car/car-n.obj", true);
+  // AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/curve_left.obj");
+  // AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/curve_right.obj");
+  AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/60.obj");
 
 }
 

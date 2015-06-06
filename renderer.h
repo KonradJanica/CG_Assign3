@@ -45,7 +45,7 @@ class Renderer {
     //   @warn uses camera pointer for view matrix
     void RenderAxis() const;
     // Enable x,y,z axis coordinates
-    void EnableAxis(const GLuint program_id);
+    void EnableAxis();
 
     void RenderWater(const Water * water, const Object * object, const Skybox * Sky) const;
 
