@@ -18,7 +18,7 @@
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "lib/shader/shader.hpp"
+#include "shaders/shader_compiler/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtx/vector_angle.hpp"
@@ -47,23 +47,14 @@ class Controller {
     };
 
     // Construct with verbose debugging mode
-    Controller(const Renderer * r, const bool &debug_flag = false);
-
-    void AddSkybox(const GLuint program_id);
-
-    void AddWater(const GLuint program_id);
-
-    void AddRain(GLuint program_id);
+    Controller(const bool debug_flag = false);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car = false);
     // Render the scene (all member models)
     //   @warn uses the renderer object
+    //   // TODO const?
     void Draw();
-    // Creates the Terrain object for RenderTerrain()
-    //   Creates Terrain VAOs
-    //   @warn terrain_ on heap, must be deleted after
-    void EnableTerrain(const GLuint program_id);
     // Set the position of the Light
     inline void SetLightPosition(const float &x, const float &y, const float &z, const float &w);
     // Accessor for Camera Object
@@ -81,16 +72,23 @@ class Controller {
     inline void KeyReleased(const int &key);
 
   private:
+    // OBJECTS
+    // The camera object
+    Camera * camera_;
     // The renderer reference
-    const Renderer * renderer_;
+    const Renderer renderer_;
+    // The shaders object (holds and compiles all shaders)
+    const Shaders * shaders_;
+    // The light controller
+    LightController * light_controller_;
+
+    // Updates light properties with view matrix from camera
 
     // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
     // The moving car
     //   An object with physics
     Object * car_;
-    // The camera object
-    Camera * camera_;
     // The terrain object
     Terrain * terrain_;
     // The skybox object
@@ -173,10 +171,6 @@ class Controller {
     //       than the catch dis, may be an issue for systems with poor performance
     void CrashAnimationCliff();
 
-    // The light controller
-    LightController * light_controller_;
-
-    // Updates light properties with view matrix from camera
     void PositionLights();
 
     // The shader to use to render Axis Coordinates

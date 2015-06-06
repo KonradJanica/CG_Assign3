@@ -9,7 +9,6 @@
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "lib/shader/shader.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 #ifdef __APPLE__

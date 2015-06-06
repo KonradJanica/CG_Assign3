@@ -1,18 +1,16 @@
 #include "renderer.h"
 
-// Construct with a depth buffer shader and verbose debugging mode
+// Construct with a camera and verbose debugging mode
 //   Creates a depth buffer (used for shadows)
 //   Allows for Verbose Debugging Mode
-//   @param depth_program_id, a depth buffer shader (used for shadows)
+//   @param camera, The camera object used to get view matrix
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely with debugging enabled
-Renderer::Renderer(const GLuint depth_program_id, const GLuint axis_program_id, const bool &debug_flag) 
-  : coord_vao_handle(0), axis_program_id(axis_program_id),
-  depth_program_id_(depth_program_id),
-  is_debugging_(debug_flag) {
+Renderer::Renderer(const Camera * camera, const bool debug_flag) :
+  shaders_(Shaders(debug_flag)), camera_(camera), coord_vao_handle(0), is_debugging_(debug_flag) {
 
-    // if (axis_program_id != 0 && is_debugging_)
-      EnableAxis(axis_program_id);
+    if (debug_flag)
+      EnableAxis(shaders_.AxisDebug);
 
   // Setup depth buffer //TODO FIX THIS!
   unsigned int windowX = 1024, windowY = 1024;
@@ -26,7 +24,7 @@ Renderer::Renderer(const GLuint depth_program_id, const GLuint axis_program_id, 
   glGenTextures(1, &depth_texture_);
   // create the depth texture and attach it to the frame buffer.
   glBindTexture(GL_TEXTURE_2D, depth_texture_);
-  
+
   // Give an empty image to OpenGL ( the last "0" )
   glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -65,9 +63,8 @@ Renderer::Renderer(const GLuint depth_program_id, const GLuint axis_program_id, 
 //   Renders the passed in water to the scene
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
-//   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Object* object, const Camera * camera, const Skybox * Sky) const
+void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky) const
 {
   glUseProgram(water->watershader());
 
@@ -83,7 +80,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   if (camPosHandle == -1) {
     printf("Couldnt get the campos for water reflections\n");
   }
-  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
+  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera_->cam_pos()));
 
   int texHandle = glGetUniformLocation(water->watershader(), "skybox");
   if (texHandle == -1) {
@@ -105,7 +102,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
-  glm::mat4 view_matrix = camera->view_matrix();
+  glm::mat4 view_matrix = camera_->view_matrix();
 
   // Get only the needed components of the object's model matrix
 
@@ -143,9 +140,8 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
 //   Renders the passed in skybox to the scene
 //   Should be called in the controller
 //   @param Skybox * sky, the skybox to render
-//   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
+void Renderer::RenderSkybox(const Skybox * Sky) const
 {
   int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
   if (mvHandle == -1) {
@@ -180,7 +176,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
   
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
-  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera->view_matrix()));
+  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera_->view_matrix()));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Render the Skybox
@@ -194,9 +190,8 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const
 // Draws/Renders the passed in objects (with their models) to the scene
 //   Should be called in the render loop
 //   @param Object * object, an object to render
-//   @param Camera * camera, to get the camera matrix and correctly position world
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera * camera) const {
+void Renderer::Render(const Object * object) const {
   bool is_frame = false;
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
@@ -323,9 +318,10 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
 //   Used with Render(index)
 //   @warn requires VAO from EnableAxis
 //   @warn is already included in Render() all function
-void Renderer::RenderAxis(const Camera * camera) const {
+void Renderer::RenderAxis() const {
   //Render Axis if VAO exists
   if (coord_vao_handle != 0) {
+    GLuint axis_program_id = shaders_.AxisDebug;
     glUseProgram(axis_program_id);
     glDisable(GL_DEPTH_TEST);
 
@@ -334,7 +330,7 @@ void Renderer::RenderAxis(const Camera * camera) const {
     if (modelviewHandle1 == -1)
       exit(1);
 
-    const glm::mat4 &view_matrix = camera->view_matrix();
+    const glm::mat4 &view_matrix = camera_->view_matrix();
     glUniformMatrix4fv( modelviewHandle1, 1, false, glm::value_ptr(view_matrix));
 
     // Set VAO to the square model and draw three in different positions
@@ -351,7 +347,6 @@ void Renderer::RenderAxis(const Camera * camera) const {
 //   @param program_id, a shader program with different colours for x,y,z
 //   @warn should only be called once, duplicate calls are irrelevant
 void Renderer::EnableAxis(const GLuint program_id) {
-  axis_program_id = program_id;
   //  Build coordinate lines
   std::vector<unsigned int> coord_indices;
   coord_indices.push_back(0);
@@ -402,10 +397,9 @@ void Renderer::EnableAxis(const GLuint program_id) {
 
 // Draws/Renders the passed in terrain to the scene
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
-//   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
+void Renderer::Render(const Terrain * terrain) const {
   GLuint program_id = terrain->terrain_program_id();
   glUseProgram(program_id);
   glCullFace(GL_BACK);
@@ -448,13 +442,8 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
       }
     }
 
-  glm::mat4 view_matrix;
-  glm::mat4 viewLightMatrix;
-  glm::mat4 projLightMatrix = glm::ortho<float> (-100,100,-40,40,-100,100);
-  glm::mat4 mvLightMatrix;
-
   const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
-  const glm::mat4 VIEW = camera->view_matrix();
+  const glm::mat4 VIEW = camera_->view_matrix();
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
   const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
@@ -466,9 +455,9 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera_->cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera_->cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
@@ -559,17 +548,17 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
 
 // Draws/Renders the passed in terrain to the scene
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
-//   @param Camera * camera, to get the camera matrix and correctly position world
 //   @param vec4 light_pos, The position of the Light for lighting
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
-void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const {
-  glUseProgram(depth_program_id_);
+void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
+  GLuint depth_program_id = shaders_.DepthBuffer;
+  glUseProgram(depth_program_id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Remove shadow acne
   glCullFace(GL_FRONT);
   // Setup Handles
-  int depth_mvp_handle = glGetUniformLocation(depth_program_id_, "depth_mvp");
+  int depth_mvp_handle = glGetUniformLocation(depth_program_id, "depth_mvp");
   if (depth_mvp_handle == -1) {
       assert(0 && "Error: can't find depth bias matrix uniform\n");
   }
@@ -577,9 +566,9 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera)
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera_->cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera_->cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));

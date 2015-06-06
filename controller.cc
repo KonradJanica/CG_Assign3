@@ -4,31 +4,37 @@
 //   Allows for Verbose Debugging Mode
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely
-Controller::Controller(const Renderer * r, const bool &debug_flag) 
-  : renderer_(r), game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
+Controller::Controller(const bool debug_flag) :
+  // Object construction
+  camera_(new Camera()),
+  renderer_(Renderer(camera_, debug_flag)),
+  shaders_(renderer_.shaders()),
+  light_controller_(new LightController()),
+  // State and var defaults
+  game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
   frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
-    camera_ = new Camera();
-    light_controller_ = new LightController();
+
     is_key_pressed_hash_.reserve(256);
     is_key_pressed_hash_.resize(256);
     playSound = 1;
 
+    // Initialize Dummy Index for first equilavence check in collisions
+    prev_colisn_pair_idx_ = 0;
+
+    rain_ = new Rain(shaders_->RainGeneric);
+    water_ = new Water(shaders_->WaterGeneric);
+    skybox_ = new Skybox(shaders_->SkyboxGeneric);
+    terrain_ = new Terrain(shaders_->LightMappedGeneric);
+
+  // Add starting models
+  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
+  AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
+
 }
 
-void Controller::AddRain(GLuint program_id)
-{
-  rain_ = new Rain(program_id);
-}
-
-void Controller::AddWater(const GLuint program_id)
-{
-  water_ = new Water(program_id);
-}
-
-void Controller::AddSkybox(const GLuint program_id)
-{
-  skybox_ = new Skybox(program_id);
-}
 // Adds a model to the member vector
 //   @param program_id, a shader program
 //   @param model_filename, a string containing the path of the .obj file
@@ -64,7 +70,7 @@ void Controller::Draw() {
   // renderer_->RenderSkybox(skybox_, camera_);
 
   // DRAW TO THE SHADOW BUFFER
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer_->frame_buffer_name_);
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.frame_buffer_name_);
 	glClear(GL_DEPTH_BUFFER_BIT);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glViewport(0,0,1024,1024);
@@ -76,15 +82,15 @@ void Controller::Draw() {
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
-  renderer_->RenderDepthBuffer(terrain_, camera_);
+  renderer_.RenderDepthBuffer(terrain_);
 
   // binds the shadow mapping for reading
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,640,480);
-  glBindTexture( GL_TEXTURE_2D, renderer_->depth_texture_ );
-  renderer_->Render(terrain_, camera_);
+  glBindTexture( GL_TEXTURE_2D, renderer_.depth_texture_ );
+  renderer_.Render(terrain_);
 
   // Car with physics
   // if (camera_->state() != camera_->kFirstPerson)
@@ -164,16 +170,6 @@ void Controller::PositionLights() {
   light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
   light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);
   light_controller_->SetSpotLights(car_->program_id(), spotLights.size(), &spotLights[0]);
-}
-
-// Creates the Terrain object for RenderTerrain()
-//   Creates Terrain VAOs
-//   @param The shader used for terrain rendering
-//   @warn terrain_ on heap, must be deleted after
-void Controller::EnableTerrain(const GLuint program_id) {
-  terrain_ = new Terrain(program_id);
-  // Initialize Dummy Index for first equilavence check in collisions
-  prev_colisn_pair_idx_ = 0;
 }
 
 // The main control tick

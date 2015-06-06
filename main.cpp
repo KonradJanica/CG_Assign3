@@ -44,7 +44,6 @@
 #include "lib/stb_image/stb_image.h"
 
 // Renderer, Controller and Camera objects
-Renderer    *g_renderer;
 Controller  *g_controller;
 Camera      *g_camera;
 
@@ -188,20 +187,10 @@ void KeyboardUp(unsigned char key, int x, int y) {
  */
 void keyboardDown(unsigned char key, int x, int y) {
 
+  g_controller->KeyPressed(key);
   // We simply check the key argument against characters we care about, in this case A and D
   switch(key) 
   {
-    case 'w':
-    case 's':
-    case 'a':
-    case 'd':
-    case 'i':
-    case 'j':
-    case 'k':
-    case 'l':
-    case 'h':
-      g_controller->KeyPressed(key);
-      break;  
     case 27: // escape key pressed
       exit(0);
       break;
@@ -277,63 +266,12 @@ int main(int argc, char **argv) {
   glEnable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
 
-  // Load in all the shaders
-  g_program_id[0] = LoadShaders("shaders/wireframe.vert", "shaders/wireframe.frag");
-  if (g_program_id[0] == 0)
-    return 1;
-
-  g_program_id[1] = LoadShaders("shaders/coord.vert", "shaders/coord.frag");
-  if (g_program_id[1] == 0)
-    return 1;
-
-  g_program_id[2] = LoadShaders("shaders/shaded.vert", "shaders/shaded.frag");
-  if (g_program_id[2] == 0)
-    return 1;
-
-  g_program_id[3] = LoadShaders("shaders/water.vert", "shaders/water.frag");
-  if (g_program_id[3] == 0)
-    return 1;
-
-  g_program_id[4] = LoadShaders("shaders/sky.vert", "shaders/sky.frag");
-  if (g_program_id[4] == 0)
-    return 1;
-
-  g_program_id[5] = LoadShaders("shaders/rain.vert", "shaders/rain.frag");
-  if (g_program_id[5] == 0)
-    return 1;
-
-  g_program_id[6] = LoadShaders("shaders/depthbuffer.vert", "shaders/depthbuffer.frag");
-  if (g_program_id[6] == 0)
-    return 1;
-
-  // Make renderer with Axis
-  g_renderer = new Renderer(g_program_id[6], g_program_id[1], false);
-
-  g_controller = new Controller(g_renderer);
-
+  // Moved to stack for speed
+  Controller controller;
+  g_controller = &controller;
+  // g_controller = new Controller();
   // Setup camera global
   g_camera = g_controller->camera();
-
-  // Setup terrain
-  g_controller->EnableTerrain(g_program_id[2]);
-
-  // Setup skybox
-  g_controller->AddSkybox(g_program_id[4]);
-
-  // Setup Water
-  g_controller->AddWater(g_program_id[3]);
-
-  // Setup Rain
-  g_controller->AddRain(g_program_id[5]);
-
-  // Add starting models
-  // g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
-  // g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj", true);
-  // g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
-  g_controller->AddModel(g_program_id[2], "models/Pick-up_Truck/pickup.obj", true);
-  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_left.obj");
-  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
-  g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
 
   // TODO fix this - removed and hardcoded for shadows
   // UpdateProjection();
@@ -350,8 +288,6 @@ int main(int argc, char **argv) {
   glutDisplayFunc(render);
   glutMainLoop();
 
-  delete g_renderer;
-  delete g_controller;
   delete g_camera;
 
   return 0;
