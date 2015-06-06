@@ -46,8 +46,8 @@ class Controller {
       kGameOver = 6,
     };
 
-    // Construct with verbose debugging mode
-    Controller(const bool debug_flag = false);
+    // Construct with window dimensions & verbose debugging mode
+    Controller(const int window_width, const int window_height, const bool debug_flag = false);
 
     // Add a wireframe model from .obj file to the scene
     void AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car = false);
@@ -73,12 +73,12 @@ class Controller {
 
   private:
     // OBJECTS
-    // The camera object
-    Camera * camera_;
     // The renderer reference
     const Renderer renderer_;
     // The shaders object (holds and compiles all shaders)
     const Shaders * shaders_;
+    // The camera object
+    Camera camera_;
     // The light controller
     LightController * light_controller_;
 
@@ -200,7 +200,7 @@ inline void Controller::SetLightPosition(const float &x, const float &y, const f
 }
 // Accessor for Camera Object
 inline Camera * Controller::camera() {
-  return camera_;
+  return &camera_;
 }
 // Trues the key hash on key down event
 //   @param a key corresponding to is_key_pressed_hash_

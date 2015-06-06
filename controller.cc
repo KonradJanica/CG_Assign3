@@ -4,11 +4,11 @@
 //   Allows for Verbose Debugging Mode
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely
-Controller::Controller(const bool debug_flag) :
+Controller::Controller(const int window_width, const int window_height, const bool debug_flag) :
   // Object construction
-  camera_(new Camera()),
-  renderer_(Renderer(camera_, debug_flag)),
+  renderer_(Renderer(debug_flag)),
   shaders_(renderer_.shaders()),
+  camera_(Camera(shaders_, window_width, window_height)),
   light_controller_(new LightController()),
   // State and var defaults
   game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
@@ -67,7 +67,7 @@ void Controller::Draw() {
   PositionLights();
 
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  // renderer_->RenderSkybox(skybox_, camera_);
+  // renderer_.RenderSkybox(skybox_);
 
   // DRAW TO THE SHADOW BUFFER
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.frame_buffer_name_);
@@ -77,12 +77,12 @@ void Controller::Draw() {
 
   // renderer_->Render(terrain_, camera_, true);
   // Car with physics
-  // if (camera_->state() != camera_->kFirstPerson)
+  // if (camera_.state() != camera_.kFirstPerson)
     // renderer_->Render(car_, camera_, true);
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
-  renderer_.RenderDepthBuffer(terrain_);
+  renderer_.RenderDepthBuffer(terrain_, &camera_);
 
   // binds the shadow mapping for reading
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -90,10 +90,14 @@ void Controller::Draw() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,640,480);
   glBindTexture( GL_TEXTURE_2D, renderer_.depth_texture_ );
-  renderer_.Render(terrain_);
+
+  renderer_.Render(terrain_, &camera_);
+
+  // Unbind buffer
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   // Car with physics
-  // if (camera_->state() != camera_->kFirstPerson)
+  // if (camera_.state() != camera_.kFirstPerson)
     // renderer_->Render(car_, camera_, false);
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, false);
@@ -105,11 +109,11 @@ void Controller::Draw() {
 	// glFlush();
 
   // DONE SHADOWS
-  // renderer_->RenderWater(water_,car_, camera_, skybox_);
+  // renderer_.RenderWater(water_, car_, skybox_);
   // Axis
   // TODO Toggle
 
-   // renderer_->RenderAxis(camera_);
+   renderer_.RenderAxis(&camera_);
    // rain_->Render(camera_, car_, skybox_);
   
 
@@ -118,7 +122,7 @@ void Controller::Draw() {
 
 // Assumes SetupLighting() has been called, only updates essential light properties
 void Controller::PositionLights() {
-  glm::mat4 view_matrix = camera_->view_matrix();
+  glm::mat4 view_matrix = camera_.view_matrix();
   glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
@@ -238,11 +242,11 @@ void Controller::UpdateGame() {
 void Controller::UpdateCamera() {
   // CAMERA CONTROLS
   // Freeview movement
-  camera_->Movement(delta_time_, is_key_pressed_hash_); 
+  camera_.Movement(delta_time_, is_key_pressed_hash_); 
   // Point at car
-  camera_->UpdateCarTick(car_);
+  camera_.UpdateCarTick(car_);
   // Update camera lookAt
-  camera_->UpdateCamera();
+  camera_.UpdateCamera();
 
 }
 
@@ -256,7 +260,7 @@ void Controller::UpdateCamera() {
 void Controller::CrashAnimationCliff() {
 
   // Lock camera state
-  // camera_->ChangeState(Camera::kFreeView);
+  // camera_.ChangeState(Camera::kFreeView);
   const glm::vec3 &car_pos = car_->translation();
 
   // Calc next movement (avoid going through)
@@ -347,7 +351,7 @@ void Controller::CrashAnimationCliff() {
     // Reset game state
     game_state_ = kStart;
     is_collision_ = false;
-    camera_->ChangeState(camera_state_); // users previous camera
+    camera_.ChangeState(camera_state_); // users previous camera
     return;
   }
 
@@ -400,7 +404,7 @@ void Controller::CrashAnimationCliff() {
       // Reset game state
       game_state_ = kAutoDrive;
       is_collision_ = false;
-      camera_->ChangeState(camera_state_); // users previous camera
+      camera_.ChangeState(camera_state_); // users previous camera
       playSound = 1;
       return;
     }
@@ -418,7 +422,7 @@ void Controller::CrashAnimationCliff() {
 void Controller::CrashAnimationFall() {
 
   // Lock camera state
-  camera_->ChangeState(Camera::kFreeView);
+  camera_.ChangeState(Camera::kFreeView);
   // Rotate car
   float x_rot = car_->rotation().x + car_->speed() * 0.0004f * delta_time_;
   // printf("dt = %f\n",delta_time_);
@@ -505,7 +509,7 @@ void Controller::CrashAnimationFall() {
       // Reset game state
       game_state_ = kAutoDrive;
       is_collision_ = false;
-      camera_->ChangeState(camera_state_); // users previous camera
+      camera_.ChangeState(camera_state_); // users previous camera
       playSound = 1;
       return;
     }
@@ -672,10 +676,10 @@ void Controller::UpdateCollisions() {
   // @warn also sets camera position for the crash
   if (is_collision_) {
     // MITCH PLAY SOUND
-    camera_state_ = camera_->state();
+    camera_state_ = camera_.state();
     if (is_water_closest) {
       game_state_ = kCrashingFall;
-      camera_->ChangeState(Camera::kFirstPerson);
+      camera_.ChangeState(Camera::kFirstPerson);
     } else {
       game_state_ = kCrashingCliff;
       is_cliff_hit_ = false;

@@ -6,11 +6,13 @@
 //   @param camera, The camera object used to get view matrix
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely with debugging enabled
-Renderer::Renderer(const Camera * camera, const bool debug_flag) :
-  shaders_(Shaders(debug_flag)), camera_(camera), coord_vao_handle(0), is_debugging_(debug_flag) {
-
-    if (debug_flag)
-      EnableAxis();
+Renderer::Renderer(const bool debug_flag) :
+  // Rendering objects
+  shaders_(Shaders(debug_flag)),
+  // Default vars
+  coord_vao_handle_(debug_flag ? EnableAxis() : 0),
+  // Debugging state
+  is_debugging_(debug_flag) {
 
   // Setup depth buffer //TODO FIX THIS!
   unsigned int windowX = 1024, windowY = 1024;
@@ -26,7 +28,7 @@ Renderer::Renderer(const Camera * camera, const bool debug_flag) :
   glBindTexture(GL_TEXTURE_2D, depth_texture_);
 
   // Give an empty image to OpenGL ( the last "0" )
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -42,14 +44,14 @@ Renderer::Renderer(const Camera * camera, const bool debug_flag) :
 
   // Set "renderedTexture" as our depth attachement
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_texture_, 0);
-  
+
   // Instruct openGL that we won't bind a color texture with the currently binded FBO
   glDrawBuffer(GL_NONE);
   // glReadBuffer(GL_NONE);
 
   // Always check that our framebuffer is ok
   GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  
+
   if (Status != GL_FRAMEBUFFER_COMPLETE) {
       printf("FB error, status: 0x%x\n", Status);
       exit(-1);
@@ -64,7 +66,7 @@ Renderer::Renderer(const Camera * camera, const bool debug_flag) :
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky) const
+void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky, const Camera * camera) const
 {
   glUseProgram(water->watershader());
 
@@ -80,7 +82,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
   if (camPosHandle == -1) {
     printf("Couldnt get the campos for water reflections\n");
   }
-  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera_->cam_pos()));
+  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
 
   int texHandle = glGetUniformLocation(water->watershader(), "skybox");
   if (texHandle == -1) {
@@ -102,7 +104,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
-  glm::mat4 view_matrix = camera_->view_matrix();
+  glm::mat4 view_matrix = camera->view_matrix();
 
   // Get only the needed components of the object's model matrix
 
@@ -141,8 +143,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
 //   Should be called in the controller
 //   @param Skybox * sky, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderSkybox(const Skybox * Sky) const
-{
+void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const {
   int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
   if (mvHandle == -1) {
     if (is_debugging_) {
@@ -150,13 +151,14 @@ void Renderer::RenderSkybox(const Skybox * Sky) const
     }
   }
 
-  int cubeHandle = glGetUniformLocation(Sky->skyshader(), "cubeMap");
-  if (cubeHandle == -1) {
-    if (is_debugging_) {
-      fprintf(stderr, "Could not find uniform variables\n");
-      exit(1);
-    }
-  }
+  // TODO KONRAD -> MITCH not used?
+  // int cubeHandle = glGetUniformLocation(Sky->skyshader(), "cubeMap");
+  // if (cubeHandle == -1) {
+  //   if (is_debugging_) {
+  //     fprintf(stderr, "Could not find uniform variables\n");
+  //     // exit(1);
+  //   }
+  // }
 
   int texHandle = glGetUniformLocation(Sky->skyshader(), "skybox");
   if (texHandle == -1) {
@@ -169,14 +171,13 @@ void Renderer::RenderSkybox(const Skybox * Sky) const
   // Draw skybox with depth testing off
   glDepthMask(GL_FALSE);
   glUseProgram(Sky->skyshader());
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(texHandle, 0);
   
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
-  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera_->view_matrix()));
+  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera->view_matrix()));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Render the Skybox
@@ -191,7 +192,7 @@ void Renderer::RenderSkybox(const Skybox * Sky) const
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object) const {
+void Renderer::Render(const Object * object, const Camera * camera) const {
   bool is_frame = false;
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
@@ -315,26 +316,19 @@ void Renderer::Render(const Object * object) const {
 }
 
 // Render Coordinate Axis 
-//   Used with Render(index)
+//   Only renders in debugging mode
 //   @warn requires VAO from EnableAxis
-//   @warn is already included in Render() all function
-void Renderer::RenderAxis() const {
-  //Render Axis if VAO exists
-  if (coord_vao_handle != 0) {
-    GLuint axis_program_id = shaders_.AxisDebug->Id;
-    glUseProgram(axis_program_id);
+void Renderer::RenderAxis(const Camera * camera) const {
+  //Render Axis if Debugging mode
+  if (is_debugging_) {
+    const Shader * shader = shaders_.AxisDebug;
+    glUseProgram(shader->Id);
     glDisable(GL_DEPTH_TEST);
 
-    // Modelview Setup
-    int modelviewHandle1 = glGetUniformLocation(axis_program_id, "modelview_matrix");
-    if (modelviewHandle1 == -1)
-      exit(1);
+    const glm::mat4 &view_matrix = camera->view_matrix();
+    glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(view_matrix));
 
-    const glm::mat4 &view_matrix = camera_->view_matrix();
-    glUniformMatrix4fv( modelviewHandle1, 1, false, glm::value_ptr(view_matrix));
-
-    // Set VAO to the square model and draw three in different positions
-    glBindVertexArray(coord_vao_handle);
+    glBindVertexArray(coord_vao_handle_);
 
     glLineWidth(4.0f);
     glDrawElements(GL_LINES, 2*3, GL_UNSIGNED_INT, 0);	// New call. 2 vertices * 3 lines
@@ -343,9 +337,9 @@ void Renderer::RenderAxis() const {
 }
 
 // Creates a VAO for x,y,z axis and binds it to a given shader for proper colouring
-//   Render() checks if the VAO is created and then draws it
+//   @return a VAO to use for the Axis
 //   @warn should only be called once, duplicate calls are irrelevant
-void Renderer::EnableAxis() {
+GLuint Renderer::EnableAxis() const {
   //  Build coordinate lines
   std::vector<unsigned int> coord_indices;
   coord_indices.push_back(0);
@@ -362,16 +356,11 @@ void Renderer::EnableAxis() {
   coord_vertices.push_back(glm::vec3(0.0,0.0,-100000.0));
   coord_vertices.push_back(glm::vec3(0.0,0.0,100000.0));
 
+  GLuint coord_vao_handle;
+
   //Create axis VAO
-  GLuint program_id = shaders_.AxisDebug->Id;
-  glUseProgram(program_id);
-
-  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
-
   glGenVertexArrays(1, &coord_vao_handle);
   glBindVertexArray(coord_vao_handle);
-
-  int vertLoc = glGetAttribLocation(program_id, "a_vertex");
 
   // Buffers to store position, colour and index data
   unsigned int buffer[2];
@@ -381,8 +370,8 @@ void Renderer::EnableAxis() {
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
   glBufferData(GL_ARRAY_BUFFER, 
       sizeof(glm::vec3) * coord_vertices.size() , &coord_vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertLoc);
-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
@@ -393,13 +382,14 @@ void Renderer::EnableAxis() {
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+  return coord_vao_handle;
 }
 
 // Draws/Renders the passed in terrain to the scene
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain) const {
+void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   const Shader * shader = terrain->shader();
   glUseProgram(shader->Id);
   glCullFace(GL_BACK);
@@ -408,7 +398,7 @@ void Renderer::Render(const Terrain * terrain) const {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
-  const glm::mat4 VIEW = camera_->view_matrix();
+  const glm::mat4 VIEW = camera->view_matrix();
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
   const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
@@ -420,9 +410,9 @@ void Renderer::Render(const Terrain * terrain) const {
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera_->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera_->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
@@ -445,13 +435,13 @@ void Renderer::Render(const Terrain * terrain) const {
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
   const glm::vec3 &vao_diffuse = glm::vec3(0.5f,0.5f,0.5f);
   const glm::vec3 &vao_specular = glm::vec3(0.5f,0.5f,0.5f);
-  float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
-  float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
-  float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
+  const float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
+  const float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
+  const float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
+  const float mtlshininess = 0.8f; 
   glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
   glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
   glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
-  float mtlshininess = 0.8f; 
   glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
 
   // Bind VAO and texture - Terrain
@@ -516,7 +506,7 @@ void Renderer::Render(const Terrain * terrain) const {
 //   @param vec4 light_pos, The position of the Light for lighting
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
-void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
+void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const {
   const Shader &shader = shaders_.DepthBuffer;
   glUseProgram(shader.Id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -527,9 +517,9 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera_->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera_->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));

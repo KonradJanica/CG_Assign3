@@ -93,40 +93,19 @@ void render() {
 
   // Swap buffers + flush
   glutSwapBuffers();
-  glFlush();
+  // No point using glFlush unless single buffer or using opengl over a network
+  //   // Konrad
+  // glFlush();
 }
 
 void idle() {
 }
 
 void timer(int t) {
-  // unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
-  // // FPS counter, only print FPS in terminal when it is not 60
-  // g_frames += 1;
-  // if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
-  //   if (g_frames != 60) {
-  //     std::cout << "FPS: " << g_frames << std::endl;
-  //   }
-  //   g_frames = 0;
-  //   g_past = time;
-  // }
-
   // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
-  
-
-  // glUseProgram(g_program_id[3]);
-  // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
-  // if(timeHandle == -1)
-  // {
-  //   printf("Could not get handle for time var \n");
-  // }
-  // //printf("sending time %d\n", time);
-  // glUniform1f(timeHandle, time+1); 
-
 
   // UpdateProjection();
-
 
   glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
@@ -197,14 +176,6 @@ void keyboardDown(unsigned char key, int x, int y) {
     case 'c':
       g_camera->CycleState();
       break;
-    case 'b':
-      g_fov += 5.0f;
-      std::cout << "FOV = " << g_fov << std::endl;
-      if (g_fov > 120.0f)
-        g_fov = 0.0f;
-      UpdateProjection();
-      glutPostRedisplay();
-      break;
     case 'p':
       // TODO fix this
       if (g_coord_axis) {
@@ -229,6 +200,9 @@ int main(int argc, char **argv) {
   std::cout << "Movement: Hold and drag left mouse to change camera direction in free mode\n";
   std::cout << "Controls: 'c' key to toggle Camera mode\n";
   std::cout << "Controls: 'Esc' key to Quit\n\n";
+
+  // Check whether vec3 can be loaded into VAO - otherwise no point continuing
+  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3);
 
   // Set up GLUT window
   glutInit(&argc, argv);
@@ -267,7 +241,7 @@ int main(int argc, char **argv) {
   glFrontFace(GL_CCW);
 
   // Moved to stack for speed
-  Controller controller(true);
+  Controller controller(g_window_x, g_window_y, true);
   g_controller = &controller;
   // g_controller = new Controller();
   // Setup camera global

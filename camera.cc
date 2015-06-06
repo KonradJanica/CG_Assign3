@@ -1,24 +1,43 @@
 /**
- * Computer Graphics Assignment 3 - 
+ * Computer Graphics Assignment 3 -
  * Mitchell Anderson, Andrew Pham, Konrad Janica
  *
  * camera.cc, implementation of multiple camera types in openGL
- * 
+ *
  * This file is an implementation of different camera types in openGL
  * including a chase cam, first person cam and a freeview cam
  *
+ * This object is responsible for updating Projection matrix
+ * 
+ *
  * Refer to the comments describing each function for further detail
  *
- * 
+ *
  */
 
 #include "camera.h"
 
 // Default Constructor sets starting position of Camera at 0,5,-10 (Above Road)
-Camera::Camera() : state_(kFreeView),
-  cam_pos_(glm::vec3(0.0f,5.0f,-10.0f)), cam_front_(glm::vec3(0.0f, -0.5f, 1.0f)), cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)), 
-  aspect_(45.0f), yaw_(kPi/2), pitch_(0.0f), delta_time_(0.0f), last_frame_(0.0f) {
-  view_matrix_ = glm::lookAt(cam_pos_, cam_pos_ + cam_front_, cam_up_);
+//   @param shaders, an object pointer containing all active shaders
+//   @param window_width, the width of the application window
+//   @param window_height, the height of the application window
+//   @param fov, the default field of view
+Camera::Camera(const Shaders * shaders, 
+    const int window_width, const int window_height, const float fov) :
+  // Default Vars - VIEWING
+  state_(kFreeView),
+  cam_pos_(glm::vec3(0.0f,5.0f,-10.0f)),
+  cam_front_(glm::vec3(0.0f, -0.5f, 1.0f)),
+  cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)),
+  yaw_(kPi/2), pitch_(0.0f),
+  // Default Vars - WINDOW
+  fov_(fov), width_(window_width), height_(window_height),
+  // Pointer to all Shaders
+  shaders_(shaders) {
+    // Setup view
+    view_matrix_ = glm::lookAt(cam_pos_, cam_pos_ + cam_front_, cam_up_);
+    // Setup projections
+    UpdateProjections();
 }
 
 // Changes the current state of the camera, hence changes the viewing
@@ -57,6 +76,27 @@ void Camera::Movement(float delta_time, const std::vector<bool> &is_key_pressed_
     if (is_key_pressed_hash.at('k')) {
       cam_pos_ -= cameraSpeed * cam_front_;
     }
+    if (is_key_pressed_hash.at('b')) {
+      fov_ += 5.0f;
+      printf("FOV = %f\n", fov_);
+      if (fov_ > 140.0f)
+        fov_ = 30.0f;
+      UpdateProjections();
+    }
+}
+
+// Updates all the currently loaded shaders' projection uniforms
+void Camera::UpdateProjections() {
+  projection_matrix_ = glm::perspective(
+      fov_, float(width_ / height_), 0.1f, 100.0f);
+  ShadersProjectionIterator iter(shaders_);
+  iter = iter.begin();
+  while (iter != iter.end()) {
+    const Shader * shader = *(iter);
+    glUseProgram(shader->Id);
+    glUniformMatrix4fv(shader->projHandle, 1, false, glm::value_ptr(projection_matrix_));
+    ++iter;
+  }
 }
 
 // Changes Direction by X and Y mouse inputs
@@ -89,19 +129,19 @@ void Camera::ChangeDirection(int x, int y) {
     cam_front_ = glm::normalize(front);
 }
 
-// Changes Aspect ratio to Zoom the camera
+// Changes FOV to Zoom the camera
 //  Calculates the difference of previous mouse y positions
 //  and current to work out the new aspect
 //  @param int y, new mouse y position
 //  @warn relies on UpdatePreviousMouse(x,y) to work
 void Camera::ChangeZoom(const int &y) {
   GLfloat yoffset = prev_mouse_y_ - y;
-  if(aspect_ >= 1.0f && aspect_ <= 45.0f)
-    aspect_ -= yoffset;
-  if(aspect_ <= 1.0f)
-    aspect_ = 1.0f;
-  if(aspect_ >= 45.0f)
-    aspect_ = 45.0f;
+  if(fov_ >= 1.0f && fov_ <= 45.0f)
+    fov_ -= yoffset;
+  if(fov_ <= 1.0f)
+    fov_ = 1.0f;
+  if(fov_ >= 45.0f)
+    fov_ = 45.0f;
 }
 
 // Update upon Car movement tick
@@ -143,8 +183,7 @@ void Camera::UpdateCarTick(const Object * car) {
   }
 }
 
-// Update the Camera Matrix
-//   Should be called in render
+// Update the VIEW Matrix
 void Camera::UpdateCamera() {
   if (state_ == kFreeView || state_ == kFirstPerson) {
     view_matrix_ = glm::lookAt(cam_pos_, cam_pos_ + cam_front_, cam_up_);

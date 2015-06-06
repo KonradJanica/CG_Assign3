@@ -123,6 +123,130 @@ struct Shaders {
       assert(RainGeneric.Id        && "RainGeneric Shader failed to load");
       assert(DepthBuffer.Id        && "DepthBuffer Shader failed to load");
     }
+
+};
+
+
+// An iterator for the Shaders struct
+//   The depthbuffer shader is at iter.end() but should be
+//   hence is excluded from std begin->end looping
+//   Helpful for updating all projections
+//   @warn iterating past end() (or before begin) is undefined
+//         behaviour and will eventually overflow to beginning
+//   @warn hard coded
+struct ShadersProjectionIterator {
+  typedef ShadersProjectionIterator const_iterator;
+  // BASE CONSTRUCTOR
+  ShadersProjectionIterator(const Shaders * shaders) :
+    shaders_(shaders) {};
+
+  // ITERATOR OVERLOADED CONSTRUCTOR
+  ShadersProjectionIterator(const Shaders * shaders, const Shader * shader, const char index) :
+    shaders_(shaders), shader_iter_(shader), index_(index) {};
+
+  // ITERATORS
+  // begin(), An iterator referring to AxisDebug or LightMappedGeneric, i.e. the first element
+  //          depends on whether debugging is enabled or not.
+  //   @warn undefined behaviour when iterating past end (or before begin)
+  const_iterator begin() const {
+    const_iterator temp(
+        this->shaders_,
+        shaders_->AxisDebug ? shaders_->AxisDebug : &(shaders_->LightMappedGeneric),
+        shaders_->AxisDebug ? 0 : 1);
+    return temp;
+  }
+  // end(), An iterator referring to DepthBuffer, i.e. past-the-end (relevant-to-proj) element
+  //   @warn undefined behaviour when iterating past end (or before begin)
+  //   @warn will return axis debug if iterated past begin
+  const_iterator end()   const {
+    const_iterator temp(
+        this->shaders_,
+        &(shaders_->DepthBuffer),
+        4);
+    return temp;
+  }
+  // Dereference
+  const Shader * operator * () { return shader_iter_; };
+  const Shader * operator -> () { return (operator * ()); };
+  // Mutators
+  const_iterator &operator ++ () {
+    switch (index_) {
+      case 0:
+        shader_iter_ = &shaders_->LightMappedGeneric;
+        break;
+      case 1:
+        shader_iter_ = &shaders_->WaterGeneric;
+        break;
+      case 2:
+        shader_iter_ = &shaders_->SkyboxGeneric;
+        break;
+      case 3:
+        shader_iter_ = &shaders_->RainGeneric;
+        break;
+      case 4:
+        shader_iter_ = &shaders_->DepthBuffer; // End of iterator
+        break;
+    }
+    ++index_;
+    return *this;
+  };
+
+  const_iterator operator ++ (int) {
+    const_iterator temp(*this);
+    ++(*this);
+    return temp;
+  };
+
+  const_iterator &operator -- () {
+    switch (index_) {
+      --index_;
+      case 0:
+      shader_iter_ = shaders_->AxisDebug;
+      case 1:
+      shader_iter_ = &shaders_->LightMappedGeneric;
+      break;
+      case 2:
+      shader_iter_ = &shaders_->WaterGeneric;
+      break;
+      case 3:
+      shader_iter_ = &shaders_->SkyboxGeneric;
+      break;
+      case 4:
+      shader_iter_ = &shaders_->RainGeneric;
+      break;
+      case 5:
+      shader_iter_ = &shaders_->DepthBuffer; // End of iterator
+      break;
+    }
+    return *this;
+  };
+
+  const_iterator operator -- (int) {
+    const_iterator temp(*this);
+    --(*this);
+    return temp;
+  };
+
+  bool operator == (const const_iterator &other) const {
+    return index_ == other.index_ &&
+      shader_iter_ == other.shader_iter_ &&
+      shaders_ == other.shaders_;
+  }
+  bool operator != (const const_iterator &other) const {
+    return index_ != other.index_ &&
+      shader_iter_ != other.shader_iter_ &&
+      shaders_ != other.shaders_;
+  }
+
+  private:
+  // The shaders object for next pointer
+  const Shaders * shaders_;
+  // The current shader object pointed to
+  const Shader * shader_iter_;
+  // The current index of the iterator
+  //   Corresponds to the order of members
+  //   in Shaders struct
+  char index_;
 };
 
 #endif
