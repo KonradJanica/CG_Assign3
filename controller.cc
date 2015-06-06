@@ -24,7 +24,7 @@ Controller::Controller(const bool debug_flag) :
     rain_ = new Rain(shaders_->RainGeneric.Id);
     water_ = new Water(shaders_->WaterGeneric.Id);
     skybox_ = new Skybox(shaders_->SkyboxGeneric.Id);
-    terrain_ = new Terrain(shaders_->LightMappedGeneric.Id);
+    terrain_ = new Terrain(&shaders_->LightMappedGeneric);
 
   // Add starting models
   AddModel(shaders_->LightMappedGeneric.Id, "models/Pick-up_Truck/pickup.obj", true);

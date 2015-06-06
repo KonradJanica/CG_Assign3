@@ -400,47 +400,12 @@ void Renderer::EnableAxis() {
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
 void Renderer::Render(const Terrain * terrain) const {
-  GLuint program_id = terrain->terrain_program_id();
-  glUseProgram(program_id);
+  const Shader * shader = terrain->shader();
+  glUseProgram(shader->Id);
   glCullFace(GL_BACK);
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  // Setup Handles
-  int mvp_handle = glGetUniformLocation(program_id, "mvp_matrix");
-  int norm_handle = glGetUniformLocation(program_id, "normal_matrix");
-  int tex_handle = glGetUniformLocation(program_id, "texMap");
-  if (mvp_handle == -1 || norm_handle==-1 || tex_handle == -1) {
-    if (is_debugging_) {
-      assert(0 && "Error: can't find matrix uniforms\n");
-    }
-  }
-  int modelview_handle = glGetUniformLocation(program_id, "modelview_matrix");
-  int depth_bias_mvp_handle = glGetUniformLocation(program_id, "depth_bias_mvp_matrix");
-  GLuint ShadowMapHandle = glGetUniformLocation(program_id, "shadowMap");
-  if (ShadowMapHandle == -1) {
-    assert(0 && "Error: cant find shadowMap");
-  }
-
-  // Uniform variables defining material colours
-  // These can be changed for each sphere, to compare effects
-  int mtlambientHandle = glGetUniformLocation(program_id, "mtl_ambient");
-  int mtldiffuseHandle = glGetUniformLocation(program_id, "mtl_diffuse");
-  int mtlspecularHandle = glGetUniformLocation(program_id, "mtl_specular");
-  int shininessHandle = glGetUniformLocation(program_id, "shininess");
-  if(0)
-    //TODO TODO mtlspecuar not even being used in shader wtaf
-    if (is_debugging_) {
-      if (mtlambientHandle = -1) {
-        assert(0 && "Error: mtl_ambient handle not found\n");
-      }
-      if (mtlambientHandle = -1) {
-        assert(0 && "Error: mtl_ambient handle not found\n");
-      }
-      if (mtlambientHandle = -1) {
-        assert(0 && "Error: mtl_ambient handle not found\n");
-      }
-    }
 
   const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
   const glm::mat4 VIEW = camera_->view_matrix();
@@ -471,10 +436,10 @@ void Renderer::Render(const Terrain * terrain) const {
   glm::mat3 NORMAL;
   // NORMAL = glm::mat3(view_matrix);
   NORMAL = glm::inverse(glm::transpose(glm::mat3(VIEW)));
-  glUniformMatrix4fv(modelview_handle, 1, false, glm::value_ptr(VIEW * MODEL));
-  glUniformMatrix4fv(mvp_handle, 1, false, glm::value_ptr(MVP));
-  glUniformMatrix4fv(depth_bias_mvp_handle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
-  glUniformMatrix3fv(norm_handle, 1, false, glm::value_ptr(NORMAL));
+  glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
+  glUniformMatrix4fv(shader->mvpHandle, 1, false, glm::value_ptr(MVP));
+  glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
+  glUniformMatrix3fv(shader->normHandle, 1, false, glm::value_ptr(NORMAL));
 
   // Pass Surface Colours to Shader
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
@@ -483,18 +448,18 @@ void Renderer::Render(const Terrain * terrain) const {
   float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
   float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
   float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
-  glUniform3fv(mtlambientHandle, 1, mtlambient);
-  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
-  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
+  glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
+  glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
   float mtlshininess = 0.8f; 
-  glUniform1fv(shininessHandle, 1, &mtlshininess);
+  glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
       // We are using texture unit 0 (the default)
       glActiveTexture(GL_TEXTURE0);
-      glUniform1i(tex_handle, 0);
+      glUniform1i(shader->texMapHandle, 0);
 
       glBindTexture(GL_TEXTURE_2D, terrain->texture());
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
@@ -503,13 +468,13 @@ void Renderer::Render(const Terrain * terrain) const {
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, depth_texture_);
-      glUniform1i(ShadowMapHandle, 1);
+      glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
     glBindVertexArray(terrain_vao_handle.at(x));
-    // glBindAttribLocation(program_id, 0, "a_vertex");
-    // glBindAttribLocation(program_id, 1, "a_normal");
-    // glBindAttribLocation(program_id, 2, "a_texture");
+    // glBindAttribLocation(shader->Id, 0, "a_vertex");
+    // glBindAttribLocation(shader->Id, 1, "a_normal");
+    // glBindAttribLocation(shader->Id, 2, "a_texture");
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
     // Un-bind
@@ -523,7 +488,7 @@ void Renderer::Render(const Terrain * terrain) const {
   for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
       // We are using texture unit 0 (the default)
       glActiveTexture(GL_TEXTURE0);
-      glUniform1i(tex_handle, 0);
+      glUniform1i(shader->texMapHandle, 0);
       // Bind VAO Road
       glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
@@ -552,16 +517,12 @@ void Renderer::Render(const Terrain * terrain) const {
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
 void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
-  GLuint depth_program_id = shaders_.DepthBuffer.Id;
-  glUseProgram(depth_program_id);
+  const Shader &shader = shaders_.DepthBuffer;
+  glUseProgram(shader.Id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Remove shadow acne
   glCullFace(GL_FRONT);
-  // Setup Handles
-  int depth_mvp_handle = glGetUniformLocation(depth_program_id, "depth_mvp_matrix");
-  if (depth_mvp_handle == -1) {
-      assert(0 && "Error: can't find depth bias matrix uniform\n");
-  }
+
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
@@ -577,7 +538,7 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain) const {
 
   // Send our transformation to the currently bound shader,
   // in the "MVP" uniform
-  glUniformMatrix4fv(depth_mvp_handle, 1, GL_FALSE, glm::value_ptr(DEPTH_MVP));
+  glUniformMatrix4fv(shader.depthMvpHandle, 1, GL_FALSE, glm::value_ptr(DEPTH_MVP));
 
   // Bind VAO and texture - Terrain
   const int amount_terrain = terrain->indice_count();

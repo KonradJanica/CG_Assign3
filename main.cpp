@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
   glFrontFace(GL_CCW);
 
   // Moved to stack for speed
-  Controller controller;
+  Controller controller(true);
   g_controller = &controller;
   // g_controller = new Controller();
   // Setup camera global

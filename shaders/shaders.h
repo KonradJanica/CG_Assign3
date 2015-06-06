@@ -4,6 +4,7 @@
 #include <cassert>
 #include <string>
 #include <cstdio>
+#include <GL/glew.h>
 #include "shader_compiler/shader.hpp"
 
 // A Shader
@@ -30,8 +31,6 @@ struct Shader {
   const GLint       camPosHandle;
   // Skybox
   const GLint         cubeHandle;
-  // Axis
-  const GLint         axisHandle;
   // Projection
   const GLint         projHandle;
 
@@ -42,7 +41,7 @@ struct Shader {
     Id(LoadShaders(vert_path.c_str(), frag_path.c_str())),
     mvpHandle(          glGetUniformLocation(Id, "mvp_matrix")),
     mvHandle(           glGetUniformLocation(Id, "modelview_matrix")),
-    normHandle(         glGetUniformLocation(Id, "modelview_matrix")),
+    normHandle(         glGetUniformLocation(Id, "normal_matrix")),
     texMapHandle(       glGetUniformLocation(Id, "texMap")),
     shadowMapHandle(    glGetUniformLocation(Id, "shadowMap")),
     depthBiasMvpHandle( glGetUniformLocation(Id, "depth_bias_mvp_matrix")),
@@ -53,11 +52,9 @@ struct Shader {
     mtlSpecularHandle(  glGetUniformLocation(Id, "mtl_specular")),
     shininessHandle(    glGetUniformLocation(Id, "shininess")),
     // Water
-    camPosHandle(       glGetUniformLocation(Id, "modelview_matrix")),
+    camPosHandle(       glGetUniformLocation(Id, "cameraPos")),
     // Skybox
-    cubeHandle(         glGetUniformLocation(Id, "modelview_matrix")),
-    // Axis
-    axisHandle(         glGetUniformLocation(Id, "modelview_matrix")),
+    cubeHandle(         glGetUniformLocation(Id, "cubeMap")),
     // Projection
     projHandle(         glGetUniformLocation(Id, "modelview_matrix"))
   {
@@ -68,6 +65,8 @@ struct Shader {
         fprintf(stderr, "%s - Could not find uniform variables - mvpHandle\n", file);
       if (mvHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - mvHandle\n", file);
+      if (normHandle == -1)
+        fprintf(stderr, "%s - Could not find uniform variables - normHandle\n", file);
       if (texMapHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - texMapHandle\n", file);
       if (shadowMapHandle == -1)
@@ -88,10 +87,9 @@ struct Shader {
         fprintf(stderr, "%s - Could not find uniform variables - camPosHandle\n", file);
       if (cubeHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - cubeHandle\n", file);
-      if (axisHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - axisHandle\n", file);
       if (projHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - projHandle\n", file);
+      fprintf(stderr, "\n"); // Make spacing
     }
   }
 };
@@ -100,7 +98,7 @@ struct Shader {
 //   Holds all shaders required for the program
 //   @warn only one instance should ever be created
 struct Shaders {
-  const Shader  * AxisDebug;
+  const Shader  * AxisDebug; //only created in debug mode
   const Shader LightMappedGeneric;
   const Shader WaterGeneric;
   const Shader SkyboxGeneric;
@@ -111,11 +109,11 @@ struct Shaders {
   //   @param is_debug, true = load axis shader
   Shaders(const bool is_debug = false) :
     AxisDebug(is_debug ? new Shader("shaders/coord.vert", "shaders/coord.frag", is_debug) : 0 ),
-    LightMappedGeneric(  Shader("shaders/shaded.vert", "shaders/shaded.frag", is_debug)),
-    WaterGeneric(        Shader("shaders/water.vert", "shaders/water.frag", is_debug)),
-    SkyboxGeneric(       Shader("shaders/sky.vert", "shaders/sky.frag", is_debug)),
-    RainGeneric(         Shader("shaders/rain.vert", "shaders/rain.frag", is_debug)),
-    DepthBuffer(         Shader("shaders/depthbuffer.vert", "shaders/depthbuffer.frag", is_debug))
+    LightMappedGeneric( Shader("shaders/shaded.vert", "shaders/shaded.frag", is_debug)),
+    WaterGeneric(       Shader("shaders/water.vert", "shaders/water.frag", is_debug)),
+    SkyboxGeneric(      Shader("shaders/sky.vert", "shaders/sky.frag", is_debug)),
+    RainGeneric(        Shader("shaders/rain.vert", "shaders/rain.frag", is_debug)),
+    DepthBuffer(        Shader("shaders/depthbuffer.vert", "shaders/depthbuffer.frag", is_debug))
     {
       if (is_debug)
         assert(AxisDebug->Id       && "Axis Shader failed to load");
