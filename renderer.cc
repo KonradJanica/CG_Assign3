@@ -66,7 +66,7 @@ Renderer::Renderer(const bool debug_flag) :
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky, const Camera * camera) const
+void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky, const Camera &camera) const
 {
   glUseProgram(water->watershader());
 
@@ -82,7 +82,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
   if (camPosHandle == -1) {
     printf("Couldnt get the campos for water reflections\n");
   }
-  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera->cam_pos()));
+  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera.cam_pos()));
 
   int texHandle = glGetUniformLocation(water->watershader(), "skybox");
   if (texHandle == -1) {
@@ -104,7 +104,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
-  glm::mat4 view_matrix = camera->view_matrix();
+  glm::mat4 view_matrix = camera.view_matrix();
 
   // Get only the needed components of the object's model matrix
 
@@ -143,7 +143,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
 //   Should be called in the controller
 //   @param Skybox * sky, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const {
+void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
   int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
   if (mvHandle == -1) {
     if (is_debugging_) {
@@ -177,7 +177,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const {
   
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
-  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera->view_matrix()));
+  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera.view_matrix()));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
 
   // Render the Skybox
@@ -192,7 +192,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera * camera) const {
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera * camera) const {
+void Renderer::Render(const Object * object, const Camera &camera) const {
   bool is_frame = false;
   GLuint program_id = object->program_id();
   glUseProgram(program_id);
@@ -252,7 +252,7 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
     glUniformMatrix4fv(projection_handle, 1, false, glm::value_ptr(projection));
     view_matrix = glm::lookAt(glm::vec3(-5.0f,0.5f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
   } else {
-    // view_matrix = camera->view_matrix();
+    // view_matrix = camera.view_matrix();
     viewLightMatrix = glm::lookAt(glm::vec3(-5.0f,0.5f,-5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
     glViewport(0,0,640,480);
   glm::mat4 projection = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
@@ -318,14 +318,14 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
 // Render Coordinate Axis 
 //   Only renders in debugging mode
 //   @warn requires VAO from EnableAxis
-void Renderer::RenderAxis(const Camera * camera) const {
+void Renderer::RenderAxis(const Camera &camera) const {
   //Render Axis if Debugging mode
   if (is_debugging_) {
     const Shader * shader = shaders_.AxisDebug;
     glUseProgram(shader->Id);
     glDisable(GL_DEPTH_TEST);
 
-    const glm::mat4 &view_matrix = camera->view_matrix();
+    const glm::mat4 &view_matrix = camera.view_matrix();
     glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(view_matrix));
 
     glBindVertexArray(coord_vao_handle_);
@@ -389,7 +389,7 @@ GLuint Renderer::EnableAxis() const {
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
+void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   const Shader * shader = terrain->shader();
   glUseProgram(shader->Id);
   glCullFace(GL_BACK);
@@ -398,7 +398,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
-  const glm::mat4 VIEW = camera->view_matrix();
+  const glm::mat4 VIEW = camera.view_matrix();
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
   const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
@@ -410,9 +410,9 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
@@ -506,7 +506,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
 //   @param vec4 light_pos, The position of the Light for lighting
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
-void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const {
+void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) const {
   const Shader &shader = shaders_.DepthBuffer;
   glUseProgram(shader.Id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -517,9 +517,9 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera * camera)
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera->cam_pos().x / texel_size.x) * texel_size.x,
+      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
       float(),
-      floor(camera->cam_pos().z / texel_size.y) * texel_size.y);
+      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
   const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));

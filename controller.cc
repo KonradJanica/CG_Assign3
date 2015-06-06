@@ -67,7 +67,7 @@ void Controller::Draw() {
   PositionLights();
 
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  // renderer_.RenderSkybox(skybox_);
+  renderer_.RenderSkybox(skybox_, camera_);
 
   // DRAW TO THE SHADOW BUFFER
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.frame_buffer_name_);
@@ -82,7 +82,7 @@ void Controller::Draw() {
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
-  renderer_.RenderDepthBuffer(terrain_, &camera_);
+  renderer_.RenderDepthBuffer(terrain_, camera_);
 
   // binds the shadow mapping for reading
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -91,7 +91,7 @@ void Controller::Draw() {
   glViewport(0,0,640,480);
   glBindTexture( GL_TEXTURE_2D, renderer_.depth_texture_ );
 
-  renderer_.Render(terrain_, &camera_);
+  renderer_.Render(terrain_, camera_);
 
   // Unbind buffer
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -113,7 +113,8 @@ void Controller::Draw() {
   // Axis
   // TODO Toggle
 
-   renderer_.RenderAxis(&camera_);
+  camera_.UpdateProjections();
+   renderer_.RenderAxis(camera_);
    // rain_->Render(camera_, car_, skybox_);
   
 

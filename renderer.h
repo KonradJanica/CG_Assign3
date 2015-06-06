@@ -36,25 +36,25 @@ class Renderer {
     //   @param Object * object, an object to render
     //   @warn this function is not responsible for NULL PTRs
     //   @warn uses camera pointer for view matrix
-    void Render(const Object * object, const Camera * camera) const;
+    void Render(const Object * object, const Camera &camera) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @warn uses camera pointer for view matrix
-    void Render(const Terrain * terrain, const Camera * camera) const;
+    void Render(const Terrain * terrain, const Camera &camera) const;
     // TODO
-    void RenderDepthBuffer(const Terrain * terrain, const Camera * camera) const;
+    void RenderDepthBuffer(const Terrain * terrain, const Camera &camera) const;
     // Render Coordinate Axis 
     //   Only renders in debugging mode
     //   @warn requires VAO from EnableAxis
-    void RenderAxis(const Camera * camera) const;
+    void RenderAxis(const Camera &camera) const;
     // Enable x,y,z axis coordinates VAO
     //   @return a VAO to use for the Axis
     //   @warn should only be called once, duplicate calls are irrelevant
     GLuint EnableAxis() const;
 
-    void RenderWater(const Water * water, const Object * object, const Skybox * Sky, const Camera * camera) const;
+    void RenderWater(const Water * water, const Object * object, const Skybox * Sky, const Camera &camera) const;
 
-    void RenderSkybox(const Skybox * Sky, const Camera * camera) const;
+    void RenderSkybox(const Skybox * Sky, const Camera &camera) const;
 
     // Accessor for a shaders pointer
     inline const Shaders * shaders() const;
