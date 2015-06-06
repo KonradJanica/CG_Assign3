@@ -33,7 +33,7 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const Shader * shader, const int width = 96, const int height = 96);
+    Terrain(const Shader & shader, const int width = 96, const int height = 96);
     
     // Accessor for the VAO
     // TODO comment
@@ -131,7 +131,7 @@ class Terrain {
     unsigned int road_indice_count_;
     // The shader to use to render heightmap
     //   Road uses the same shader
-    const Shader * shader_;
+    const Shader & shader_;
     // The texture to be used to Wrap Terrain
     GLuint texture_;
     // The texture to be used for the road
@@ -313,9 +313,9 @@ class Terrain {
 inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
   return terrain_vao_handle_;
 }
-// Accessor for the program id (shader)
+// Accessor for the Shader object
 inline const Shader * Terrain::shader() const {
-  return shader_;
+  return &shader_;
 }
 // TODO comment
 inline circular_vector<unsigned int> Terrain::road_vao_handle() const {

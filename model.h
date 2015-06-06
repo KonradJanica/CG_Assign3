@@ -6,6 +6,7 @@
 #include <cassert>
 #include "model_data.h"
 #include "object.h"
+#include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -37,14 +38,14 @@ class Model : public Object {
       kMax = 3,
     };  
 
-    Model(const GLuint program_id, const std::string &model_filename, 
+    Model(const Shader & shader, const std::string &model_filename, 
         // Below are optional variables for object (parent) construction
         const glm::vec3 &position = glm::vec3(0,0,0), const glm::vec3 &rotation = glm::vec3(0,0,0), const glm::vec3 &scale = glm::vec3(1,1,1),
         float starting_speed = 0, bool debugging_on = false);
 
     // Accessor for current shader program.
     //   @return program_id_, the shader used by the model
-    inline GLuint program_id() const;
+    inline const Shader * shader() const;
 
     // Accessor for each shapes VAO and it's corresponding texture
     //   Each VAO includes indices, vertices and UV coordinates
@@ -97,7 +98,7 @@ class Model : public Object {
 
   private:
     // Shader program
-    GLuint program_id_;
+    const Shader &shader_;
     // RawModelData
     ModelData *model_data_;
     // The file path to the mtl file (and hopefully the textures)
@@ -135,8 +136,8 @@ class Model : public Object {
 
 // Returns the program_id_ (i.e. the shader) that the model uses
 //   @return program_id_, the shader member variable
-inline GLuint Model::program_id () const {
-  return program_id_;
+inline const Shader * Model::shader() const {
+  return &shader_;
 }
 
 // Accessor for the VAO & Texture Handler

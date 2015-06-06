@@ -29,8 +29,6 @@ struct Shader {
   const GLint    shininessHandle;
   // Water
   const GLint       camPosHandle;
-  // Skybox
-  const GLint         cubeHandle;
   // Projection
   const GLint         projHandle;
 
@@ -53,8 +51,6 @@ struct Shader {
     shininessHandle(    glGetUniformLocation(Id, "shininess")),
     // Water
     camPosHandle(       glGetUniformLocation(Id, "cameraPos")),
-    // Skybox
-    cubeHandle(         glGetUniformLocation(Id, "cubeMap")),
     // Projection
     projHandle(         glGetUniformLocation(Id, "modelview_matrix"))
   {
@@ -85,8 +81,6 @@ struct Shader {
         fprintf(stderr, "%s - Could not find uniform variables - shininessHandle\n", file);
       if (camPosHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - camPosHandle\n", file);
-      if (cubeHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - cubeHandle\n", file);
       if (projHandle == -1)
         fprintf(stderr, "%s - Could not find uniform variables - projHandle\n", file);
       fprintf(stderr, "\n"); // Make spacing
@@ -151,8 +145,8 @@ struct ShadersProjectionIterator {
   const_iterator begin() const {
     const_iterator temp(
         this->shaders_,
-        shaders_->AxisDebug ? shaders_->AxisDebug : &(shaders_->LightMappedGeneric),
-        shaders_->AxisDebug ? 0 : 1);
+        this->shaders_->AxisDebug ? this->shaders_->AxisDebug : &(this->shaders_->LightMappedGeneric),
+        this->shaders_->AxisDebug ? 0 : 1);
     return temp;
   }
   // end(), An iterator referring to DepthBuffer, i.e. past-the-end (relevant-to-proj) element
@@ -161,8 +155,8 @@ struct ShadersProjectionIterator {
   const_iterator end()   const {
     const_iterator temp(
         this->shaders_,
-        &(shaders_->DepthBuffer),
-        4);
+        &(this->shaders_->DepthBuffer),
+        5);
     return temp;
   }
   // Dereference
@@ -172,19 +166,19 @@ struct ShadersProjectionIterator {
   const_iterator &operator ++ () {
     switch (index_) {
       case 0:
-        shader_iter_ = &shaders_->LightMappedGeneric;
+        shader_iter_ = &(shaders_->LightMappedGeneric);
         break;
       case 1:
-        shader_iter_ = &shaders_->WaterGeneric;
+        shader_iter_ = &(shaders_->WaterGeneric);
         break;
       case 2:
-        shader_iter_ = &shaders_->SkyboxGeneric;
+        shader_iter_ = &(shaders_->SkyboxGeneric);
         break;
       case 3:
-        shader_iter_ = &shaders_->RainGeneric;
+        shader_iter_ = &(shaders_->RainGeneric);
         break;
       case 4:
-        shader_iter_ = &shaders_->DepthBuffer; // End of iterator
+        shader_iter_ = &(shaders_->DepthBuffer); // End of iterator
         break;
     }
     ++index_;
@@ -203,19 +197,19 @@ struct ShadersProjectionIterator {
       case 0:
       shader_iter_ = shaders_->AxisDebug;
       case 1:
-      shader_iter_ = &shaders_->LightMappedGeneric;
+      shader_iter_ = &(shaders_->LightMappedGeneric);
       break;
       case 2:
-      shader_iter_ = &shaders_->WaterGeneric;
+      shader_iter_ = &(shaders_->WaterGeneric);
       break;
       case 3:
-      shader_iter_ = &shaders_->SkyboxGeneric;
+      shader_iter_ = &(shaders_->SkyboxGeneric);
       break;
       case 4:
-      shader_iter_ = &shaders_->RainGeneric;
+      shader_iter_ = &(shaders_->RainGeneric);
       break;
       case 5:
-      shader_iter_ = &shaders_->DepthBuffer; // End of iterator
+      shader_iter_ = &(shaders_->DepthBuffer); // End of iterator
       break;
     }
     return *this;
@@ -233,8 +227,8 @@ struct ShadersProjectionIterator {
       shaders_ == other.shaders_;
   }
   bool operator != (const const_iterator &other) const {
-    return index_ != other.index_ &&
-      shader_iter_ != other.shader_iter_ &&
+    return index_ != other.index_ ||
+      shader_iter_ != other.shader_iter_ ||
       shaders_ != other.shaders_;
   }
 

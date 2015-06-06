@@ -37,6 +37,8 @@ class Renderer {
     //   @warn this function is not responsible for NULL PTRs
     //   @warn uses camera pointer for view matrix
     void Render(const Object * object, const Camera &camera) const;
+    // TODO
+    void RenderDepthBuffer(const Object * car, const Camera &camera) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @warn uses camera pointer for view matrix

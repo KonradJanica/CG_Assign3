@@ -24,14 +24,14 @@ Controller::Controller(const int window_width, const int window_height, const bo
     rain_ = new Rain(shaders_->RainGeneric.Id);
     water_ = new Water(shaders_->WaterGeneric.Id);
     skybox_ = new Skybox(shaders_->SkyboxGeneric.Id);
-    terrain_ = new Terrain(&shaders_->LightMappedGeneric);
+    terrain_ = new Terrain(shaders_->LightMappedGeneric);
 
   // Add starting models
-  AddModel(shaders_->LightMappedGeneric.Id, "models/Pick-up_Truck/pickup.obj", true);
-  // AddModel(shaders_->LightMappedGeneric.Id, "models/Car/car-n.obj", true);
-  // AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/curve_left.obj");
-  // AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/curve_right.obj");
-  AddModel(shaders_->LightMappedGeneric.Id, "models/Signs_OBJ/working/60.obj");
+  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
+  AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
 
 }
 
@@ -40,9 +40,9 @@ Controller::Controller(const int window_width, const int window_height, const bo
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
 //   TODO split Car into it's own
-void Controller::AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car) {
+void Controller::AddModel(const Shader &shader, const std::string &model_filename, const bool is_car) {
   if (is_car) {
-    car_ = new Model(program_id, model_filename,
+    car_ = new Model(shader, model_filename,
         glm::vec3(1.12f, 0.55f, 35.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
         // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
         glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
@@ -52,7 +52,7 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
     UpdateCollisions();
     prev_left_lane_midpoint_ = left_lane_midpoint_;
   } else {
-    Object * object = new Model(program_id, model_filename,
+    Object * object = new Model(shader, model_filename,
         glm::vec3(1.4f, 0.0f, 50.0f), // Translation
         glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
         glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale
@@ -66,8 +66,6 @@ void Controller::Draw() {
   // Lights need to be transformed with view/normal matrix
   PositionLights();
 
-  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  renderer_.RenderSkybox(skybox_, camera_);
 
   // DRAW TO THE SHADOW BUFFER
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.frame_buffer_name_);
@@ -82,23 +80,28 @@ void Controller::Draw() {
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, true);
   // Terrain
+  renderer_.RenderDepthBuffer(car_, camera_);
   renderer_.RenderDepthBuffer(terrain_, camera_);
 
   // binds the shadow mapping for reading
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,640,480);
   glBindTexture( GL_TEXTURE_2D, renderer_.depth_texture_ );
 
+  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
+  // renderer_.RenderSkybox(skybox_, camera_);
+  renderer_.Render(car_, camera_);
   renderer_.Render(terrain_, camera_);
 
   // Unbind buffer
   glBindTexture(GL_TEXTURE_2D, 0);
+  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Car with physics
   // if (camera_.state() != camera_.kFirstPerson)
-    // renderer_->Render(car_, camera_, false);
   // Road-signs
   // renderer_->Render(objects_.at(0), camera_, false);
   // Terrain
@@ -109,12 +112,12 @@ void Controller::Draw() {
 	// glFlush();
 
   // DONE SHADOWS
-  // renderer_.RenderWater(water_, car_, skybox_);
+  renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Axis
   // TODO Toggle
 
-  camera_.UpdateProjections();
-   renderer_.RenderAxis(camera_);
+  // camera_.UpdateProjections();
+  renderer_.RenderAxis(camera_);
    // rain_->Render(camera_, car_, skybox_);
   
 
@@ -167,14 +170,14 @@ void Controller::PositionLights() {
     spotLights.push_back(headlight);
   }
 
-  light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
+  light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
   dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
   light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
-  light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);
-  light_controller_->SetSpotLights(car_->program_id(), spotLights.size(), &spotLights[0]);
+  light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
+  light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }
 
 // The main control tick

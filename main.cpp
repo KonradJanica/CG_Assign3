@@ -83,6 +83,8 @@ void render() {
 
   // Clear the buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
+    glViewport(0,0,640,480);
 
   // Call the daw function of the controller which handles drawing the objects
   g_controller->Draw();
@@ -237,8 +239,8 @@ int main(int argc, char **argv) {
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
-  glEnable(GL_CULL_FACE);
-  glFrontFace(GL_CCW);
+  // glEnable(GL_CULL_FACE);
+  // glFrontFace(GL_CCW);
 
   // Moved to stack for speed
   Controller controller(g_window_x, g_window_y, true);
@@ -261,8 +263,6 @@ int main(int argc, char **argv) {
   glutTimerFunc(1,timer,0);
   glutDisplayFunc(render);
   glutMainLoop();
-
-  delete g_camera;
 
   return 0;
 }

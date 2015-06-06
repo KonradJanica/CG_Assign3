@@ -94,6 +94,7 @@ void Camera::UpdateProjections() {
   while (iter != iter.end()) {
     const Shader * shader = *(iter);
     glUseProgram(shader->Id);
+    printf("id = %d\n", shader->Id);
     glUniformMatrix4fv(shader->projHandle, 1, false, glm::value_ptr(projection_matrix_));
     ++iter;
   }

@@ -50,7 +50,7 @@ class Controller {
     Controller(const int window_width, const int window_height, const bool debug_flag = false);
 
     // Add a wireframe model from .obj file to the scene
-    void AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car = false);
+    void AddModel(const Shader & shader, const std::string &model_filename, const bool is_car = false);
     // Render the scene (all member models)
     //   @warn uses the renderer object
     //   // TODO const?
