@@ -53,6 +53,8 @@ uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
 
+uniform int isBumped;
+
 uniform sampler2D texMap;
 uniform sampler2D normMap;
 
@@ -156,9 +158,11 @@ void main(void) {
   
  
 
-
+  if(isBumped > 0)
+  {
   vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
   normal_mv  =  normal_mv +  normalize(2.0*NN.xyz-1.0);
+  }
 
 
   vec4 litColour = calcDirectionalLight(normal_mv);

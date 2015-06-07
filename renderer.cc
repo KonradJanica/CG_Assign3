@@ -364,9 +364,16 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
   }
 
+  int bumpHandle = glGetUniformLocation(program_id, "isBumped");
+  if(texHandle2 == -1)
+  {
+    printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
+  }
+
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
 
   glUniform1i(texHandle2, 1);
+  glUniform1i(bumpHandle, 1);
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
@@ -381,8 +388,10 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
+  
+  glBindTexture(GL_TEXTURE_2D, terrain->road_bump());
 
- 
+  glUniform1i(texHandle2, 1);
   //////////////////////////
   // ROADS
   int amount = terrain->road_indice_count();
@@ -398,6 +407,8 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
 
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
+
+  glUniform1i(bumpHandle, 0);
 
   
 }
