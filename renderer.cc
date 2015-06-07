@@ -486,5 +486,4 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) 
   }
   // Unbind
   glBindVertexArray(0);
->>>>>>> shaders_merge
 }
