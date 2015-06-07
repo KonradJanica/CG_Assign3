@@ -100,14 +100,14 @@ void Controller::PositionLights() {
   std::vector<PointLight> pointLights;
   // Main car brake lights
   for (unsigned int i = 0; i < 2; i++) {
-    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.8f + i * 1.6f, 0.0f, -3.4f));
+    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.85f + i * 1.7f, 0.0f, -3.3f));
 
     PointLight brakeLight;
     brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
     brakeLight.Position = glm::vec3(car_mv_matrix * brakeLightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    brakeLight.Attenuation.Constant = 0.01f;
-    brakeLight.Attenuation.Linear = 3.0f;
-    brakeLight.Attenuation.Exp = 5.0f;
+    brakeLight.Attenuation.Constant = 0.001f;
+    brakeLight.Attenuation.Linear = 2.0f;
+    brakeLight.Attenuation.Exp = 3.0f;
 
     if (is_key_pressed_hash_.at('s')) {
       brakeLight.Attenuation.Constant = 0.00001f;
