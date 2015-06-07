@@ -50,7 +50,7 @@ uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
 
-uniform samplerCube skybox;
+uniform samplerCube texMap;
 
 uniform vec3 cameraPos;
 
@@ -159,7 +159,7 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
-  vec4 colour = litColour * texture(skybox, R);
+  vec4 colour = litColour * texture(texMap, R);
   // Set transparency
   colour.a = 0.9;
 

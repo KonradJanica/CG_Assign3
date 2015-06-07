@@ -19,6 +19,8 @@
 #include <random>
 
 #include "camera.h"
+#include "shaders/shaders.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -33,8 +35,7 @@ class Water {
   public:
     // Constructor - Take the shader ID you want the Water to be rendered to
     // NOTE - This shader needs more specific set up than most and you should not try to use
-    // anything but water.vert and water.frag to render this water
-    Water(const GLuint program_id);
+    Water(const Shader &shader);
 
     // Destructor
     ~Water();
@@ -45,8 +46,8 @@ class Water {
     // Returns the VAO
     inline unsigned int watervao() const;
 
-    // Return the shader ID
-    inline GLuint watershader() const;
+    // Return the shader
+    inline const Shader shader() const;
 
     // Return the amount of indices   
     inline unsigned int water_index_count() const;
@@ -61,19 +62,18 @@ class Water {
     inline unsigned int height() const;
 
   private:
-    
     // Generate the Mesh (based on functionality provided in lecture slides)
     void GenerateMesh();
 
     // Create the VAO
-    unsigned int CreateVao();
+    GLuint CreateVao();
 
-    // VAO to store the Water 
-    unsigned int water_vao_;  
+    // The shader with uniforms and Id
+    const Shader shader_;
 
-    // GLuint to store the shader ID
-    GLuint water_shader_; 
-
+    // VAO to store the Water
+    const GLuint water_vao_;
+    
     // Vector to hold indices
     unsigned int * indices_;
 
@@ -98,7 +98,7 @@ class Water {
 // =======================================================================//  
 
 // Return the WaterVAO
-inline unsigned int Water::watervao() const {
+inline GLuint Water::watervao() const {
   return water_vao_;
 }
 
@@ -113,8 +113,8 @@ inline unsigned int Water::water_vertex_count() const {
 }
 
 // Return the Water shader
-inline GLuint Water::watershader() const {
-  return water_shader_;
+inline const Shader Water::shader() const {
+  return shader_;
 }
 
 // Return the Water width

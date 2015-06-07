@@ -22,8 +22,8 @@ Controller::Controller(const int window_width, const int window_height, const bo
     prev_colisn_pair_idx_ = 0;
 
     rain_ = new Rain(shaders_->RainGeneric.Id);
-    water_ = new Water(shaders_->WaterGeneric.Id);
-    skybox_ = new Skybox(shaders_->SkyboxGeneric.Id);
+    water_ = new Water(shaders_->WaterGeneric);
+    skybox_ = new Skybox(shaders_->SkyboxGeneric);
     terrain_ = new Terrain(shaders_->LightMappedGeneric);
 
   // Add starting models
@@ -68,7 +68,7 @@ void Controller::Draw() {
 
 
   // DRAW TO THE SHADOW BUFFER
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.frame_buffer_name_);
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo_.frame_buffer_name_);
 	glClear(GL_DEPTH_BUFFER_BIT);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glViewport(0,0,1024,1024);
@@ -88,10 +88,10 @@ void Controller::Draw() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,640,480);
-  glBindTexture( GL_TEXTURE_2D, renderer_.depth_texture_ );
+  glBindTexture( GL_TEXTURE_2D, renderer_.fbo_.depth_texture_ );
 
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  // renderer_.RenderSkybox(skybox_, camera_);
+  renderer_.RenderSkybox(skybox_, camera_);
   renderer_.Render(car_, camera_);
   renderer_.Render(terrain_, camera_);
 
@@ -174,8 +174,8 @@ void Controller::PositionLights() {
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
   dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
-  light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
-  light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
+  light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
+  light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
   light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }

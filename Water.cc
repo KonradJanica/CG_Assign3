@@ -13,51 +13,25 @@
 
 #include "Water.h"
 
-Water::Water(const GLuint program_id)
+Water::Water(const Shader &shader) :
+  shader_(shader),
+  // Create the VAO based on the index and vertex data
+  water_vao_(CreateVao())
 {
-  water_shader_ = program_id;
-  glUseProgram(water_shader_);
-
-  // Create the mesh for the 'water', stored into the 
-  // class vectors indices_ and vertices_
-  GenerateMesh();
-
-  // Create the VAO based on the index and vertex data 
-  water_vao_ = CreateVao();
-
-  // Handles for wave properties
-  int mtlambientHandle = glGetUniformLocation(water_shader_, "mtl_ambient");
-  int mtldiffuseHandle = glGetUniformLocation(water_shader_, "mtl_diffuse");
-  int mtlspecularHandle = glGetUniformLocation(water_shader_, "mtl_specular");
-  int shininessHandle = glGetUniformLocation(water_shader_, "shininess");
-
-  if( mtlambientHandle == -1)
-  {
-    fprintf(stderr,"Could not find uniform: 'mtl_ambient' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
-  }
-
-  if( mtldiffuseHandle == -1)
-  {
-    fprintf(stderr,"Could not find uniform: 'mtl_diffuse' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
-  }
-
-  if( mtlspecularHandle == -1)
-  {
-    fprintf(stderr,"Could not find uniform: 'mtl_specular' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
-  }
+  glUseProgram(shader_.Id);
 
   // Create and send material properties for the water
-  float mtlambient[3] = { 0.5, 0.5, 0.5 };          // ambient material
-  float mtldiffuse[3] = { 0.5, 0.5, 0.5};           // diffuse material
-  float mtlspecular[3] = { 1.0, 1.0, 1.0 };         // specular material MITCH - maybe change
-  glUniform3fv(mtlambientHandle, 1, mtlambient);
-  glUniform3fv(mtldiffuseHandle, 1, mtldiffuse);
-  glUniform3fv(mtlspecularHandle, 1, mtlspecular);
-  float mtlshininess = 32.0f;
-  glUniform1fv(shininessHandle, 1, &mtlshininess);
+  const float mtlambient[3] = { 0.5, 0.5, 0.5 };          // ambient material
+  const float mtldiffuse[3] = { 0.5, 0.5, 0.5};           // diffuse material
+  const float mtlspecular[3] = { 1.0, 1.0, 1.0 };         // specular material MITCH - maybe change
+  const float mtlshininess = 32.0f;
+  glUniform3fv(shader.mtlAmbientHandle, 1, mtlambient);
+  glUniform3fv(shader.mtlDiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(shader.mtlSpecularHandle, 1, mtlspecular);
+  glUniform1fv(shader.shininessHandle, 1, &mtlshininess);
 
   // Determine the number of waves we want, and send over to the shader
-  int wavesHandle = glGetUniformLocation(water_shader_ , "numWaves");
+  int wavesHandle = glGetUniformLocation(shader_.Id , "numWaves");
   int numWaves = 15;
   if(wavesHandle == -1 )
   {
@@ -80,7 +54,7 @@ Water::Water(const GLuint program_id)
     float amplitude = 0.5f / (i + 1);
     //printf("amplitude[%d] = %f \n", i, amplitude);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
-    int amplitudeHandle = glGetUniformLocation(water_shader_, uniformName);
+    int amplitudeHandle = glGetUniformLocation(shader_.Id, uniformName);
     if(amplitudeHandle == -1 )
     {
       fprintf(stderr,"Could not find uniform: amplitude[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
@@ -90,7 +64,7 @@ Water::Water(const GLuint program_id)
     float wavelength = 8 * M_PI / (i + 1);
     //printf("wavelength[%d] = %f \n", i, wavelength);
     snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
-    int wavelengthHandle = glGetUniformLocation(water_shader_, uniformName);
+    int wavelengthHandle = glGetUniformLocation(shader_.Id, uniformName);
     if(wavelengthHandle == -1)
     {
       fprintf(stderr,"Could not find uniform: wavelength[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
@@ -100,7 +74,7 @@ Water::Water(const GLuint program_id)
     float speed = 1.0f + 2*i;
     //printf("speed[%d] = %f \n", i, speed);
     snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
-    int speedHandle = glGetUniformLocation(water_shader_, uniformName);
+    int speedHandle = glGetUniformLocation(shader_.Id, uniformName);
     if(speedHandle == -1)
     {
       fprintf(stderr,"Could not find uniform: speed[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
@@ -110,7 +84,7 @@ Water::Water(const GLuint program_id)
     float angle = distr(eng);
     //printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
     snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
-    int directionHandle = glGetUniformLocation(water_shader_, uniformName);
+    int directionHandle = glGetUniformLocation(shader_.Id, uniformName);
     if(directionHandle == -1)
     {
       fprintf(stderr,"Could not find uniform: direction[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
@@ -132,9 +106,9 @@ Water::~Water()
 // Send the updated time variable so the waves actually move
 void Water::SendTime(float dt)
 {
-  glUseProgram(water_shader_);
+  glUseProgram(shader_.Id);
 
-  int timeHandle = glGetUniformLocation(water_shader_, "time");
+  int timeHandle = glGetUniformLocation(shader_.Id, "time");
   if(timeHandle == -1)
   {
     fprintf(stderr,"Could not find uniform: 'time' In: Water - SendTime\n This may cause unexpected behaviour in the program\n");
@@ -144,13 +118,17 @@ void Water::SendTime(float dt)
 
 unsigned int Water::CreateVao()
 {
+  // Create the mesh for the 'water', stored into the 
+  // class vectors indices_ and vertices_
+  GenerateMesh();
+
   // Switch to out water shader program and create a VAO 
-  glUseProgram(water_shader_);
+  glUseProgram(shader_.Id);
   unsigned int vaoHandle;
   glGenVertexArrays(1, &vaoHandle);
   glBindVertexArray(vaoHandle);
 
-  int vertLoc = glGetAttribLocation(water_shader_, "a_vertex");
+  int vertLoc = glGetAttribLocation(shader_.Id, "a_vertex");
 
   if(vertLoc == -1)
   {

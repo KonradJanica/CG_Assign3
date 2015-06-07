@@ -8,129 +8,55 @@
 //   @warn assert will end program prematurely with debugging enabled
 Renderer::Renderer(const bool debug_flag) :
   // Rendering objects
+  fbo_(FrameBufferObject()),
   shaders_(Shaders(debug_flag)),
   // Default vars
   coord_vao_handle_(debug_flag ? EnableAxis() : 0),
   // Debugging state
   is_debugging_(debug_flag) {
 
-  // Setup depth buffer //TODO FIX THIS!
-  unsigned int windowX = 1024, windowY = 1024;
-
-  // generate namespace for the frame buffer 
-  glGenFramebuffers(1, &frame_buffer_name_);
-  //switch to our fbo so we can bind stuff to it
-  glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
-
-  // and depthbuffer
-  glGenTextures(1, &depth_texture_);
-  // create the depth texture and attach it to the frame buffer.
-  glBindTexture(GL_TEXTURE_2D, depth_texture_);
-
-  // Give an empty image to OpenGL ( the last "0" )
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-
-  // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-  // Set "renderedTexture" as our depth attachement
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_texture_, 0);
-
-  // Instruct openGL that we won't bind a color texture with the currently binded FBO
-  glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
-
-  // Always check that our framebuffer is ok
-  GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-  if (Status != GL_FRAMEBUFFER_COMPLETE) {
-      printf("FB error, status: 0x%x\n", Status);
-      exit(-1);
-  }
-
-  // Unbind buffer
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 //   Renders the passed in water to the scene
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Object* object, const Skybox * Sky, const Camera &camera) const
-{
-  glUseProgram(water->watershader());
+void Renderer::RenderWater(const Water * water, const Object* object,
+    const Skybox * Sky, const Camera &camera) const {
+  // Get and setup shader
+  const Shader &shader = water->shader();
+  glUseProgram(shader.Id);
 
-  //printf("The Water shader ID is (inside of renderwater2) %d \n", water->watershader());
-  int mvHandle = glGetUniformLocation(water->watershader(), "modelview_matrix");
-  if (mvHandle == -1) {
-    if (is_debugging_) {
-      assert(0 && "Error: can't find matrix uniforms\n");
-    }
-  }
-
-  int camPosHandle = glGetUniformLocation(water->watershader(), "cameraPos");
-  if (camPosHandle == -1) {
-    printf("Couldnt get the campos for water reflections\n");
-  }
-  glUniformMatrix3fv(camPosHandle, 1, false, glm::value_ptr(camera.cam_pos()));
-
-  int texHandle = glGetUniformLocation(water->watershader(), "skybox");
-  if (texHandle == -1) {
-    
-      fprintf(stderr, "Could not find uniform variables (WATER - SKYCUBE)\n");
-   
-  }
-
-  int normHandle = glGetUniformLocation(water->watershader(), "normal_matrix");
-  if (normHandle == -1) {
-    if (is_debugging_) {
-      fprintf(stderr, "Could not find uniform variables\n");
-      exit(1);
-    }
-  }
-  
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // Setup rendering options
   glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-
-  glm::mat4 view_matrix = camera.view_matrix();
-
   // Get only the needed components of the object's model matrix
-
   // Translation to put water where car is
   // Y component is fixed at -3.0f so that it does not follow car falling down
-  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
+  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f),
       glm::vec3(object->translation().x, -3.0f, object->translation().z));
 
   // Translate to reposition the origin of the water
-  float water_translate_x = water->width() / 2;
-  float water_translate_z = water->height() / 2;
-  glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
-  
-  view_matrix = view_matrix * object_translate * water_translate;
+  const float water_translate_x = water->width() / 2;
+  const float water_translate_z = water->height() / 2;
+  const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
 
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
+  const glm::mat4 &VIEW = camera.view_matrix();
+  // Make MVP
+  const glm::mat4 MODEL = object_translate * water_translate;
+  const glm::mat4 MODELVIEW = VIEW * MODEL;
+  // Make NORMAL
+  const glm::mat3 NORMAL = glm::mat3(VIEW);
 
-  // Create and send normal matrix
-  glm::mat3 normMatrix;
-  normMatrix = glm::mat3(view_matrix);
-  glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
+  // Send Uniforms
+  glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(MODELVIEW));
+  glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
   // Send the cubemap (for reflections)
-      glActiveTexture(GL_TEXTURE0);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
-  glUniform1i(texHandle, 0);
+  glUniform1i(shader.texMapHandle, 0);
 
   // Render the Skybox
   glBindVertexArray(water->watervao());
@@ -145,42 +71,24 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Skyb
 //   @param Skybox * sky, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
 void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
-  int mvHandle = glGetUniformLocation(Sky->skyshader(), "modelview_matrix");
-  if (mvHandle == -1) {
-    if (is_debugging_) {
-      assert(0 && "Error: can't find matrix uniforms\n");
-    }
-  }
 
-  // TODO KONRAD -> MITCH not used?
-  // int cubeHandle = glGetUniformLocation(Sky->skyshader(), "cubeMap");
-  // if (cubeHandle == -1) {
-  //   if (is_debugging_) {
-  //     fprintf(stderr, "Could not find uniform variables\n");
-  //     // exit(1);
-  //   }
-  // }
-
-  int texHandle = glGetUniformLocation(Sky->skyshader(), "skybox");
-  if (texHandle == -1) {
-    if (is_debugging_) {
-      fprintf(stderr, "Could not find uniform variables\n");
-      exit(1);
-    }
-  }
+  const Shader &shader = Sky->shader();
 
   // Draw skybox with depth testing off
   glDepthMask(GL_FALSE);
-  glUseProgram(Sky->skyshader());
+  glUseProgram(shader.Id);
 
-      glActiveTexture(GL_TEXTURE0);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
-  glUniform1i(texHandle, 0);
+  glUniform1i(shader.texMapHandle, 0);
   
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
-  glm::mat4 view_matrix = glm::mat4(glm::mat3(camera.view_matrix()));
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) );
+  const glm::mat4 &PROJECTION = camera.projection_matrix();
+  const glm::mat4 VIEW = glm::mat4(glm::mat3(camera.view_matrix()));
+  const glm::mat4 MVP = PROJECTION * VIEW;
+  // Update Handles
+  glUniformMatrix4fv(shader.mvpHandle, 1, false, glm::value_ptr(MVP) );
 
   // Render the Skybox
   glBindVertexArray(Sky->skyboxvao());
@@ -205,7 +113,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-  const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+  const glm::mat4 &PROJECTION = camera.projection_matrix();
   const glm::mat4 VIEW = camera.view_matrix();
   const glm::mat4 MODEL = object->model_matrix();
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
@@ -261,11 +169,10 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     // Bind VAO
     glBindTexture(GL_TEXTURE_2D, vao_texture_handle.at(y).second);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
@@ -286,20 +193,20 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
 void Renderer::RenderAxis(const Camera &camera) const {
   //Render Axis if Debugging mode
   if (is_debugging_) {
-    printf("HERE\n");
     const Shader * shader = shaders_.AxisDebug;
     glUseProgram(shader->Id);
+    // Setup rendering options
     glDisable(GL_DEPTH_TEST);
-
-  const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
-    const glm::mat4 &view_matrix = camera.view_matrix();
-    glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(view_matrix));
-    glUniformMatrix4fv(shader->projHandle, 1, false, glm::value_ptr(PROJECTION));
-
+    // Update Handles
+    const glm::mat4 &PROJECTION = camera.projection_matrix();
+    const glm::mat4 &VIEW = camera.view_matrix();
+    const glm::mat4 MVP = PROJECTION * VIEW;
+    glUniformMatrix4fv(shader->mvpHandle, 1, false, glm::value_ptr(MVP));
+    // Bind VAOS and draw
     glBindVertexArray(coord_vao_handle_);
-
     glLineWidth(4.0f);
     glDrawElements(GL_LINES, 2*3, GL_UNSIGNED_INT, 0);	// New call. 2 vertices * 3 lines
+    // Reset Renderering options
     glEnable(GL_DEPTH_TEST);
   }
 }
@@ -325,9 +232,7 @@ GLuint Renderer::EnableAxis() const {
   coord_vertices.push_back(glm::vec3(0.0,0.0,100000.0));
 
   GLuint coord_vao_handle;
-  GLuint program_id = shaders_.AxisDebug->Id;
-  glUseProgram(program_id);
-int vertLoc = glGetAttribLocation(program_id, "a_vertex");
+  const Shader * shader = shaders_.AxisDebug;
 
   //Create axis VAO
   glGenVertexArrays(1, &coord_vao_handle);
@@ -341,8 +246,8 @@ int vertLoc = glGetAttribLocation(program_id, "a_vertex");
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
   glBufferData(GL_ARRAY_BUFFER, 
       sizeof(glm::vec3) * coord_vertices.size() , &coord_vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertLoc);
-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader->vertLoc);
+  glVertexAttribPointer(shader->vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
@@ -368,7 +273,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-  const glm::mat4 PROJECTION = glm::perspective(75.0f, float(640 / 480), 0.1f, 100.0f);
+  const glm::mat4 &PROJECTION = camera.projection_matrix();
   const glm::mat4 VIEW = camera.view_matrix();
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
@@ -428,7 +333,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
@@ -455,7 +360,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate shader

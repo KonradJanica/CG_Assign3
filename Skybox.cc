@@ -13,13 +13,11 @@
 
 #include "Skybox.h"
 
-Skybox::Skybox(const GLuint program_id)
-{
-	// Set the class shader variable
-	skybox_shader_ = program_id;
-
+Skybox::Skybox(const Shader &shader) :
+  shader_(shader),
 	// Create the VAO
-	skybox_vao_ = CreateVao();
+	skybox_vao_(CreateVao())
+{
 
 	// Create the Skybox texture cubemap
 	std::vector<const GLchar*> faces;
@@ -44,12 +42,10 @@ Skybox::Skybox(const GLuint program_id)
 
 // Create a Skybox VAO (Essentially just a simple -1 to 1 cube)
 // @return - return the vao that has been created
-unsigned int Skybox::CreateVao()
+GLuint Skybox::CreateVao() const
 {
-	glUseProgram(skybox_shader_);
-
 	// Create the actual vertices that will be used for the skybox
-	float cubeVertices[] = {
+	const float cubeVertices[] = {
         
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
@@ -95,34 +91,27 @@ unsigned int Skybox::CreateVao()
 	};
 
   // Create a VAO
-	unsigned int vaoHandle;
+	GLuint vaoHandle;
 	glGenVertexArrays(1, &vaoHandle);
 	glBindVertexArray(vaoHandle);
 
-	int vertLoc = glGetAttribLocation(skybox_shader_, "a_vertex");
-
-	if(vertLoc == -1)
-	{
-		  fprintf(stderr,"Could not find uniform: 'a_vertex' In: Skybox - CreateVao\n This may cause unexpected behaviour in the program\n");
-	}
-
 	// Buffers to store position, colour and index data
-	unsigned int buffer[1];
+	GLuint buffer[1];
 	glGenBuffers(1, buffer);
 
 	// Set vertex position
 	glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
 	glBufferData(GL_ARRAY_BUFFER, 
                  sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(vertLoc);
-	glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(shader().vertLoc);
+	glVertexAttribPointer(shader().vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	
     // Un-bind
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
 	return vaoHandle;
-  
+
 }
 
 // Generate a cubemap texture

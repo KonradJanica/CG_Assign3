@@ -11,10 +11,15 @@
 //   Holds an ID and all possible handles of a shader
 //   In debugging mode prints uniforms not found
 //   @warn Uniforms not found will be -1
+//   @warn Function calls in initializer list hence order
+//         of declaration is vital!
 struct Shader {
+  // SHADER ID
   const GLuint Id;
 
+  // GET UNIFORMS
   // Matrices
+  const GLint         projHandle;
   const GLint          mvpHandle;
   const GLint           mvHandle;
   const GLint         normHandle;
@@ -29,14 +34,21 @@ struct Shader {
   const GLint    shininessHandle;
   // Water
   const GLint       camPosHandle;
-  // Projection
-  const GLint         projHandle;
+
+  // GET ATTRIB LOCATIONS
+  //   For VAO creation
+  const GLint            vertLoc;
+  const GLint            normLoc;
+  const GLint         textureLoc;
 
   // Try to load all uniform handles
   //   Will print to stderr when handles are not found
   //     in debugging mode
   Shader(const std::string &vert_path, const std::string &frag_path, const bool is_debug) :
     Id(LoadShaders(vert_path.c_str(), frag_path.c_str())),
+    // GET UNIFORMS
+    // Matrices
+    projHandle(         glGetUniformLocation(Id, "projection_matrix")),
     mvpHandle(          glGetUniformLocation(Id, "mvp_matrix")),
     mvHandle(           glGetUniformLocation(Id, "modelview_matrix")),
     normHandle(         glGetUniformLocation(Id, "normal_matrix")),
@@ -51,46 +63,55 @@ struct Shader {
     shininessHandle(    glGetUniformLocation(Id, "shininess")),
     // Water
     camPosHandle(       glGetUniformLocation(Id, "cameraPos")),
-    // Projection
-    projHandle(         glGetUniformLocation(Id, "modelview_matrix"))
+    // GET ATTRIB LOCATIONS
+    vertLoc(      glGetAttribLocation(Id, "a_vertex")),
+    normLoc(      glGetAttribLocation(Id, "a_normal")),
+    textureLoc(   glGetAttribLocation(Id, "a_texture"))
   {
     if (is_debug) {
       const std::string file_string = vert_path.substr(vert_path.find_last_of('/') + 1);
       const char *      file        = file_string.c_str();
-      if (mvpHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - mvpHandle\n", file);
-      if (mvHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - mvHandle\n", file);
-      if (normHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - normHandle\n", file);
-      if (texMapHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - texMapHandle\n", file);
-      if (shadowMapHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - shadowMapHandle\n", file);
-      if (depthBiasMvpHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - depthBiasMvpHandle\n", file);
-      if (depthMvpHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - depthMvpHandle\n", file);
-      if (mtlAmbientHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - mtlAmbientHandle\n", file);
-      if (mtlDiffuseHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - mtlDiffuseHandle\n", file);
-      if (mtlSpecularHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - mtlSpecularHandle\n", file);
-      if (shininessHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - shininessHandle\n", file);
-      if (camPosHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - camPosHandle\n", file);
-      if (projHandle == -1)
-        fprintf(stderr, "%s - Could not find uniform variables - projHandle\n", file);
-      fprintf(stderr, "\n"); // Make spacing
+      CheckHandle(projHandle,         "projHandle",         file);
+      CheckHandle(mvpHandle,          "mvpHandle",          file);
+      CheckHandle(mvHandle,           "mvHandle",           file);
+      CheckHandle(normHandle,         "normHandle",         file);
+      CheckHandle(texMapHandle,       "texMapHandle",       file);
+      CheckHandle(shadowMapHandle,    "shadowMapHandle",    file);
+      CheckHandle(depthBiasMvpHandle, "depthBiasMvpHandle", file);
+      CheckHandle(depthMvpHandle,     "depthMvpHandle",     file);
+      CheckHandle(mtlAmbientHandle,   "mtlAmbientHandle",   file);
+      CheckHandle(mtlDiffuseHandle,   "mtlDiffuseHandle",   file);
+      CheckHandle(mtlSpecularHandle,  "mtlSpecularHandle",  file);
+      CheckHandle(shininessHandle,    "shininessHandle",    file);
+      CheckHandle(camPosHandle,       "camPosHandle",       file);
+      CheckAttrib(vertLoc,            "vertLoc",            file);
+      CheckAttrib(normLoc,            "normLoc",            file);
+      CheckAttrib(textureLoc,         "textureLoc",         file);
+      printf("\n"); // Make spacing only in stdout
     }
+  }
+  private:
+  // Checks for validity of handle and prints to stderr or to stdout appropriately
+  void CheckHandle(const GLint handle, const char * handle_name, const char * file) {
+    if (handle == -1)
+      fprintf(stderr, "%s - Could not find uniform variables - %s\n", file, handle_name);
+    else
+      printf("%s - Found uniform var - GLint Id:%3d - %s\n", file, handle, handle_name);
+  }
+  // Checks for validity of attribute locaion and prints to stderr or to stdout appropriately
+  void CheckAttrib(const GLint a_loc, const char * a_loc_name, const char * file) {
+    if (a_loc == -1)
+      fprintf(stderr, "%s - Couldn't find attribute location - %s\n", file, a_loc_name);
+    else
+      printf("%s - Found attrib locn - GLint Id:%3d - %s\n", file, a_loc, a_loc_name);
   }
 };
 
 // A Shaders class
 //   Holds all shaders required for the program
 //   @warn only one instance should ever be created
+//   @warn Function calls in initializer list hence order
+//         of declaration is vital!
 struct Shaders {
   const Shader  * AxisDebug; //only created in debug mode
   const Shader LightMappedGeneric;

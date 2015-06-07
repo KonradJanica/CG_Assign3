@@ -25,11 +25,9 @@ application.  All use of these programs is entirely at the user's own risk.
 // This shader passes on colour values to be interpolated by the fixed functionality
 // 
 
-uniform mat4 projection_matrix;
-uniform mat4 modelview_matrix;
+uniform mat4 mvp_matrix;
 
 in vec3 a_vertex;
-in vec4 a_colour;	// The new, per-vertex attribute
 
 // This colour attribute will be sent out per-vertex and the fixed-functionality
 // interpolates the colour (smooths the colour between) with connected vertices in the triangle
@@ -37,8 +35,6 @@ out vec4 colour;
 
 void main(void) {
 	
-	colour = a_colour;	// We simply pass the colour along to the next stage
-
   // Doing the following in fragment shader instead
    colour.x = 0;
    colour.y = 0;
@@ -52,6 +48,6 @@ void main(void) {
     colour.z = 1;
   }
 
-	gl_Position = projection_matrix * modelview_matrix * vec4(a_vertex, 1.0);
+	gl_Position = mvp_matrix * vec4(a_vertex, 1.0);
 
 }

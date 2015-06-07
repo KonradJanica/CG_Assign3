@@ -89,8 +89,10 @@ class Camera {
     inline void ResetPosition(const glm::vec3 &camera_position);
 
     // ACCESSORS:
-    // Accessor for the camera matrix
+    // Accessor for the view matrix
     inline glm::mat4 view_matrix() const;
+    // Accessor for the projection matrix
+    inline glm::mat4 projection_matrix() const;
     // Accessor for the FOV (field of view)
     inline float fov() const;
     // Accessor for the Current Camera Position
@@ -177,6 +179,10 @@ inline void Camera::ResetPosition(const glm::vec3 &camera_position) {
 // Accessor for the camera matrix
 inline glm::mat4 Camera::view_matrix() const {
   return view_matrix_;
+}
+// Accessor for the projection matrix
+inline glm::mat4 Camera::projection_matrix() const {
+  return projection_matrix_;
 }
 // Accessor for the FOV (Field of view) of the projection
 inline float Camera::fov() const {
