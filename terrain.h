@@ -18,7 +18,6 @@
 #include "shaders/shaders.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "lib/circular_vector/circular_vector.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -26,24 +25,30 @@
 #include <GL/glut.h>
 #endif
 
+#include "lib/circular_vector/circular_vector.h"
+// Check better performance container
+// #include <deque>
+// #define circular_vector std::deque
+
 class Terrain {
   public:
     GLuint cliff_nrm_texture_;
     // These are used for collisions and it's helper functions
     typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
     typedef std::vector<boundary_pair> colisn_vec;
+    typedef std::vector<glm::vec3> anim_vec;
+    typedef circular_vector<anim_vec> anim_container;
 
     // Construct with width and height specified
     Terrain(const Shader & shader, const int width = 96, const int height = 96);
-    
-    // Accessor for the VAO
-    // TODO comment
-    inline circular_vector<unsigned int> terrain_vao_handle() const;
+
     // Accessor for the program id (shader)
     inline const Shader * shader() const;
-    // TODO comment
-    inline circular_vector<unsigned int> road_vao_handle() const;
-    // TODO comment
+    // A container filled with tiled terrain VAOs in proceeding order
+    inline const circular_vector<GLuint> * terrain_vao_handle() const;
+    // A container filled with tiled road VAOs in proceeding order
+    inline const circular_vector<GLuint> * road_vao_handle() const;
+    // The GL generated road texture used for binding
     inline GLuint road_texture() const;
 
     inline GLuint cliff_bump() const;
@@ -63,23 +68,20 @@ class Terrain {
     //   Used in render to efficiently draw triangles
     inline int road_indice_count() const;
     // Accessor for the collision checking data structure
-    //   See the collision_queue_hash_ member var (or this func implementation) for details
-    inline circular_vector<colisn_vec> collision_queue_hash() const;
+    //   See the colisn_boundary_pairs_ member var (or this func implementation) for details
+    inline const circular_vector<colisn_vec> * colisn_boundary_pairs() const;
     // Accessor for the water collision checking data structure
     //   See this func implementation for details
-    inline std::list<std::vector<glm::vec3> > colisn_lst_water() const;
+    inline const circular_vector<std::vector<glm::vec3> > * colisn_lst_water() const;
     // Accessor for the cliff collision checking data structure
     //   See this func implementation for details
-    inline std::list<std::vector<glm::vec3> > colisn_lst_cliff() const;
+    inline const circular_vector<std::vector<glm::vec3> > * colisn_lst_cliff() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
-    //   TODO remove and replace in circular buffer instead
-    //   @warn this is a test function (shouldn't be inline either)
-    inline void col_pop();
+    void colisn_pop();
     // Generates next tile and removes first one
     //   Uses the circular_vector data structure to do this in O(1)
-    //   TODO merge col_pop or something
-    //   TODO comment spread over ticks
+    //   Sets up for generating next terrain tile over several ticks
     void ProceedTiles();
     // Generates the next part of tile for spreading over multiple ticks
     void GenerationTick();
@@ -146,17 +148,17 @@ class Terrain {
     // The texture to be used for the road
     GLuint road_texture_;
     // The VAO handle for the terrain
-    circular_vector<unsigned int> terrain_vao_handle_;
+    circular_vector<GLuint> terrain_vao_handle_;
     // The VAO handle for the road
-    circular_vector<unsigned int> road_vao_handle_;
+    circular_vector<GLuint> road_vao_handle_;
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //     pair.first = min_x, pair.second = max_x
-    circular_vector<colisn_vec> collision_queue_hash_;
+    circular_vector<colisn_vec> colisn_boundary_pairs_;
     // The collisions for the right (water) side
-    std::list<std::vector<glm::vec3> > colisn_lst_water_;
+    circular_vector<std::vector<glm::vec3> > colisn_lst_water_;
     // The collisions for the left (cliff) side
-    std::list<std::vector<glm::vec3> > colisn_lst_cliff_;
+    circular_vector<std::vector<glm::vec3> > colisn_lst_cliff_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -303,12 +305,12 @@ class Terrain {
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   The parameters are self explanatory.
     //   @return vao_handle, the vao handle
-    unsigned int CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+    GLuint CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param  tile_type  An enum representing the proper members to use
     //   @return vao_handle, the vao handle
-    unsigned int CreateVao(TileType tile_type);
+    GLuint CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
     GLuint LoadTexture(const std::string &filename);
@@ -326,16 +328,16 @@ inline GLuint Terrain::road_bump() const {
 }
 // Accessor for the VAO
 // TODO comment
-inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
-  return terrain_vao_handle_;
+inline const circular_vector<GLuint> * Terrain::terrain_vao_handle() const {
+  return &terrain_vao_handle_;
 }
 // Accessor for the Shader object
 inline const Shader * Terrain::shader() const {
   return &shader_;
 }
 // TODO comment
-inline circular_vector<unsigned int> Terrain::road_vao_handle() const {
-  return road_vao_handle_;
+inline const circular_vector<unsigned int> * Terrain::road_vao_handle() const {
+  return &road_vao_handle_;
 }
 // TODO comment
 inline GLuint Terrain::road_texture() const {
@@ -368,27 +370,18 @@ inline int Terrain::road_indice_count() const {
 // A queue representing each road tile for collision checking
 //     i.e. it's bounding box of the road
 //     pair.first = min_x, pair.second = max_x
-inline circular_vector<Terrain::colisn_vec> Terrain::collision_queue_hash() const {
-  return collision_queue_hash_;
+inline const circular_vector<Terrain::colisn_vec> * Terrain::colisn_boundary_pairs() const {
+  return &colisn_boundary_pairs_;
 }
 // Accessor for the water collision checking data structure
 //   Holds all vertices right (water) side of road for crashing animation
-inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_water() const {
-  return colisn_lst_water_;
+inline const circular_vector<std::vector<glm::vec3> > * Terrain::colisn_lst_water() const {
+  return &colisn_lst_water_;
 }
 // Accessor for the water collision checking data structure
 //   Holds a line of vertices left (cliff) side of road for crashing animation
-inline std::list<std::vector<glm::vec3> > Terrain::colisn_lst_cliff() const {
-  return colisn_lst_cliff_;
-}
-// Pops the first collision map 
-//   To be used after car has passed road tile
-//   TODO remove and replace in circular buffer instead
-//   @warn this is a test function (shouldn't be inline either)
-inline void Terrain::col_pop() {
-  collision_queue_hash_.pop_front();
-  colisn_lst_water_.pop_front();
-  colisn_lst_cliff_.pop_front();
+inline const circular_vector<std::vector<glm::vec3> > * Terrain::colisn_lst_cliff() const {
+  return &colisn_lst_cliff_;
 }
 
 #endif

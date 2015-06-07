@@ -283,15 +283,15 @@ void Controller::CrashAnimationCliff() {
 
   // Check for collision
   if (!is_cliff_hit_) {
-    typedef std::vector<glm::vec3> w_vec;
-    typedef std::list<w_vec> w_list;
-    const w_list &cliff = terrain_->colisn_lst_cliff();
-    glm::vec3 closest_vertice = cliff.begin()->at(0);
-    glm::vec3 snd_clst_vertice = cliff.begin()->at(1);
+    typedef Terrain::anim_vec w_vec;
+    typedef Terrain::anim_container w_list;
+    const w_list * cliff = terrain_->colisn_lst_cliff();
+    glm::vec3 closest_vertice = cliff->begin()->at(0);
+    glm::vec3 snd_clst_vertice = cliff->begin()->at(1);
     dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos,z_pos));
     float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos,z_pos));
 
-    w_list::const_iterator it = cliff.begin();
+    w_list::const_iterator it = cliff->begin();
     for (unsigned int i = 0; i < 2; ++i) {
 
       const w_vec &vertices = *it;
@@ -442,16 +442,16 @@ void Controller::CrashAnimationFall() {
   float z_pos = car_->translation().z;
   z_pos += vel_z * dt;
 
-  typedef std::vector<glm::vec3> w_vec;
-  typedef std::list<w_vec> w_list;
-  const w_list &water = terrain_->colisn_lst_water();
-  const w_list &cliff = terrain_->colisn_lst_cliff();
-  glm::vec3 closest_vertice = cliff.begin()->at(0);
-  glm::vec3 snd_clst_vertice = cliff.begin()->at(1);
+  typedef Terrain::anim_vec w_vec;
+  typedef Terrain::anim_container w_list;
+  const w_list * water = terrain_->colisn_lst_water();
+  const w_list * cliff = terrain_->colisn_lst_cliff();
+  glm::vec3 closest_vertice = cliff->begin()->at(0);
+  glm::vec3 snd_clst_vertice = cliff->begin()->at(1);
   float dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos,z_pos));
   float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos,z_pos));
 
-  w_list::const_iterator it = water.begin();
+  w_list::const_iterator it = water->begin();
   for (unsigned int i = 0; i < 2; ++i) {
 
     const w_vec &vertices = *it;
@@ -572,9 +572,9 @@ bool Controller::IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::v
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 void Controller::UpdateCollisions() {
   // Setup vars
-  const circular_vector<Terrain::colisn_vec> &col = terrain_->collision_queue_hash();
+  const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
   const glm::vec3 &car = car_->translation();
-  const Terrain::colisn_vec &head = col.front();
+  const Terrain::colisn_vec &head = col->front();
   Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
 
   // Find closest edge point
@@ -607,13 +607,13 @@ void Controller::UpdateCollisions() {
 
   if (it == head.end()) {
     // Get next pair from next vector in circular_vector
-    closest_it = col[1].begin(); // reassign to find new midpoint etc.
+    closest_it = (*col)[1].begin(); // reassign to find new midpoint etc.
     it = closest_it;
     it++; // We want next point (i.e. end-1 == begin)
     next_pair = *it;
 
-    terrain_->col_pop();
-    terrain_->ProceedTiles();
+    terrain_->colisn_pop();
+    // terrain_->ProceedTiles();
     prev_colisn_pair_idx_ = 0;
   } else {
 

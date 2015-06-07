@@ -344,8 +344,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glUniform1i(texHandle3, 2);
 
   // Bind VAO and texture - Terrain
-  const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
-  for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
+  const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
+  for (unsigned int x = 0; x < terrain_vao_handle->size(); ++x) {
       // We are using texture unit 0 (the default)
       glActiveTexture(GL_TEXTURE0);
       glUniform1i(shader->texMapHandle, 0);
@@ -360,7 +360,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
-    glBindVertexArray(terrain_vao_handle.at(x));
+    glBindVertexArray((*terrain_vao_handle)[x]);
     // glBindAttribLocation(shader->Id, 0, "a_vertex");
     // glBindAttribLocation(shader->Id, 1, "a_normal");
     // glBindAttribLocation(shader->Id, 2, "a_texture");
@@ -373,8 +373,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // ROADS
   glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();
-  const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
-  for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
+  const circular_vector<unsigned int> * road_vao_handle = terrain->road_vao_handle();
+  for (unsigned int x = 0; x < road_vao_handle->size(); ++x) {
       // We are using texture unit 0 (the default)
       glActiveTexture(GL_TEXTURE0);
       glUniform1i(shader->texMapHandle, 0);
@@ -389,7 +389,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate shader
-    glBindVertexArray(road_vao_handle.at(x));
+    glBindVertexArray((*road_vao_handle)[x]);
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
@@ -470,18 +470,18 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) 
 
   // Bind VAO and texture - Terrain
   const int amount_terrain = terrain->indice_count();
-  const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
-  for (unsigned int x = 0; x < terrain_vao_handle.size(); ++x) {
-    glBindVertexArray(terrain_vao_handle.at(x));
+  const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
+  for (unsigned int x = 0; x < terrain_vao_handle->size(); ++x) {
+    glBindVertexArray((*terrain_vao_handle)[x]);
     glDrawElements(GL_TRIANGLES, amount_terrain, GL_UNSIGNED_INT, 0);
   }
 
   // ROADS
   glCullFace(GL_BACK); //Road is rendererd reverse facing
   const int amount_road = terrain->road_indice_count();
-  const circular_vector<unsigned int> &road_vao_handle = terrain->road_vao_handle();
-  for (unsigned int x = 0; x < road_vao_handle.size(); ++x) {
-    glBindVertexArray(road_vao_handle.at(x));
+  const circular_vector<unsigned int> * road_vao_handle = terrain->road_vao_handle();
+  for (unsigned int x = 0; x < road_vao_handle->size(); ++x) {
+    glBindVertexArray((*road_vao_handle)[x]);
     glDrawElements(GL_TRIANGLES, amount_road, GL_UNSIGNED_INT, 0);
   }
   // Unbind

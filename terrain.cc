@@ -28,7 +28,7 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     int center_right_x = x_length_ - x_length_/2;
     x_cliff_position_ = center_right_x, z_cliff_position_ = center_z;
     // Reserve space (required to ensure default iterators are not invalidated)
-    collision_queue_hash_.reserve(6);
+    // colisn_boundary_pairs_.reserve(6);
 
     // Textures
     glActiveTexture(GL_TEXTURE0);
@@ -68,18 +68,20 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     }
 
     // Pop off first and second collision map which is already behind car
-    col_pop();
-    col_pop();
+    colisn_pop();
+    colisn_pop();
   }
 
 // Generates next tile and removes first one
 //   Uses the circular_vector data structure to do this in O(1)
 //   Resets the generation ticks to 0, E.g. begins generating next tile
-//   TODO merge col_pop or something
+//   Sets up for generating next terrain tile over several ticks
 void Terrain::ProceedTiles() {
   // TODO free/delete GL VAOs
-  // glDeleteVertexArray(1, &terrain_vao_handle_[0]);
-  // glDeleteVertexArray(1, &road_vao_handle_[0]);
+  // glDeleteVertexArrays(1, &terrain_vao_handle_[0]);
+  // glDeleteVertexArrays(1, &road_vao_handle_[0]);
+  glDeleteVertexArrays(1, &terrain_vao_handle_[0]);
+  glDeleteVertexArrays(1, &road_vao_handle_[0]);
   terrain_vao_handle_.pop_front();
   road_vao_handle_.pop_front();
 
@@ -932,7 +934,15 @@ void Terrain::HelperMakeRoadCollisionMap() {
     tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
   }
 
-  collision_queue_hash_.push_back(tile_map);
+  colisn_boundary_pairs_.push_back(tile_map);
+}
+
+// Pops the first collision map
+//   To be used after car has passed road tile
+void Terrain::colisn_pop() {
+  colisn_boundary_pairs_.pop_front();
+  colisn_lst_water_.pop_front();
+  colisn_lst_cliff_.pop_front();
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer
@@ -1029,7 +1039,9 @@ GLuint Terrain::LoadTexture(const std::string &filename) {
   }
   stbi_image_free(data);
 
-  glGenerateMipmap(GL_TEXTURE_2D); 
+  glGenerateMipmap(GL_TEXTURE_2D);
 
+  // Unbind
+  glBindTexture(GL_TEXTURE_2D, 0);
   return new_texture;
 }
