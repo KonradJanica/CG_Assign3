@@ -210,7 +210,6 @@ void main(void) {
 
   float visibility = texture(shadowMap, vec3(a_shadow_coord.xy, (a_shadow_coord.z)/a_shadow_coord.w) );
   visibility = visibility / 2 + 0.5; //Fit range between [0,0.5]
->>>>>>> shaders_merge
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), visibility * litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
   //fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
