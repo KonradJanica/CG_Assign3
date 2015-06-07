@@ -320,13 +320,13 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
   glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
 
-  int texHandle2 = glGetUniformLocation(program_id, "normMap");
+  int texHandle2 = glGetUniformLocation(shader->Id, "normMap");
   if(texHandle2 == -1)
   {
     printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
   }
 
-  int bumpHandle = glGetUniformLocation(program_id, "isBumped");
+  int bumpHandle = glGetUniformLocation(shader->Id, "isBumped");
 
 
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
@@ -334,7 +334,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glUniform1i(texHandle2, 1);
   glUniform1i(bumpHandle, 1);
 
-  int texHandle3 = glGetUniformLocation(program_id, "mossMap");
+  int texHandle3 = glGetUniformLocation(shader->Id, "mossMap");
   if(texHandle3 == -1)
   {
     printf("TERRAIN COULDNT FIND MOSS MAPPINGS\n");
