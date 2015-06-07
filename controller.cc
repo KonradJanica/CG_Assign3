@@ -90,9 +90,9 @@ void Controller::PositionLights() {
 
   DirectionalLight dirLight;
 
-  dirLight.DiffuseIntensity = glm::vec3(0.1f, 0.1f, 0.1f);
+  dirLight.DiffuseIntensity = glm::vec3(0.2f, 0.2f, 0.2f);
   //dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
-  dirLight.SpecularIntensity = glm::vec3(0.1f, 0.1f, 0.1f);
+  dirLight.SpecularIntensity = glm::vec3(0.01f, 0.01f, 0.01f);
   dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
 
 
@@ -100,7 +100,7 @@ void Controller::PositionLights() {
   std::vector<PointLight> pointLights;
   // Main car brake lights
   for (unsigned int i = 0; i < 2; i++) {
-    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.5f, -3.0f));
+    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.8f + i * 1.6f, 0.0f, -3.4f));
 
     PointLight brakeLight;
     brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -108,6 +108,12 @@ void Controller::PositionLights() {
     brakeLight.Attenuation.Constant = 0.01f;
     brakeLight.Attenuation.Linear = 3.0f;
     brakeLight.Attenuation.Exp = 5.0f;
+
+    if (is_key_pressed_hash_.at('s')) {
+      brakeLight.Attenuation.Constant = 0.00001f;
+      brakeLight.Attenuation.Linear = 0.5f;
+      brakeLight.Attenuation.Exp = 3.0f;
+    }
 
     pointLights.push_back(brakeLight);
   }
@@ -122,12 +128,12 @@ void Controller::PositionLights() {
 
     SpotLight headlight;
     headlight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-    headlight.SpecularIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+    headlight.SpecularIntensity = glm::vec3(0.1f, 0.1f, 0.1f);
     headlight.Position = glm::vec3(car_mv_matrix * headlightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     headlight.Direction = headlightNormMatrix * glm::vec3(0.0f, -0.3f, 1.0f);
     headlight.CosineCutoff = cos(DEG2RAD(30.0f));
-    headlight.Attenuation.Constant = 0.5f;
-    headlight.Attenuation.Linear = 0.1f;
+    headlight.Attenuation.Constant = 0.3f;
+    headlight.Attenuation.Linear = 0.01f;
     headlight.Attenuation.Exp = 0.01f;
 
     spotLights.push_back(headlight);

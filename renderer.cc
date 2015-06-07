@@ -71,7 +71,7 @@ void Renderer::RenderWater(const Water * water, const Object* object, const Came
 
   // Create and send normal matrix
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(view_matrix);
+  normMatrix = glm::transpose(glm::inverse(glm::mat3(view_matrix)));
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
   // Send the cubemap (for reflections)
@@ -183,9 +183,9 @@ void Renderer::Render(const Object * object, const Camera * camera) const {
   glm::mat3 normMatrix;
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  normMatrix = glm::mat3(view_matrix);
   const glm::mat4 &model_matrix = object->model_matrix();
   glm::mat4 modelview_matrix = view_matrix * model_matrix;
+  normMatrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(modelview_matrix) );	// Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
@@ -341,7 +341,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 normMatrix;
-  normMatrix = glm::mat3(view_matrix);
+  normMatrix = glm::transpose(glm::inverse(glm::mat3(view_matrix)));
   glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix) ); // Middle
   glUniformMatrix3fv(normHandle, 1, false, glm::value_ptr(normMatrix));
 
