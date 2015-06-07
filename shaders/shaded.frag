@@ -158,11 +158,8 @@ void main(void) {
   
  
 
-  if(isBumped > 0)
-  {
   vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
   normal_mv  =  normal_mv +  normalize(2.0*NN.xyz-1.0);
-  }
 
 
   vec4 litColour = calcDirectionalLight(normal_mv);

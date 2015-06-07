@@ -32,8 +32,7 @@ Terrain::Terrain(const GLuint program_id, const int &width, const int &height)
     glActiveTexture(GL_TEXTURE1);
 
 
-    cliff_bump_ = LoadTexture("textures/rock01_NRM.jpg");
-    road_bump_ = LoadTexture("textures/road_NRM.jpg");
+    cliff_bump_ = LoadTexture("textures/normalMap.tga");
 
 
     // Setup Indices and UV Coordinates
