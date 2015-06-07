@@ -152,11 +152,10 @@ void main(void) {
   vec4 vertex_mv = a_vertex_mv;
   vec3 normal_mv = normalize(a_normal_mv); 
 
-  if(isBumped > 0)
-  {
-    vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
-    normal_mv = normal_mv + normalize(2.0*NN.xyz-1.0);
-  }
+
+  //vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
+  //normal_mv = normal_mv + normalize(2.0*NN.xyz-1.0);
+  
  
 
 

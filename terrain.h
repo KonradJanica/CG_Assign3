@@ -310,7 +310,7 @@ class Terrain {
     unsigned int CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
-    GLuint LoadTexture(const std::string &filename, unsigned int active);
+    GLuint LoadTexture(const std::string &filename);
 
     // Verbose Debugging mode
     bool is_debugging_;

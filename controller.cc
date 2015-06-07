@@ -90,7 +90,7 @@ void Controller::PositionLights() {
 
   DirectionalLight dirLight;
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
-  dirLight.Direction = norm_matrix * glm::vec3(0.0f, -1.0f, 0.0f);
+  dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
 
   // Point lights
   std::vector<PointLight> pointLights;

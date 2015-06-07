@@ -25,11 +25,13 @@ Terrain::Terrain(const GLuint program_id, const int &width, const int &height)
     collision_queue_hash_.reserve(6);
 
     // Textures
-    texture_ = LoadTexture("textures/rock01.jpg", 0);
-    road_texture_ = LoadTexture("textures/road.jpg", 0);
+    glActiveTexture(GL_TEXTURE0);
+    texture_ = LoadTexture("textures/rock01.jpg");
+    road_texture_ = LoadTexture("textures/road.jpg");
 
-    cliff_bump_ = LoadTexture("textures/rock01_NRM.jpg", 1);
-    road_bump_ = LoadTexture("textures/road_NRM.jpg", 1);
+    glActiveTexture(GL_TEXTURE1);
+    cliff_bump_ = LoadTexture("textures/rock01_NRM.jpg");
+    road_bump_ = LoadTexture("textures/road_NRM.jpg");
 
     // Setup Indices and UV Coordinates
     //   These never change unless the x_length_ and/or z_length_ of the heightmap change
@@ -993,11 +995,10 @@ unsigned int Terrain::CreateVao(TileType tile_type) {
 
 // Creates a texture pointer from file
 //   @return new_texture, a GLuint texture pointer
-GLuint Terrain::LoadTexture(const std::string &filename, unsigned int active) {
+GLuint Terrain::LoadTexture(const std::string &filename) {
   // A shader program has many texture units, slots in which a texture can be bound, available to
   // it and this function defines which unit we are working with currently
   // We will only use unit 0 until later in the course. This is the default.
-  glActiveTexture(active);
 
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
