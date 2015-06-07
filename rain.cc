@@ -62,7 +62,7 @@ Rain::~Rain()
 
 }
 
-unsigned int Rain::CreateVao()
+GLuint Rain::CreateVao()
 {
   glUseProgram(shader_.Id);
 
@@ -98,6 +98,9 @@ unsigned int Rain::CreateVao()
 
   // Initially set data to NULL
   glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES_ * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+
+  // Unbind
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   return vao;
 }
