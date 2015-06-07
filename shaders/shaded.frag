@@ -77,13 +77,10 @@ uniform float shininess;
 uniform int isBumped;
 
 uniform sampler2D texMap;
-<<<<<<< HEAD
 uniform sampler2D normMap;
 uniform sampler2D mossMap;
-
-=======
 uniform sampler2DShadow shadowMap;
->>>>>>> shaders_merge
+
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
