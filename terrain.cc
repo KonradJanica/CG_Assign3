@@ -7,18 +7,28 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
   x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
   // Default vars
   generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), 
-  prev_spacing_rand_((rand() % 100)*0.003f - 0.15f), indice_count_(0), road_indice_count_(0), 
+  prev_spacing_rand_((rand() % 100)*0.003f - 0.15f),
   // The shader to use
   shader_(shader),
+  // Setup Indices and UV Coordinates
+  //   These never change unless the x_length_ and/or z_length_ of the heightmap change
+  terrain_vbo_uv_indices_(InitializeIndicesAndUV(kTerrain)),
+  road_vbo_uv_indices_   (InitializeIndicesAndUV(kRoad)),
+  indices_(     InitializeIndices(kTerrain)),
+  indices_road_(InitializeIndices(kRoad)),
+  indice_count_     (indices_.size()),
+  road_indice_count_(indices_road_.size()),
   // More Default vars
   rotation_(0), prev_rotation_(0), z_smooth_max_(10 * length_multiplier_) {
+
+    printf("HERE\n");
 
     // New Seed
     srand(time(NULL));
     // Setup Vars
     heights_.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
-    vertices.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
-    normals.resize(x_length_ * z_length_);  // Initialize to 0 to avoid seg fault during smoothing
+    vertices_.resize(x_length_ * z_length_); // Initialize to 0 to avoid seg fault during smoothing
+    normals_.resize(x_length_ * z_length_);  // Initialize to 0 to avoid seg fault during smoothing
     next_tile_start_ = glm::vec2(-10,-10);
     prev_max_x_ = 20.0f; // DONT TOUCH - Magic number derived from min_position
     // Height randomization vars
@@ -41,14 +51,6 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     glActiveTexture(GL_TEXTURE2);
     road_bump_ =  LoadTexture("textures/lichen.jpg");
 
-
-    // Setup Indices and UV Coordinates
-    //   These never change unless the x_length_ and/or z_length_ of the heightmap change
-    HelperMakeIndicesAndUV();
-    indice_count_ = indices.size();
-
-    HelperMakeRoadIndicesAndUV(); // BEWARD FULL OF MAGIC NUMBERS
-    road_indice_count_ = indices_road_.size();
     //  Road Normals only have to be generated once
     //    because the surface is relatively flat
     HelperMakeRoadNormals();
@@ -158,8 +160,6 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
   //  ROAD - Extract middle flat section and make road VAO
   //  BEWARD FULL OF MAGIC NUMBERS
   HelperMakeRoadVertices();
-  // Fix the UV caused by z_smooth_max_ being random
-  // HelperFixUV();
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
   // Make VAOs
@@ -241,6 +241,168 @@ void Terrain::GenerateTerrain(RoadType road_type) {
         break;
       }
   }
+}
+
+// Generates the indices and UV texture coordinates to be used by the tile
+// @param  The type of tile, road will automatically call HelperMakeRoadIndicesAndUV
+// @note  These don't change for the same x_length_ * z_length_ height maps
+// @warn  No changes can be made to indices or UV member until the Road Helpers complete
+// @return  UV and indices pair in that order
+std::pair<GLuint, GLuint> Terrain::InitializeIndicesAndUV(const TileType tile_type) const {
+  // CONSTRUCT HEIGHT MAP INDICES
+  // 2 triangles for every quad of the terrain mesh
+  const unsigned int numTriangles = ( x_length_ - 1 ) * ( z_length_ - 1 ) * 2;
+  // The indices generated for all the terrain and water tiles
+  //   These should only be generated once as x_lengths and z_lengths are the
+  //   same between tiles.
+  std::vector<int> indices(numTriangles * 3);
+  unsigned int index = 0; // Index in the index buffer
+  for (int j = 0; j < (z_length_ - 1); ++j )
+  {
+    for (int i = 0; i < (x_length_ - 1); ++i )
+    {
+      int vertexIndex = ( j * x_length_ ) + i;
+      // Top triangle (T0)
+      indices[index++] = vertexIndex;                        // V0
+      indices[index++] = vertexIndex + x_length_ + 1;        // V3
+      indices[index++] = vertexIndex + 1;                    // V1
+      // Bottom triangle (T1)
+      indices[index++] = vertexIndex;                        // V0
+      indices[index++] = vertexIndex + x_length_;            // V2
+      indices[index++] = vertexIndex + x_length_ + 1;        // V3
+    }
+  }
+
+  // CONSTRUCT UV COORDINATES
+  // The texture coordinates generated for all the terrain and water tiles
+  //   These should only be generated once as x_lengths and z_lengths are the
+  //   same between tiles.
+  std::vector<glm::vec2> texture_coordinates_uv(x_length_*z_length_, glm::vec2());
+  int offset;
+  // First, build the data for the vertex buffer
+  for (int y = 0; y < z_length_; y++) {
+    for (int x = 0; x < x_length_; x++) {
+      offset = (y*x_length_)+x;
+      float xRatio = x / (float) (x_length_ - 1);
+      float yRatio = (y / (float) (z_length_ - 1));
+      // Textures need to be less frequent at infinity spots
+      if (x > x_length_ - 5) {
+        yRatio /= (x_length_/20)*(40+x_length_/20);
+        xRatio /= (x_length_/20)*(40+x_length_/20);
+      } else if (x < 4) {
+        yRatio /= (x_length_/20)*(40+x_length_/20);
+        xRatio /= (x_length_/20)*(40+x_length_/20);
+      }
+
+      texture_coordinates_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f,
+          yRatio*float(z_length_)*0.10f / length_multiplier_);
+    }
+  }
+  // Cut out middle parts for road VBOs
+  if (tile_type == kRoad)
+    InitializeRoadIndicesAndUV(indices, texture_coordinates_uv);
+
+  // Setup VBOs
+  // Buffers to store index and UV data
+  GLuint buffer[2];
+  glGenBuffers(2, buffer);
+  // Texture attributes
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader()->textureLoc);
+  // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
+  // We don't attach this to a shader label, instead it controls how rendering is performed
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+      sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
+  // Return the buffers for deletion reference
+  const std::pair<GLuint, GLuint> buffer_pair(buffer[0], buffer[1]);
+
+  return buffer_pair;
+}
+
+// Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
+// store these in the indice and UV vectors respectfully
+// @param  indices,                the indices vector from the terrain call
+// @param  texture_coordinates_uv, the uv vector for the terrain call
+// @warn  requires a preceeding call to HelperMakeIndicesAndUV otherwise undefined behaviour
+// @warn  for optimzation this should only be called once because road indices and UV don't change
+// @warn  modifies the inputs!
+void Terrain::InitializeRoadIndicesAndUV(std::vector<int> &indices, std::vector<glm::vec2> &texture_coordinates_uv) const {
+  // Create Index Data
+  // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
+  //   Above based on 32 x_length_ & z_length_
+  // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+  indices.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
+
+  // CONSTRUCT UV COORDINATES
+  std::vector<glm::vec2> temp_uv(x_length_*z_length_, glm::vec2());
+  int offset;
+  // First, build the data for the vertex buffer
+  for (int y = 0; y < z_length_; y++) {
+    for (int x = 0; x < x_length_; x++) {
+      offset = (y*x_length_)+x;
+      float xRatio = x / (float) (x_length_ - 1);
+      float yRatio = (y / (float) (z_length_ - 1));
+
+      temp_uv.at(offset) = glm::vec2(
+          xRatio*float(z_length_)*0.10f * 3.2f / length_multiplier_,
+          yRatio*float(z_length_)*0.10f * 1.0f / length_multiplier_);
+    }
+  }
+  // Create UV Data
+  texture_coordinates_uv.clear();
+  for (int x = 0; x < 5*length_multiplier_; ++x) {
+    for (unsigned int z = 0; z < z_length_; ++z){
+      // The multiplications below change stretch of the texture (ie repeats)
+      texture_coordinates_uv.push_back(glm::vec2(
+            temp_uv.at(x + z*x_length_).x,
+            temp_uv.at(x + z*x_length_).y));
+    }
+  }
+
+}
+
+// Generates the indices to be used by the tile type
+// @param  The type of tile, Terrain or Road
+// @note  These don't change for the same x_length_ * z_length_ height maps
+// @return  A vector of indices for generating vertices
+std::vector<int> Terrain::InitializeIndices(const TileType tile_type) const {
+  // CONSTRUCT HEIGHT MAP INDICES
+  // 2 triangles for every quad of the terrain mesh
+  const unsigned int numTriangles = ( x_length_ - 1 ) * ( z_length_ - 1 ) * 2;
+  // The indices generated for all the terrain and water tiles
+  //   These should only be generated once as x_lengths and z_lengths are the
+  //   same between tiles.
+  std::vector<int> indices(numTriangles * 3);
+  unsigned int index = 0; // Index in the index buffer
+  for (int j = 0; j < (z_length_ - 1); ++j )
+  {
+    for (int i = 0; i < (x_length_ - 1); ++i )
+    {
+      int vertexIndex = ( j * x_length_ ) + i;
+      // Top triangle (T0)
+      indices[index++] = vertexIndex;                        // V0
+      indices[index++] = vertexIndex + x_length_ + 1;        // V3
+      indices[index++] = vertexIndex + 1;                    // V1
+      // Bottom triangle (T1)
+      indices[index++] = vertexIndex;                        // V0
+      indices[index++] = vertexIndex + x_length_;            // V2
+      indices[index++] = vertexIndex + x_length_ + 1;        // V3
+    }
+  }
+
+  // Cut out middle parts for road VBOs
+  if (tile_type == kRoad)
+    // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
+    //   Above based on 32 x_length_ & z_length_
+    // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
+    indices.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
+
+  return indices;
 }
 
 // Model the heights using an X^3 mathematical functions, then randomize heights
@@ -522,12 +684,12 @@ void Terrain::AverageVector(const int start, const int end, std::vector<T> &vec_
 void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_type,
     const float min_position, const float position_range) {
   // Store the connecting row to smooth
-  std::vector<glm::vec3>::iterator z_smooth_begin = vertices.end()-1*x_length_;
-  std::vector<glm::vec3>::iterator z_smooth_end = vertices.end()-0*x_length_;
+  std::vector<glm::vec3>::iterator z_smooth_begin = vertices_.end()-1*x_length_;
+  std::vector<glm::vec3>::iterator z_smooth_end = vertices_.end()-0*x_length_;
   std::vector<glm::vec3> temp_last_row_vertices(z_smooth_begin, z_smooth_end);
 
   // Zero vertice vector
-  // vertices.assign(x_length_ * z_length_, glm::vec3());
+  // vertices_.assign(x_length_ * z_length_, glm::vec3());
 
   int offset;
   // First, build the data for the vertex buffer
@@ -572,12 +734,12 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
           }
       }
 
-      vertices.at(offset) = glm::vec3(xPosition, yPosition, zPosition);
+      vertices_.at(offset) = glm::vec3(xPosition, yPosition, zPosition);
     }
   }
   // special point for finding pivot translation
   unsigned int pivot_x = 18 * length_multiplier_; // relative tile x position of pivot
-  const glm::vec3 &pivot = vertices.at(pivot_x);
+  const glm::vec3 &pivot = vertices_.at(pivot_x);
   // pivot.y = 10000.0f;
   // Rotate the point using glm function
   glm::vec3 rotated = glm::rotateY(pivot, rotation_);
@@ -587,21 +749,21 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     for (int x = 0; x < x_length_; x++) {
       offset = (y*x_length_)+x;
 
-      glm::vec3 rotated = vertices.at(offset);
+      glm::vec3 rotated = vertices_.at(offset);
       rotated = glm::rotateY(rotated, rotation_);
       float xPosition = rotated.x + translate_x;
       float zPosition = rotated.z + translate_z;
       // xPosition = rotated.x + position_range/2;
       float yPosition = rotated.y;
 
-      vertices.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
+      vertices_.at(offset) = glm::vec3(xPosition + next_tile_start_.x, yPosition,
           zPosition + next_tile_start_.y);
     }
   }
   // Water or Terrain
   switch(tile_type) {
     case kTerrain:
-      const glm::vec3 &pivot_end = vertices.at(pivot_x + (z_length_-1)*x_length_);
+      const glm::vec3 &pivot_end = vertices_.at(pivot_x + (z_length_-1)*x_length_);
       // Set next z position
       next_tile_start_.y = pivot_end.z;
 
@@ -634,18 +796,18 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
   prev_rotation_ = rotation_;
   for (int x = 0; x < 4; ++x) {
     for (int z = 0; z < z_length_; ++z) {
-      float &vert_x = vertices.at((x_length_-x-1)+z*x_length_).x;
+      float &vert_x = vertices_.at((x_length_-x-1)+z*x_length_).x;
       vert_x += 40 * cos_rot;
-      float &vert_z = vertices.at((x_length_-x-1)+z*x_length_).z;
+      float &vert_z = vertices_.at((x_length_-x-1)+z*x_length_).z;
       vert_z += 40 * sin_rot;
     }
   }
   // Make Right side infinite
   for (int x = 0; x < 4; ++x) {
     for (int z = 0; z < z_length_; ++z) {
-      float &vert_x = vertices.at(x+z*x_length_).x;
+      float &vert_x = vertices_.at(x+z*x_length_).x;
       vert_x -= 40 * cos_rot;
-      float &vert_z = vertices.at(x+z*x_length_).z;
+      float &vert_z = vertices_.at(x+z*x_length_).z;
       vert_z -= 40 * sin_rot;
     }
   }
@@ -654,14 +816,14 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     // Try to remove first couple layers going too high
     int z = 0;
     // while (z <= z_smooth_max_) {
-    //   float &vert_y = vertices.at((x_length_-x-1)+z*x_length_).y;
+    //   float &vert_y = vertices_.at((x_length_-x-1)+z*x_length_).y;
     //     vert_y = -20.0f;
     //   ++z;
     // }
     // Randomly decrease slope
     int r = rand() % 40 + 10;
     for (; z < z_length_; ++z) {
-      float &vert_y = vertices.at((x_length_-x-1)+z*x_length_).y;
+      float &vert_y = vertices_.at((x_length_-x-1)+z*x_length_).y;
       vert_y -= r;
     }
   }
@@ -669,7 +831,7 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
   // Compare connection rows to eachother and smooth new one
   std::vector<glm::vec3> translate_column_by;
   for (int x = 0; x < x_length_; ++x) {
-    glm::vec3 dis_between_smooth = vertices.at(x+(z_smooth_max_)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
+    glm::vec3 dis_between_smooth = vertices_.at(x+(z_smooth_max_)*x_length_) - temp_last_row_vertices.at(x+0*x_length_);
     dis_between_smooth.x /= z_smooth_max_;
     dis_between_smooth.z /= z_smooth_max_;
     glm::vec3 new_column_size = dis_between_smooth;
@@ -677,98 +839,24 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
     translate_column_by.push_back(translate_by);
     // printf("trans = %f,%f\n",translate_by.x,translate_by.z);
   }
-  for (int z = 0; z < z_smooth_max_; ++z) {
+  for (unsigned int z = 0; z < z_smooth_max_; ++z) {
     for (int x = 0; x < x_length_; ++x) {
-      float &vert_x = vertices.at(x+z*x_length_).x;
+      float &vert_x = vertices_.at(x+z*x_length_).x;
       vert_x = temp_last_row_vertices.at(x).x + z * translate_column_by.at(x).x;
 
-      float &vert_z = vertices.at(x+z*x_length_).z;
+      float &vert_z = vertices_.at(x+z*x_length_).z;
       vert_z = temp_last_row_vertices.at(x).z + z * translate_column_by.at(x).z;
     }
   }
   // Ensure heights are connected
   for (int x = 0; x < x_length_; ++x) {
-    float &vert_y = vertices.at(x+0*x_length_).y;
+    float &vert_y = vertices_.at(x+0*x_length_).y;
     vert_y = temp_last_row_vertices.at(x).y;
   }
 
   // Smooth left side structure LOOKS BAD
-  // AverageVector(x_length_-4,x_length_-1,vertices, temp_last_row_vertices);
+  // AverageVector(x_length_-4,x_length_-1,vertices_, temp_last_row_vertices);
 
-  // Fix UV coordinates LOOKS WORSE (LOGIC ERROR)
-  // HelperFixUV(translate_column_by, position_range);
-
-}
-
-// Fixes the UV caused by a changing z_smooth_max_
-//   @warn changes UV for terrain
-void Terrain::HelperFixUV(const std::vector<glm::vec3> &translated_by, const float position_range) {
-  // FIX TERRAINUV COORDINATES
-  for (int z = 0; z < z_smooth_max_; z++) {
-    for (int x = 0; x < x_length_; x++) {
-      int offset = (z*x_length_)+x;
-      float xRatio = x / (float) (x_length_ - 1);
-      float zRatio = (z / (float) (z_length_ - 1));
-      // zRatio /= (x_length_/20)*(40+x_length_/20);
-      zRatio *= 1-(translated_by.at(z).z-position_range/z_length_);
-      xRatio *= 1-(translated_by.at(x).x-position_range/x_length_);
-
-      texture_coordinates_uv.at(offset) = glm::vec2(
-          xRatio*float(z_length_)*0.10f,
-          zRatio*float(z_length_)*0.10f / length_multiplier_);
-    }
-  }
-}
-
-// Generates the indices and UV texture coordinates to be used by the tile
-// @note  These don't change for the same x_length_ * z_length_ height maps
-// @warn  No changes can be made to indices or UV member until the Road Helpers complete
-void Terrain::HelperMakeIndicesAndUV() {
-  // CONSTRUCT HEIGHT MAP INDICES
-  // 2 triangles for every quad of the terrain mesh
-  const unsigned int numTriangles = ( x_length_ - 1 ) * ( z_length_ - 1 ) * 2;
-  // 3 indices for each triangle in the terrain mesh
-  indices.assign( numTriangles * 3 , int() );
-  unsigned int index = 0; // Index in the index buffer
-  for (unsigned int j = 0; j < (z_length_ - 1); ++j )
-  {
-    for (unsigned int i = 0; i < (x_length_ - 1); ++i )
-    {
-      int vertexIndex = ( j * x_length_ ) + i;
-      // Top triangle (T0)
-      indices[index++] = vertexIndex;                        // V0
-      indices[index++] = vertexIndex + x_length_ + 1;        // V3
-      indices[index++] = vertexIndex + 1;                    // V1
-      // Bottom triangle (T1)
-      indices[index++] = vertexIndex;                        // V0
-      indices[index++] = vertexIndex + x_length_;            // V2
-      indices[index++] = vertexIndex + x_length_ + 1;        // V3
-    }
-  }
-
-  // CONSTRUCT UV COORDINATES
-  texture_coordinates_uv.assign(x_length_*z_length_, glm::vec2());
-  int offset;
-  // First, build the data for the vertex buffer
-  for (int y = 0; y < z_length_; y++) {
-    for (int x = 0; x < x_length_; x++) {
-      offset = (y*x_length_)+x;
-      float xRatio = x / (float) (x_length_ - 1);
-      float yRatio = (y / (float) (z_length_ - 1));
-      // Textures need to be less frequent at infinity spots
-      if (x > x_length_ - 5) {
-        yRatio /= (x_length_/20)*(40+x_length_/20);
-        xRatio /= (x_length_/20)*(40+x_length_/20);
-      } else if (x < 4) {
-        yRatio /= (x_length_/20)*(40+x_length_/20);
-        xRatio /= (x_length_/20)*(40+x_length_/20);
-      }
-
-      texture_coordinates_uv.at(offset) = glm::vec2(
-          xRatio*float(z_length_)*0.10f,
-          yRatio*float(z_length_)*0.10f / length_multiplier_);
-    }
-  }
 }
 
 // Generates the normals by doing a cross product of neighbouring vertices
@@ -776,16 +864,16 @@ void Terrain::HelperMakeIndicesAndUV() {
 void Terrain::HelperMakeNormals() {
   // normals.assign(x_length_*z_length_, glm::vec3());
   // Reset normals vector but save last X row to start
-  for (int i = 0, x = normals.size()-x_length_-1; 
-      x < normals.size(); ++i, ++x) {
-    normals.at(i) = normals.at(x);
+  for (unsigned int i = 0, x = normals_.size()-x_length_-1;
+      x < normals_.size(); ++i, ++x) {
+    normals_.at(i) = normals_.at(x);
   }
-  std::fill(normals.begin()+1,normals.end(), glm::vec3()); //fill rest with zero
+  std::fill(normals_.begin()+1,normals_.end(), glm::vec3()); //fill rest with zero
   // for ( unsigned int i = z_smooth_max_*x_length_; i < indices.size()-2; i += 3 )  {
-  for ( unsigned int i = 0; i < indices.size()-2; i += 3 )  {
-    glm::vec3 v0 = vertices[ indices[i + 0] ];
-    glm::vec3 v1 = vertices[ indices[i + 1] ];
-    glm::vec3 v2 = vertices[ indices[i + 2] ];
+  for ( unsigned int i = 0; i < indices_.size()-2; i += 3 )  {
+    glm::vec3 v0 = vertices_[ indices_[i + 0] ];
+    glm::vec3 v1 = vertices_[ indices_[i + 1] ];
+    glm::vec3 v2 = vertices_[ indices_[i + 2] ];
 
     glm::vec3 normal = glm::normalize( glm::cross( v1 - v0, v2 - v0 ) );
     // printf("norm = (%f,%f,%f)\n",normal.x,normal.y,normal.z);
@@ -794,14 +882,14 @@ void Terrain::HelperMakeNormals() {
     // if (normal.x != normal.x) {
     // printf("Overlapping vertices being crossed\n");
     // } else {
-    normals[ indices[i + 0] ] += normal;
-    normals[ indices[i + 1] ] += normal;
-    normals[ indices[i + 2] ] += normal;
+    normals_[ indices_[i + 0] ] += normal;
+    normals_[ indices_[i + 1] ] += normal;
+    normals_[ indices_[i + 2] ] += normal;
     // }
   }
 
-  for ( unsigned int i = 0; i < normals.size(); ++i ) {
-    normals[i] = glm::normalize( normals[i] );
+  for ( unsigned int i = 0; i < normals_.size(); ++i ) {
+    normals_[i] = glm::normalize( normals_[i] );
   }
 }
 
@@ -810,9 +898,9 @@ void Terrain::HelperMakeNormals() {
 // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
 void Terrain::HelperMakeRoadVertices() {
   vertices_road_.clear();
-  for (unsigned int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
+  for (int x = 15 * length_multiplier_; x < 19 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z){
-      vertices_road_.push_back(vertices.at(x + z*x_length_));
+      vertices_road_.push_back(vertices_.at(x + z*x_length_));
       // Lift road a bit above terrain to make it visible
       vertices_road_.back().y += 0.01f;
       // vertices_road_.back().y += 0.01f + 0.02*rotation_;
@@ -822,9 +910,9 @@ void Terrain::HelperMakeRoadVertices() {
   // Store water vertices
   std::vector<glm::vec3> water_side;
   water_side.reserve((x_length_ - (15 * length_multiplier_))*z_length_);
-  for (unsigned int x = 0; x < 15 * length_multiplier_; ++x) {
+  for (int x = 0; x < 15 * length_multiplier_; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
-      water_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
+      water_side.push_back(vertices_.at(x + z*x_length_)); // other side vertices
     }
   }
   colisn_lst_water_.push_back(water_side);
@@ -833,9 +921,9 @@ void Terrain::HelperMakeRoadVertices() {
   std::vector<glm::vec3> cliff_side;
   cliff_side.reserve(1*z_length_);
   // NOTE the +1 in below loop is a tweak for 96x96 terrain
-  for (unsigned int x = 19 * length_multiplier_+1; x < 20 * length_multiplier_+1; ++x) {
+  for (int x = 19 * length_multiplier_+1; x < 20 * length_multiplier_+1; ++x) {
     for (unsigned int z = 0; z < z_length_; ++z) {
-      cliff_side.push_back(vertices.at(x + z*x_length_)); // other side vertices
+      cliff_side.push_back(vertices_.at(x + z*x_length_)); // other side vertices
     }
   }
   colisn_lst_cliff_.push_back(cliff_side);
@@ -853,46 +941,6 @@ void Terrain::HelperMakeRoadNormals() {
   //   }
   // }
   normals_road_.assign((4*length_multiplier_)*z_length_, glm::vec3(0,1,0));
-}
-
-// Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
-// store these in the indice and UV vectors respectfully
-// @warn  requires a preceeding call to HelperMakeIndicesAndUV otherwise undefined behaviour
-// @warn  for optimzation this should only be called once because road indices and UV don't change
-void Terrain::HelperMakeRoadIndicesAndUV() {
-  // Create Index Data
-  // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
-  //   Above based on 32 x_length_ & z_length_
-  // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
-  indices_road_.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
-
-  // CONSTRUCT UV COORDINATES
-  std::vector<glm::vec2> temp_uv;
-  temp_uv.assign(x_length_*z_length_, glm::vec2());
-  int offset;
-  // First, build the data for the vertex buffer
-  for (int y = 0; y < z_length_; y++) {
-    for (int x = 0; x < x_length_; x++) {
-      offset = (y*x_length_)+x;
-      float xRatio = x / (float) (x_length_ - 1);
-      float yRatio = (y / (float) (z_length_ - 1));
-
-      temp_uv.at(offset) = glm::vec2(
-          xRatio*float(z_length_)*0.10f * 3.2f / length_multiplier_,
-          yRatio*float(z_length_)*0.10f * 1.0f / length_multiplier_);
-    }
-  }
-  // Create UV Data
-  texture_coordinates_uv_road_.clear();
-  for (unsigned int x = 0; x < 5*length_multiplier_; ++x) {
-    for (unsigned int z = 0; z < z_length_; ++z){
-      // The multiplications below change stretch of the texture (ie repeats)
-      texture_coordinates_uv_road_.push_back(glm::vec2(
-            temp_uv.at(x + z*x_length_).x,
-            temp_uv.at(x + z*x_length_).y));
-    }
-  }
-
 }
 
 // Generates a collision coordinate mapping
@@ -945,20 +993,22 @@ void Terrain::colisn_pop() {
   colisn_lst_cliff_.pop_front();
 }
 
-// Creates a new vertex array object and loads in data into a vertex attribute buffer
-//   The parameters are self explanatory.
+// Creates a new vertex array object for a heightmap (Indices and UV are constants)
+//   @param vertices, the vertices of the heightmap
+//   @param normals, the normals of the heightmap
+//   @param vbo_handle, a pair of VBOs: first = indices, second = UV
 //   @return vao_handle, the vao handle
-unsigned int Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
-    const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices) {
+GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+    const std::pair<GLuint, GLuint> &vbo_handle) const {
 
-  unsigned int VAO_handle;
+  GLuint VAO_handle;
   glUseProgram(shader()->Id);
   glGenVertexArrays(1, &VAO_handle);
   glBindVertexArray(VAO_handle);
 
-  // Buffers to store position, colour and index data
-  unsigned int buffer[4];
-  glGenBuffers(4, buffer);
+  // Buffers to store position and normals and index data
+  GLuint buffer[2];
+  glGenBuffers(2, buffer);
 
   // Set vertex position
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
@@ -969,38 +1019,37 @@ unsigned int Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const st
   // Normal attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
   glBufferData(GL_ARRAY_BUFFER,
-      sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+      sizeof(glm::vec3) * normals_.size(), &normals_[0], GL_STATIC_DRAW);
   glVertexAttribPointer(shader()->normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader()->normLoc);
-  // Texture attributes
-  glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
-  glBufferData(GL_ARRAY_BUFFER,
-      sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  // UV
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.first);
+  glVertexAttribPointer(shader()->textureLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader()->textureLoc);
+  // Indices
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[3]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-      sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);   
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_handle.second);
 
   // Un-bind
   glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
   return VAO_handle;
 }
 
 // Creates a new vertex array object and loads in data into a vertex attribute buffer
+//   Also stores created VBOs to allow deleting the reference
 //   @param  tile_type  An enum representing the proper members to use
 //   @return vao_handle, the vao handle
-unsigned int Terrain::CreateVao(TileType tile_type) {
-  unsigned int vao;
+GLuint Terrain::CreateVao(TileType tile_type) const {
+  GLuint vao;
+  // Create storage pair (for freeing buffer)
+  // std::pair<GLuint, GLuint> store_vbo(buffer[0], buffer[1]);
   switch(tile_type) {
     case kTerrain: //and kRoad
-      vao = CreateVao(vertices, normals, texture_coordinates_uv, indices);
+      vao = CreateVao(vertices_, normals_, terrain_vbo_uv_indices_);
       break;
     case kRoad:
-      vao = CreateVao(vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
+      vao = CreateVao(vertices_road_, normals_road_, road_vbo_uv_indices_);
       break;
   }
   return vao;
@@ -1008,7 +1057,7 @@ unsigned int Terrain::CreateVao(TileType tile_type) {
 
 // Creates a texture pointer from file
 //   @return new_texture, a GLuint texture pointer
-GLuint Terrain::LoadTexture(const std::string &filename) {
+GLuint Terrain::LoadTexture(const std::string &filename) const {
 
   // Generate New Texture
   GLuint new_texture;

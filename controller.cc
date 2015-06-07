@@ -613,7 +613,7 @@ void Controller::UpdateCollisions() {
     next_pair = *it;
 
     terrain_->colisn_pop();
-    // terrain_->ProceedTiles();
+    terrain_->ProceedTiles();
     prev_colisn_pair_idx_ = 0;
   } else {
 

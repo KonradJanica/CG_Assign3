@@ -132,10 +132,6 @@ class Terrain {
     char prev_water_x3_rand_;
     // The previous random value used to generate next spacing of tile
     float prev_spacing_rand_;
-    // The amount of indices, used to render terrain efficiently
-    unsigned int indice_count_;
-    // The amount of indices in a straight road piece, used to render efficiently
-    unsigned int road_indice_count_;
     // The shader to use to render heightmap
     //   Road uses the same shader
     const Shader & shader_;
@@ -147,10 +143,27 @@ class Terrain {
     GLuint road_bump_;
     // The texture to be used for the road
     GLuint road_texture_;
-    // The VAO handle for the terrain
+    // The VAO handle for the terrain and roads
     circular_vector<GLuint> terrain_vao_handle_;
-    // The VAO handle for the road
     circular_vector<GLuint> road_vao_handle_;
+    // The terrain and road VBOs assosicated with each VAO for deleting
+    //   Each pair represents Vertices and Normals
+    // @note  UV and Indices never change hence dont require delete
+    circular_vector<std::pair<GLuint, GLuint> > terrain_vbo_handle_;
+    circular_vector<std::pair<GLuint, GLuint> > road_vbo_handle_;
+    // The road and terrain UV and Indice VBOs
+    //   These dont change throughout life of terrain
+    //   These are used in CreateVAO to optimize
+    const std::pair<GLuint, GLuint> terrain_vbo_uv_indices_;
+    const std::pair<GLuint, GLuint> road_vbo_uv_indices_;
+    // The indices generated for all the tiles
+    //   These should only be generated once as x_lengths and z_lengths are the
+    //   same between tiles.
+    const std::vector<int> indices_;
+    const std::vector<int> indices_road_;
+    // The amount of indices, used to render terrain efficiently
+    const unsigned int indice_count_;
+    const unsigned int road_indice_count_;
     // A circular_vector representing each road tile for collision checking
     //   The first (0th) index is the current tile the car is on (or not - check index 1)
     //     pair.first = min_x, pair.second = max_x
@@ -162,17 +175,9 @@ class Terrain {
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
-    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> vertices_;
     // Normals to be generated for the next terrain (or water) tile
-    std::vector<glm::vec3> normals;
-    // The texture coordinates generated for all the terrain and water tiles
-    //   These should only be generated once as x_lengths and z_lengths are the
-    //   same between tiles.
-    std::vector<glm::vec2> texture_coordinates_uv;
-    // The indices generated for all the terrain and water tiles
-    //   These should only be generated once as x_lengths and z_lengths are the
-    //   same between tiles.
-    std::vector<int> indices;
+    std::vector<glm::vec3> normals_;
     // This vector is used to build heights and smooths previous tile connections
     std::vector<float> heights_; 
 
@@ -190,14 +195,6 @@ class Terrain {
     //   These should only be generated once as x_lengths and z_lengths are the
     //   same between tiles.and the normals always point upwards (road is flat)
     std::vector<glm::vec3> normals_road_;
-    // The texture coordinates generated for all the road tiles
-    //   These should only be generated once as x_lengths and z_lengths are the
-    //   same between tiles.
-    std::vector<glm::vec2> texture_coordinates_uv_road_;
-    // The indices generated for all the road tiles
-    //   These should only be generated once as x_lengths and z_lengths are the
-    //   same between tiles.
-    std::vector<int> indices_road_;
     // Current road tile end rotation
     //   The rotation of the entire next tile from positive z
     //   Positive degrees rotate leftwards (anti cw from spidermans facing)
@@ -230,6 +227,28 @@ class Terrain {
     //   @warn creates and pushes back a road VAO based on the terrain middle section
     //   @warn pushes next road collision map into member queue
     void GenerateTerrain(RoadType road_type);
+
+    // INITIALIZATION HELPERS
+    // Generates the indices and UV texture coordinates to be used by the tile
+    // @param  The type of tile, road will automatically call HelperMakeRoadIndicesAndUV
+    // @param  bool, if true populate the indices_ member only and dont make VBO
+    // @note  These don't change for the same x_length_ * z_length_ height maps
+    // @return  A pair of VBO handles (for use in VBO deletion)
+    // @return  Dummy pair if just populating member
+    std::pair<GLuint, GLuint> InitializeIndicesAndUV(const TileType tile_type) const;
+    // Rip the road parts of the input terrain indice and UV vectors using calulcated magic numbers and
+    // store these in the indice and UV vectors respectfully
+    // @param  indices,                the indices vector from the terrain call
+    // @param  texture_coordinates_uv, the uv vector from the terrain call
+    // @note  Normal usage is for this to be called from inside HelperMakeIndicesAndUV(kRoad)
+    // @warn  for optimzation this should only be called once because road indices and UV don't change
+    // @warn  modifies the inputs!
+    void InitializeRoadIndicesAndUV(std::vector<int> &indices, std::vector<glm::vec2> &texture_coordinates_uv) const;
+    // Generates the indices to be used by the tile type
+    // @param  The type of tile, Terrain or Road
+    // @note  These don't change for the same x_length_ * z_length_ height maps
+    // @return  A vector of indices for generating vertices
+    std::vector<int> InitializeIndices(const TileType tile_type) const;
 
     // TERRAIN GENERATION HELPERS
     // Model the heights using an X^3 mathematical functions, then randomize heights
@@ -268,10 +287,6 @@ class Terrain {
     // @warn  No changes can be made to vertices_ member until the Road Helpers complete
     void HelperMakeVertices(const RoadType road_type = kStraight, const TileType tile_type = kTerrain,
         const float min_position = 0.0f, const float position_range = 20.0f);
-    // Generates the indices and UV texture coordinates to be used by the tile
-    // @note  These don't change for the same x_length_ * z_length_ height maps
-    // @warn  No changes can be made to indices or UV member until the Road Helpers complete
-    void HelperMakeIndicesAndUV();
     // Generates the normals by doing a cross product of neighbouring vertices
     // @warn  No changes can be made to normals_ member until the Road Helpers complete
     void HelperMakeNormals();
@@ -279,21 +294,13 @@ class Terrain {
     // ROAD GENERATION HELPERS
     // Rip the road parts of the terrain vertice vector using calulcated magic numbers and store
     // these in the vertices_road_ vector
-    // @warn  requires a preceeding call to HelperMakeVertices otherwise undefined behaviour
+    // @return  A pair of VBO handles (for use in VBO deletion)
     void HelperMakeRoadVertices();
-    // Fixes the UV caused by a changing z_smooth_max_
-    //   @warn changes UV for terrain
-    void HelperFixUV(const std::vector<glm::vec3> &translated_by, const float position_range);
     // Rip the road parts of the terrain normals vector using calulcated magic numbers and store
     // these in the normals_road_ vector
     // @warn  requires a preceeding call to HelperMakeNormals otherwise undefined behaviour
     // @warn  for optimzation this should only be called once because road normals don't change
     void HelperMakeRoadNormals();
-    // Rip the road parts of the terrain indice and UV vectors using calulcated magic numbers and 
-    // store these in the indice and UV vectors respectfully
-    // @warn  requires a preceeding call to HelperMakeIndicesAndUV otherwise undefined behaviour
-    // @warn  for optimzation this should only be called once because road indices and UV don't change
-    void HelperMakeRoadIndicesAndUV();
     // Generates a collision coordinate mapping
     //   Finds all edge vertices of road in order then pairs them with the closest vertices
     //   on the opposite side of the road
@@ -303,17 +310,20 @@ class Terrain {
 
     // OPENGL RENDERING FUNCTIONS
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
-    //   The parameters are self explanatory.
+    //   @param vertices, the vertices of the heightmap
+    //   @param normals, the normals of the heightmap
+    //   @param vbo_handle, a pair of VBOs: first = indices, second = UV
+    //   @return vao_handle, the vao handle
     //   @return vao_handle, the vao handle
     GLuint CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
-        const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
+        const std::pair<GLuint, GLuint> &vbo_handle) const;
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param  tile_type  An enum representing the proper members to use
     //   @return vao_handle, the vao handle
-    GLuint CreateVao(TileType tile_type);
+    GLuint CreateVao(TileType tile_type) const;
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
-    GLuint LoadTexture(const std::string &filename);
+    GLuint LoadTexture(const std::string &filename) const;
 
     // Verbose Debugging mode
     bool is_debugging_;
