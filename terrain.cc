@@ -999,14 +999,8 @@ unsigned int Terrain::CreateVao(TileType tile_type) {
 // Creates a texture pointer from file
 //   @return new_texture, a GLuint texture pointer
 GLuint Terrain::LoadTexture(const std::string &filename) {
-  // A shader program has many texture units, slots in which a texture can be bound, available to
-  // it and this function defines which unit we are working with currently
-  // We will only use unit 0 until later in the course. This is the default.
 
-
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-
+  // Generate New Texture
   GLuint new_texture;
   glGenTextures( 1, &new_texture );
 
@@ -1023,6 +1017,9 @@ GLuint Terrain::LoadTexture(const std::string &filename) {
       );
 
   glBindTexture( GL_TEXTURE_2D, new_texture );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
   if (n == 3) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
   }
