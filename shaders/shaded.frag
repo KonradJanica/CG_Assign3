@@ -57,6 +57,7 @@ uniform int isBumped;
 
 uniform sampler2D texMap;
 uniform sampler2D normMap;
+uniform sampler2D mossMap;
 
 
 in vec4 a_vertex_mv;
@@ -151,15 +152,13 @@ void main(void) {
   // Cannot trust pipeline interpolation to generate normalized normals
 
   vec4 vertex_mv = a_vertex_mv;
-  vec3 normal_mv = normalize(a_normal_mv); 
-
-
-
-  
+  vec3 normal_mv = normalize(a_normal_mv);  
  
-
-  vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
-  normal_mv  =  normal_mv +  normalize(2.0*NN.xyz-1.0);
+  if(isBumped > 0)
+  {
+    vec3 NN = texture(normMap, a_tex_coord.st).xyz; // normal map
+    normal_mv  =  normal_mv +  normalize(2.0*NN.xyz-1.0);
+  }
 
 
   vec4 litColour = calcDirectionalLight(normal_mv);
@@ -174,7 +173,10 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
   }
 
-	//fragColour = litColour * texture(texMap, a_tex_coord);
+	if(isBumped > 0)
+  {
+    litColour = mix(litColour, texture(mossMap, a_tex_coord), 0.1);
+  }
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
 }

@@ -365,15 +365,21 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   }
 
   int bumpHandle = glGetUniformLocation(program_id, "isBumped");
-  if(texHandle2 == -1)
-  {
-    printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
-  }
+
 
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
 
   glUniform1i(texHandle2, 1);
   glUniform1i(bumpHandle, 1);
+
+  int texHandle3 = glGetUniformLocation(program_id, "mossMap");
+  if(texHandle3 == -1)
+  {
+    printf("TERRAIN COULDNT FIND MOSS MAPPINGS\n");
+  }
+  glBindTexture(GL_TEXTURE_2D, terrain->road_bump());
+
+  glUniform1i(texHandle3, 2);
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> &terrain_vao_handle = terrain->terrain_vao_handle();
@@ -389,9 +395,7 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
   
-  glBindTexture(GL_TEXTURE_2D, terrain->road_bump());
-
-  glUniform1i(texHandle2, 1);
+  glUniform1i(bumpHandle, 0);
   //////////////////////////
   // ROADS
   int amount = terrain->road_indice_count();
