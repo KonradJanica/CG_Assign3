@@ -21,7 +21,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
     // Initialize Dummy Index for first equilavence check in collisions
     prev_colisn_pair_idx_ = 0;
 
-    rain_ = new Rain(shaders_->RainGeneric, true);
+    rain_ = new Rain(shaders_->RainGeneric, debug_flag);
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
     terrain_ = new Terrain(shaders_->LightMappedGeneric);
@@ -63,65 +63,43 @@ void Controller::AddModel(const Shader &shader, const std::string &model_filenam
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
-  // Lights need to be transformed with view/normal matrix
-  PositionLights();
-
-
   // DRAW TO THE SHADOW BUFFER
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo_.frame_buffer_name_);
 	glClear(GL_DEPTH_BUFFER_BIT);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
-  glViewport(0,0,1024,1024);
+  glViewport(0, 0, 1024, 1024);
 
-  // renderer_->Render(terrain_, camera_, true);
   // Car with physics
-  // if (camera_.state() != camera_.kFirstPerson)
-    // renderer_->Render(car_, camera_, true);
-  // Road-signs
-  // renderer_->Render(objects_.at(0), camera_, true);
-  // Terrain
   renderer_.RenderDepthBuffer(car_, camera_);
+  // Terrain
   renderer_.RenderDepthBuffer(terrain_, camera_);
+  // Road-signs TODO
 
   // binds the shadow mapping for reading
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glViewport(0,0,640,480);
-  glBindTexture( GL_TEXTURE_2D, renderer_.fbo_.depth_texture_ );
+  glViewport(0, 0, camera_.width(), camera_.height());
+  glBindTexture(GL_TEXTURE_2D, renderer_.fbo_.depth_texture_);
 
   //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
   renderer_.RenderSkybox(skybox_, camera_);
+  // Car with physics
   renderer_.Render(car_, camera_);
+  // Terrain
   renderer_.Render(terrain_, camera_);
 
   // Unbind buffer
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  // Car with physics
-  // if (camera_.state() != camera_.kFirstPerson)
-  // Road-signs
-  // renderer_->Render(objects_.at(0), camera_, false);
-  // Terrain
-  // renderer_->Render(terrain_, camera_, false);
-
-	// glBindVertexArray(0);
-	// glutSwapBuffers();
-	// glFlush();
+  // glBindTexture(GL_TEXTURE_2D, 0);
+  // glBindVertexArray(0);
+  // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // DONE SHADOWS
   renderer_.RenderWater(water_, car_, skybox_, camera_);
-  // Axis
-  // TODO Toggle
+  rain_->Render(camera_, car_, skybox_);
 
-  // camera_.UpdateProjections();
+  // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
-   rain_->Render(camera_, car_, skybox_);
-  
-
-  car_->UpdateModelMatrix();
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties
@@ -183,13 +161,13 @@ void Controller::PositionLights() {
 // The main control tick
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
-  // calculate delta time
-
+  // Lights need to be transformed with view/normal matrix
+  PositionLights();
   // Update the position of the rain
   rain_->UpdatePosition();
 
-  long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter - also determine delta time
+  long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   frames_count_ += 1;
   if ((current_frame - frames_past_) > 1000) {
     const int fps = frames_count_ * 1000.0f / (current_frame - frames_past_);
@@ -213,7 +191,11 @@ void Controller::UpdateGame() {
   if (!is_collision_) {
     UpdatePhysics();
     UpdateCollisions();
+  } else {
+    // TODO add car off road shaking
   }
+  car_->UpdateModelMatrix();
+
   UpdateCamera();
 
   if (game_state_ == kCrashingFall) {

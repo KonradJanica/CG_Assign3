@@ -95,6 +95,10 @@ class Camera {
     inline glm::mat4 projection_matrix() const;
     // Accessor for the FOV (field of view)
     inline float fov() const;
+    // Accessor for the window width
+    inline int width() const;
+    // Accessor for the window height
+    inline int height() const;
     // Accessor for the Current Camera Position
     inline glm::vec3 cam_pos() const;
     // Accessor for the Current Camera State
@@ -187,6 +191,14 @@ inline glm::mat4 Camera::projection_matrix() const {
 // Accessor for the FOV (Field of view) of the projection
 inline float Camera::fov() const {
   return fov_;
+}
+// Accessor for the window width
+inline int Camera::width() const {
+  return width_;
+}
+// Accessor for the window height
+inline int Camera::height() const {
+  return height_;
 }
 // Accessor for the Current Camera Position
 inline glm::vec3 Camera::cam_pos() const {
