@@ -334,6 +334,13 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
     }
   }
 
+  int isBumpedHandle = glGetUniformLocation(program_id, "isBumped");
+  int normMapHandle = glGetUniformLocation(program_id, "normMap");
+  glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
+  glUniform1i(normMapHandle, 1);
+  glUniform1i(isBumpedHandle, 1);
+
+
   const glm::mat4 &view_matrix = camera->view_matrix();
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
@@ -370,6 +377,8 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   }
 
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glUniform1i(isBumpedHandle, 0);
+
   //////////////////////////
   // ROADS
   int amount = terrain->road_indice_count();
@@ -385,4 +394,6 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
 
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
+
+  
 }

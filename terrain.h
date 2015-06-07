@@ -44,6 +44,10 @@ class Terrain {
     inline circular_vector<unsigned int> road_vao_handle() const;
     // TODO comment
     inline GLuint road_texture() const;
+
+    inline GLuint cliff_bump() const;
+
+    inline GLuint road_bump() const;
     // Accessor for the loaded texture
     //   @warn requires a texture to be loaded with LoadTexture()
     inline GLuint texture() const;
@@ -134,6 +138,10 @@ class Terrain {
     GLuint terrain_program_id_;
     // The texture to be used to Wrap Terrain
     GLuint texture_;
+    // The bumpmap texture for the cliff
+    GLuint cliff_bump_;
+    // The bumpmap texture for the road
+    GLuint road_bump_;
     // The texture to be used for the road
     GLuint road_texture_;
     // The VAO handle for the terrain
@@ -302,12 +310,19 @@ class Terrain {
     unsigned int CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
-    GLuint LoadTexture(const std::string &filename);
+    GLuint LoadTexture(const std::string &filename, unsigned int active);
 
     // Verbose Debugging mode
     bool is_debugging_;
 };
 
+inline GLuint Terrain::cliff_bump() const {
+  return cliff_bump_;
+}
+
+inline GLuint Terrain::road_bump() const {
+  return road_bump_;
+}
 // Accessor for the VAO
 // TODO comment
 inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
