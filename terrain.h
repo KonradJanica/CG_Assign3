@@ -15,7 +15,7 @@
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "lib/shader/shader.hpp"
+#include "shaders/shaders.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "lib/circular_vector/circular_vector.h"
@@ -34,13 +34,13 @@ class Terrain {
     typedef std::vector<boundary_pair> colisn_vec;
 
     // Construct with width and height specified
-    Terrain(const GLuint program_id, const int &width = 96, const int &height = 96);
+    Terrain(const Shader & shader, const int width = 96, const int height = 96);
     
     // Accessor for the VAO
     // TODO comment
     inline circular_vector<unsigned int> terrain_vao_handle() const;
     // Accessor for the program id (shader)
-    inline GLuint terrain_program_id() const;
+    inline const Shader * shader() const;
     // TODO comment
     inline circular_vector<unsigned int> road_vao_handle() const;
     // TODO comment
@@ -136,7 +136,7 @@ class Terrain {
     unsigned int road_indice_count_;
     // The shader to use to render heightmap
     //   Road uses the same shader
-    GLuint terrain_program_id_;
+    const Shader & shader_;
     // The texture to be used to Wrap Terrain
     GLuint texture_;
     // The bumpmap texture for the cliff
@@ -303,7 +303,7 @@ class Terrain {
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   The parameters are self explanatory.
     //   @return vao_handle, the vao handle
-    unsigned int CreateVao(const GLuint program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+    unsigned int CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
         const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices);
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param  tile_type  An enum representing the proper members to use
@@ -329,9 +329,9 @@ inline GLuint Terrain::road_bump() const {
 inline circular_vector<unsigned int> Terrain::terrain_vao_handle() const {
   return terrain_vao_handle_;
 }
-// Accessor for the program id (shader)
-inline GLuint Terrain::terrain_program_id() const {
-  return terrain_program_id_;
+// Accessor for the Shader object
+inline const Shader * Terrain::shader() const {
+  return &shader_;
 }
 // TODO comment
 inline circular_vector<unsigned int> Terrain::road_vao_handle() const {

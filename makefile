@@ -29,7 +29,7 @@ endif
 
 CC = g++ -Wno-switch-enum -std=c++11
 LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o Skybox.o Water.o rain.o controller.o main.o
-LIB = lib/tiny_obj_loader/tiny_obj_loader.o lib/shader/shader.o
+LIB = lib/tiny_obj_loader/tiny_obj_loader.o shaders/shader_compiler/shader.o
 
 .PHONY:  clean
 
@@ -77,9 +77,9 @@ model_data.o: model_data.cc model_data.h
 
 $(LIB):
 	$(MAKE) -C lib/tiny_obj_loader
-	$(MAKE) -C lib/shader
+	$(MAKE) -C shaders/shader_compiler
 
 clean:
 	rm -f *.o assign3$(EXT)
 	$(MAKE) -C lib/tiny_obj_loader clean
-	$(MAKE) -C lib/shader clean
+	$(MAKE) -C shaders/shader_compiler clean

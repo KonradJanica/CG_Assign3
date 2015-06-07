@@ -21,10 +21,10 @@
 #include "model_data.h"
 #include "model.h"
 #include "object.h"
+#include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -52,7 +52,9 @@ class Camera {
 
     // CONSTRUCTORS:
     // Default Constructor sets starting position of Camera at 0,0,3
-    Camera();
+    Camera(const Shaders * shaders,
+        const int window_width, const int window_height,
+        const float fov = 55.0f);
 
     // MUTATORS:
     // Changes the current state of the camera, hence changes the viewing
@@ -81,15 +83,22 @@ class Camera {
     void UpdateCarTick(const Object * car);
     // Update the Camera Matrix
     void UpdateCamera();
+    // Updates all the currently loaded shaders' projection uniforms
+    void UpdateProjections();
     // Mutates the cameras position
     inline void ResetPosition(const glm::vec3 &camera_position);
 
     // ACCESSORS:
-    // Accessor for the camera matrix
+    // Accessor for the view matrix
     inline glm::mat4 view_matrix() const;
-    // Accessor for the Current Zoom Aspect Ratio
-    //  To be used in render
-    inline float aspect() const;
+    // Accessor for the projection matrix
+    inline glm::mat4 projection_matrix() const;
+    // Accessor for the FOV (field of view)
+    inline float fov() const;
+    // Accessor for the window width
+    inline int width() const;
+    // Accessor for the window height
+    inline int height() const;
     // Accessor for the Current Camera Position
     inline glm::vec3 cam_pos() const;
     // Accessor for the Current Camera State
@@ -108,27 +117,37 @@ class Camera {
     inline int prev_mouse_y() const;
     
   private:
+    // VIEWING VARS
     // The viewing state of the camera
     State state_;
-    // The modelview matrix for the viewing camera
-    glm::mat4 view_matrix_;
     // The Position of the Camera
     glm::vec3 cam_pos_;
     // The Front (or back depends on your visualization) position of the camera
     glm::vec3 cam_front_;
     // The upwards vector of the camera
     glm::vec3 cam_up_;
-    // Aspect Ratio used for zooming
-    float aspect_;
     // The Yaw (Up/Down) of the Camera
     GLfloat yaw_;
     // The Pitch (Left/Right) of the Camera
     GLfloat pitch_;
-    // Time between current frame and last frame
-    GLfloat delta_time_;	
-    // Time of last frame
-    GLfloat last_frame_;
-    
+
+    // WINDOW VARS
+    // The field of view of the projection
+    float fov_;
+    // The width of the Window
+    int width_;
+    // The height of the Window
+    int height_;
+
+    // CALCULATED MATRICES
+    // The modelview matrix for the viewing camera
+    glm::mat4 view_matrix_;
+    // The projection matrix for the world
+    glm::mat4 projection_matrix_;
+
+    // SHADERS TO UPDATE PROJECTION
+    const Shaders * shaders_;
+
     // MOUSE SETTINGS:
     // Stores previous mouse X location on Window
     int prev_mouse_x_;
@@ -165,10 +184,21 @@ inline void Camera::ResetPosition(const glm::vec3 &camera_position) {
 inline glm::mat4 Camera::view_matrix() const {
   return view_matrix_;
 }
-// Accessor for the Current Zoom Aspect Ratio
-//  To be used in render
-inline float Camera::aspect() const {
-  return aspect_;
+// Accessor for the projection matrix
+inline glm::mat4 Camera::projection_matrix() const {
+  return projection_matrix_;
+}
+// Accessor for the FOV (Field of view) of the projection
+inline float Camera::fov() const {
+  return fov_;
+}
+// Accessor for the window width
+inline int Camera::width() const {
+  return width_;
+}
+// Accessor for the window height
+inline int Camera::height() const {
+  return height_;
 }
 // Accessor for the Current Camera Position
 inline glm::vec3 Camera::cam_pos() const {

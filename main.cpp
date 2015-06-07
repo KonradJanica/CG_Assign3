@@ -44,7 +44,6 @@
 #include "lib/stb_image/stb_image.h"
 
 // Renderer, Controller and Camera objects
-Renderer    *g_renderer;
 Controller  *g_controller;
 Camera      *g_camera;
 
@@ -84,6 +83,8 @@ void render() {
 
   // Clear the buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
+    glViewport(0,0,640,480);
 
   // Call the daw function of the controller which handles drawing the objects
   g_controller->Draw();
@@ -94,40 +95,19 @@ void render() {
 
   // Swap buffers + flush
   glutSwapBuffers();
-  glFlush();
+  // No point using glFlush unless single buffer or using opengl over a network
+  //   // Konrad
+  // glFlush();
 }
 
 void idle() {
 }
 
 void timer(int t) {
-  // unsigned long long time = glutGet(GLUT_ELAPSED_TIME);
-  // // FPS counter, only print FPS in terminal when it is not 60
-  // g_frames += 1;
-  // if (static_cast<float>(time - g_past) / 1000.0f >= 1.0f) {
-  //   if (g_frames != 60) {
-  //     std::cout << "FPS: " << g_frames << std::endl;
-  //   }
-  //   g_frames = 0;
-  //   g_past = time;
-  // }
-
   // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
-  
-
-  // glUseProgram(g_program_id[3]);
-  // int timeHandle = glGetUniformLocation(g_program_id[3], "time");
-  // if(timeHandle == -1)
-  // {
-  //   printf("Could not get handle for time var \n");
-  // }
-  // //printf("sending time %d\n", time);
-  // glUniform1f(timeHandle, time+1); 
-
 
   // UpdateProjection();
-
 
   glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
@@ -188,33 +168,15 @@ void KeyboardUp(unsigned char key, int x, int y) {
  */
 void keyboardDown(unsigned char key, int x, int y) {
 
+  g_controller->KeyPressed(key);
   // We simply check the key argument against characters we care about, in this case A and D
   switch(key) 
   {
-    case 'w':
-    case 's':
-    case 'a':
-    case 'd':
-    case 'i':
-    case 'j':
-    case 'k':
-    case 'l':
-    case 'h':
-      g_controller->KeyPressed(key);
-      break;  
     case 27: // escape key pressed
       exit(0);
       break;
     case 'c':
       g_camera->CycleState();
-      break;
-    case 'b':
-      g_fov += 5.0f;
-      std::cout << "FOV = " << g_fov << std::endl;
-      if (g_fov > 120.0f)
-        g_fov = 0.0f;
-      UpdateProjection();
-      glutPostRedisplay();
       break;
     case 'p':
       // TODO fix this
@@ -240,6 +202,9 @@ int main(int argc, char **argv) {
   std::cout << "Movement: Hold and drag left mouse to change camera direction in free mode\n";
   std::cout << "Controls: 'c' key to toggle Camera mode\n";
   std::cout << "Controls: 'Esc' key to Quit\n\n";
+
+  // Check whether vec3 can be loaded into VAO - otherwise no point continuing
+  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3);
 
   // Set up GLUT window
   glutInit(&argc, argv);
@@ -273,65 +238,19 @@ int main(int argc, char **argv) {
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
 
-  // Load in all the shaders
-  g_program_id[0] = LoadShaders("shaders/wireframe.vert", "shaders/wireframe.frag");
-  if (g_program_id[0] == 0)
-    return 1;
-
-  g_program_id[1] = LoadShaders("shaders/coord.vert", "shaders/coord.frag");
-  if (g_program_id[1] == 0)
-    return 1;
-
-  g_program_id[2] = LoadShaders("shaders/shaded.vert", "shaders/shaded.frag");
-  if (g_program_id[2] == 0)
-    return 1;
-
-  g_program_id[3] = LoadShaders("shaders/water.vert", "shaders/water.frag");
-  if (g_program_id[3] == 0)
-    return 1;
-
-  g_program_id[4] = LoadShaders("shaders/sky.vert", "shaders/sky.frag");
-  if (g_program_id[4] == 0)
-    return 1;
-
-  g_program_id[5] = LoadShaders("shaders/rain.vert", "shaders/rain.frag");
-  if (g_program_id[5] == 0)
-    return 1;
-
-
-  g_renderer = new Renderer();
-  // Construct Axis VAO
-  g_renderer->EnableAxis(g_program_id[1]);
-
-  g_controller = new Controller(g_renderer);
-
+  // Moved to stack for speed
+  Controller controller(g_window_x, g_window_y, true);
+  g_controller = &controller;
+  // g_controller = new Controller();
   // Setup camera global
   g_camera = g_controller->camera();
 
-  // Setup terrain
-  g_controller->EnableTerrain(g_program_id[2]);
-
-  // Setup skybox
-  g_controller->AddSkybox(g_program_id[4]);
-
-  // Setup Water
-  g_controller->AddWater(g_program_id[3]);
-
-  // Setup Rain
-  g_controller->AddRain(g_program_id[5]);
-
-  // Add starting models
-  // g_controller->AddModel(g_program_id[2], "models/Spider-Man/Spider-Man.obj");
-  // g_controller->AddModel(g_program_id[2], "models/Aventador/Avent.obj", true);
-  // g_controller->AddModel(g_program_id[2], "models/Car/car-n.obj", true);
-  g_controller->AddModel(g_program_id[2], "models/Pick-up_Truck/pickup.obj", true);
-  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_left.obj");
-  // g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/curve_right.obj");
-  g_controller->AddModel(g_program_id[2], "models/Signs_OBJ/working/60.obj");
-
-  UpdateProjection();
+  // TODO fix this - removed and hardcoded for shadows
+  // UpdateProjection();
 
   // Set our GLUT window handler callback functions
   glutKeyboardFunc(keyboardDown);
@@ -344,10 +263,6 @@ int main(int argc, char **argv) {
   glutTimerFunc(1,timer,0);
   glutDisplayFunc(render);
   glutMainLoop();
-
-  delete g_renderer;
-  delete g_controller;
-  delete g_camera;
 
   return 0;
 }

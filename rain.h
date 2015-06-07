@@ -16,12 +16,12 @@
 #include "Skybox.h"
 #include "camera.h"
 #include "object.h"
+#include "shaders/shaders.h"
 #include <stdlib.h>
 #include <ctime>
 #include <random>
 #include "glm/glm.hpp"
 #include <GL/glew.h>
-#include "lib/shader/shader.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -42,21 +42,21 @@ class Rain {
     // Constructor - Take the shader ID you want the rain to be rendered to
     // NOTE - This shader needs more specific set up than most and you should not try to use
     // anything but rain.vert and rain.frag to render this rain
-    Rain(const GLuint program_id);
+    Rain(const Shader &shader, const bool is_debug = false);
 
     // Destructor - Free memory allocated from constructor
     ~Rain();
 
-    void Render(Camera * camera, Object * car, Skybox * skybox);
+    void Render(Camera &camera, Object * car, Skybox * skybox) const;
     
     // Updates the position of each particles
     void UpdatePosition();
 
     // Returns the VAO
-    inline unsigned int rainvao() const;
+    inline GLuint rainvao() const;
 
     // Return the shader ID
-    inline GLuint rainshader() const;
+    inline Shader shader() const;
 
   private:
     
@@ -70,13 +70,24 @@ class Rain {
     void GenerateMesh();
 
     // Create the VAO
-    unsigned int CreateVao();
+    GLuint CreateVao();
 
     // Initialises first set of particles
     void Init();
 
+    // GLuint to store the shader uniforms and ID
+    const Shader shader_;
+
+    // Rain shader specific attributes
+    const GLuint initialVerticesLoc_;
+    const GLuint positionsLoc_;
+    const GLuint colourLoc_;
+    // Rain shader specific uniforms
+    const GLuint camRightHandle_;
+    const GLuint camUpHandle_;
+
     // VAO to store the rain 
-    unsigned int rain_vao_;  
+    const GLuint rain_vao_;
 
     // VBO for single particle instance
     GLuint particle_instance_buffer_;
@@ -93,9 +104,6 @@ class Rain {
     // Array that is sent to GPU
     GLfloat * particle_colour_buffer_data_;
 
-    // GLuint to store the shader ID
-    GLuint rain_shader_; 
-
     // Store the max positions we want the rain to be located in
     int maxx_;
     int maxy_;
@@ -108,13 +116,13 @@ class Rain {
 // =======================================================================//  
 
 // Return the rainVAO
-inline unsigned int Rain::rainvao() const {
+inline GLuint Rain::rainvao() const {
   return rain_vao_;
 }
 
 // Return the rain shader
-inline GLuint Rain::rainshader() const {
-  return rain_shader_;
+inline Shader Rain::shader() const {
+  return shader_;
 }
 
 #endif

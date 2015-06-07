@@ -4,39 +4,45 @@
 //   Allows for Verbose Debugging Mode
 //   @param bool debug_flag, true will enable verbose debugging
 //   @warn assert will end program prematurely
-Controller::Controller(const Renderer * r, const bool &debug_flag) 
-  : renderer_(r), game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
+Controller::Controller(const int window_width, const int window_height, const bool debug_flag) :
+  // Object construction
+  renderer_(Renderer(debug_flag)),
+  shaders_(renderer_.shaders()),
+  camera_(Camera(shaders_, window_width, window_height)),
+  light_controller_(new LightController()),
+  // State and var defaults
+  game_state_(kAutoDrive), road_y_rotation_(0), light_pos_(glm::vec4(0,0,0,0)),
   frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
-    camera_ = new Camera();
-    light_controller_ = new LightController();
+
     is_key_pressed_hash_.reserve(256);
     is_key_pressed_hash_.resize(256);
     playSound = 1;
 
+    // Initialize Dummy Index for first equilavence check in collisions
+    prev_colisn_pair_idx_ = 0;
+
+    rain_ = new Rain(shaders_->RainGeneric, debug_flag);
+    water_ = new Water(shaders_->WaterGeneric);
+    skybox_ = new Skybox(shaders_->SkyboxGeneric);
+    terrain_ = new Terrain(shaders_->LightMappedGeneric);
+
+  // Add starting models
+  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
+  AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
+
 }
 
-void Controller::AddRain(GLuint program_id)
-{
-  rain_ = new Rain(program_id);
-}
-
-void Controller::AddWater(const GLuint program_id)
-{
-  water_ = new Water(program_id);
-}
-
-void Controller::AddSkybox(const GLuint program_id)
-{
-  skybox_ = new Skybox(program_id);
-}
 // Adds a model to the member vector
 //   @param program_id, a shader program
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
 //   TODO split Car into it's own
-void Controller::AddModel(const GLuint program_id, const std::string &model_filename, const bool &is_car) {
+void Controller::AddModel(const Shader &shader, const std::string &model_filename, const bool is_car) {
   if (is_car) {
-    car_ = new Model(program_id, model_filename,
+    car_ = new Model(shader, model_filename,
         glm::vec3(1.12f, 0.55f, 35.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
         // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
         glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
@@ -46,7 +52,7 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
     UpdateCollisions();
     prev_left_lane_midpoint_ = left_lane_midpoint_;
   } else {
-    Object * object = new Model(program_id, model_filename,
+    Object * object = new Model(shader, model_filename,
         glm::vec3(1.4f, 0.0f, 50.0f), // Translation
         glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
         glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale
@@ -57,34 +63,48 @@ void Controller::AddModel(const GLuint program_id, const std::string &model_file
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
-  // Lights need to be transformed with view/normal matrix
-  PositionLights();
-  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
-  renderer_->RenderSkybox(skybox_, camera_);
+  // DRAW TO THE SHADOW BUFFER
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo_.frame_buffer_name_);
+	glClear(GL_DEPTH_BUFFER_BIT);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
+  glViewport(0, 0, 1024, 1024);
+
   // Car with physics
-  if (camera_->state() != camera_->kFirstPerson)
-    renderer_->Render(car_, camera_);
-  // Road-signs
-  renderer_->Render(objects_.at(0), camera_);
-  // Aventador
-  // renderer_->Render(objects_.at(1), camera_);
+  renderer_.RenderDepthBuffer(car_, camera_);
   // Terrain
-  renderer_->Render(terrain_, camera_);
+  renderer_.RenderDepthBuffer(terrain_, camera_);
+  // Road-signs TODO
 
-  renderer_->RenderWater(water_,car_, camera_, skybox_);
-  // Axis
-  // TODO Toggle
+  // binds the shadow mapping for reading
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0, 0, camera_.width(), camera_.height());
+  glBindTexture(GL_TEXTURE_2D, renderer_.fbo_.depth_texture_);
 
-   renderer_->RenderAxis(camera_);
-   rain_->Render(camera_, car_, skybox_);
-  
+  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
+  renderer_.RenderSkybox(skybox_, camera_);
+  // Car with physics
+  renderer_.Render(car_, camera_);
+  // Terrain
+  renderer_.Render(terrain_, camera_);
 
-  car_->UpdateModelMatrix();
+  // Unbind buffer - dont think this is necessary - Konrad
+  // glBindTexture(GL_TEXTURE_2D, 0);
+  // glBindVertexArray(0);
+  // glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  // DONE SHADOWS
+  renderer_.RenderWater(water_, car_, skybox_, camera_);
+  rain_->Render(camera_, car_, skybox_);
+
+  // Axis only renders in debugging mode
+  renderer_.RenderAxis(camera_);
 }
 
 // Assumes SetupLighting() has been called, only updates essential light properties
 void Controller::PositionLights() {
-  glm::mat4 view_matrix = camera_->view_matrix();
+  glm::mat4 view_matrix = camera_.view_matrix();
   glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
@@ -133,36 +153,26 @@ void Controller::PositionLights() {
     spotLights.push_back(headlight);
   }
 
-  light_controller_->SetDirectionalLight(car_->program_id(), dirLight);
+  light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
   dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
-  light_controller_->SetSpotLights(water_->watershader(), spotLights.size(), &spotLights[0]);
-  light_controller_->SetDirectionalLight(water_->watershader(), dirLight);
-  light_controller_->SetPointLights(car_->program_id(), pointLights.size(), &pointLights[0]);
-  light_controller_->SetSpotLights(car_->program_id(), spotLights.size(), &spotLights[0]);
-}
-
-// Creates the Terrain object for RenderTerrain()
-//   Creates Terrain VAOs
-//   @warn terrain_ on heap, must be deleted after
-void Controller::EnableTerrain(const GLuint program_id) {
-  terrain_ = new Terrain(program_id);
-  // Initialize Dummy Index for first equilavence check in collisions
-  prev_colisn_pair_idx_ = 0;
+  light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
+  light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
+  light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
+  light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }
 
 // The main control tick
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
-  // calculate delta time
-
+  // Lights need to be transformed with view/normal matrix
+  PositionLights();
   // Update the position of the rain
   rain_->UpdatePosition();
 
-
-  long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   // FPS counter - also determine delta time
+  long long current_frame = glutGet(GLUT_ELAPSED_TIME);
   frames_count_ += 1;
   if ((current_frame - frames_past_) > 1000) {
     const int fps = frames_count_ * 1000.0f / (current_frame - frames_past_);
@@ -186,7 +196,11 @@ void Controller::UpdateGame() {
   if (!is_collision_) {
     UpdatePhysics();
     UpdateCollisions();
+  } else {
+    // TODO add car off road shaking
   }
+  car_->UpdateModelMatrix();
+
   UpdateCamera();
 
   if (game_state_ == kCrashingFall) {
@@ -219,11 +233,11 @@ void Controller::UpdateGame() {
 void Controller::UpdateCamera() {
   // CAMERA CONTROLS
   // Freeview movement
-  camera_->Movement(delta_time_, is_key_pressed_hash_); 
+  camera_.Movement(delta_time_, is_key_pressed_hash_); 
   // Point at car
-  camera_->UpdateCarTick(car_);
+  camera_.UpdateCarTick(car_);
   // Update camera lookAt
-  camera_->UpdateCamera();
+  camera_.UpdateCamera();
 
 }
 
@@ -237,7 +251,7 @@ void Controller::UpdateCamera() {
 void Controller::CrashAnimationCliff() {
 
   // Lock camera state
-  // camera_->ChangeState(Camera::kFreeView);
+  // camera_.ChangeState(Camera::kFreeView);
   const glm::vec3 &car_pos = car_->translation();
 
   // Calc next movement (avoid going through)
@@ -328,7 +342,7 @@ void Controller::CrashAnimationCliff() {
     // Reset game state
     game_state_ = kStart;
     is_collision_ = false;
-    camera_->ChangeState(camera_state_); // users previous camera
+    camera_.ChangeState(camera_state_); // users previous camera
     return;
   }
 
@@ -381,7 +395,7 @@ void Controller::CrashAnimationCliff() {
       // Reset game state
       game_state_ = kAutoDrive;
       is_collision_ = false;
-      camera_->ChangeState(camera_state_); // users previous camera
+      camera_.ChangeState(camera_state_); // users previous camera
       playSound = 1;
       return;
     }
@@ -399,7 +413,7 @@ void Controller::CrashAnimationCliff() {
 void Controller::CrashAnimationFall() {
 
   // Lock camera state
-  camera_->ChangeState(Camera::kFreeView);
+  camera_.ChangeState(Camera::kFreeView);
   // Rotate car
   float x_rot = car_->rotation().x + car_->speed() * 0.0004f * delta_time_;
   // printf("dt = %f\n",delta_time_);
@@ -486,7 +500,7 @@ void Controller::CrashAnimationFall() {
       // Reset game state
       game_state_ = kAutoDrive;
       is_collision_ = false;
-      camera_->ChangeState(camera_state_); // users previous camera
+      camera_.ChangeState(camera_state_); // users previous camera
       playSound = 1;
       return;
     }
@@ -653,10 +667,10 @@ void Controller::UpdateCollisions() {
   // @warn also sets camera position for the crash
   if (is_collision_) {
     // MITCH PLAY SOUND
-    camera_state_ = camera_->state();
+    camera_state_ = camera_.state();
     if (is_water_closest) {
       game_state_ = kCrashingFall;
-      camera_->ChangeState(Camera::kFirstPerson);
+      camera_.ChangeState(Camera::kFirstPerson);
     } else {
       game_state_ = kCrashingCliff;
       is_cliff_hit_ = false;

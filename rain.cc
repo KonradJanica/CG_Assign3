@@ -14,8 +14,31 @@
 
 #include "rain.h"
 
-Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(100000), rain_shader_(program_id)
+Rain::Rain(const Shader &shader, const bool is_debug) :
+  // Setup Constants
+  MAX_PARTICLES_(100000),
+  // Setup shader and uniforms
+  shader_(shader),
+  initialVerticesLoc_(glGetAttribLocation(shader_.Id, "initial_vertices")),
+  positionsLoc_(      glGetAttribLocation(shader_.Id, "displaced_vertices")),
+  colourLoc_(         glGetAttribLocation(shader_.Id, "colour")),
+  camRightHandle_(glGetUniformLocation(shader_.Id, "cam_right")),
+  camUpHandle_(   glGetUniformLocation(shader_.Id, "cam_up")),
+  // Setup VAO
+  rain_vao_(CreateVao())
 {
+  // DEBUGGING PRINTS to stderr (if error) and stdout (else)
+  if (is_debug) {
+    const char * shader_name = "Rain shader";
+    // Check the attrib locations in debugging mode
+    Shader::CheckAttrib(initialVerticesLoc_, "initialVerticesLoc_", shader_name);
+    Shader::CheckAttrib(positionsLoc_, "positionsLoc_", shader_name);
+    Shader::CheckAttrib(colourLoc_, "colourLoc_", shader_name);
+    // Check the uniform locations in debugging mode
+    Shader::CheckHandle(camRightHandle_, "camRightHandle_", shader_name);
+    Shader::CheckHandle(camUpHandle_, "camUpHandle_", shader_name);
+  }
+
   // Initialize the particle buffers
   particles_ = new Particle[MAX_PARTICLES_];
   particle_position_buffer_data_ = new GLfloat[MAX_PARTICLES_ * 3];
@@ -27,7 +50,6 @@ Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(100000), rain_shader_(progr
   maxz_ = 100.0f;
 
   // Run initialization
-  rain_vao_ = CreateVao();
   Init();
 
 }
@@ -42,7 +64,7 @@ Rain::~Rain()
 
 unsigned int Rain::CreateVao()
 {
-  glUseProgram(rain_shader_);
+  glUseProgram(shader_.Id);
 
   // Initial declaration of the shape of the 'raindrop'
   // these values can be modified to change the shape of the rain
@@ -93,11 +115,11 @@ void Rain::Init()
   // Initialize the position/speed/colour for all particles
 
 
-  int maxx = 50.0f;
-  int maxy = 20.0f;
-  int maxz = 50.0f;
+  // int maxx = 50.0f;
+  // int maxy = 20.0f;
+  // int maxz = 50.0f;
 
-  for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
+  for (int i = 0; i < MAX_PARTICLES_; i++)
   {
     // Randomly generate the positions of the particle
     particles_[i].pos = glm::vec3(xgen(eng), ygen(eng), zgen(eng));
@@ -114,7 +136,7 @@ void Rain::Init()
 void Rain::UpdatePosition()
 {
   // Updates particles and puts in data arrays
-  for (unsigned int i = 0; i < MAX_PARTICLES_; i++)
+  for (int i = 0; i < MAX_PARTICLES_; i++)
   {
     // Reduce y so the rain travels towards the ground
     particles_[i].pos.y -= particles_[i].speed;
@@ -145,9 +167,9 @@ void Rain::UpdatePosition()
   }
 }
 
-void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
+void Rain::Render(Camera &camera, Object * car, Skybox * skybox) const
 {
-  glUseProgram(rain_shader_);
+  glUseProgram(shader_.Id);
 
   // Enable blending so that rain is slightly transparent, transparency is set in the frag shader
   glEnable(GL_BLEND);
@@ -165,55 +187,43 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
   glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES_ * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, MAX_PARTICLES_ * 4 * sizeof(GLfloat), particle_colour_buffer_data_);
 
-  // Get the handle for the Model * View Matrix
-  GLint mvHandle = glGetUniformLocation(rain_shader_, "modelview_matrix");
-  if (mvHandle == -1) {
-    fprintf(stderr,"Could not find uniform: modelview_matrix In: Rain - Render\n This may cause unexpected behaviour in the program\n");
-  }
-
-  GLuint initialVerticesHandle = glGetAttribLocation(rain_shader_, "initial_vertices");
-  GLuint positionsHandle = glGetAttribLocation(rain_shader_, "displaced_vertices");
-  GLuint colourHandle = glGetAttribLocation(rain_shader_, "colour");
-
-  // Get the view matrix from the camera
-  glm::mat4 view_matrix = camera->view_matrix();
-
   // Translate based on the car, so the rain follows the car
-  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
+  const glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
       glm::vec3(car->translation().x, 1.0f , car->translation().z));
 
   // Translate the rain so its centre is roughly around the centre of the car
-  glm::mat4 rain_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-maxx_ / 2.0f, 0.0f, -maxz_ / 2.0f));
+  const glm::mat4 rain_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-maxx_ / 2.0f, 0.0f, -maxz_ / 2.0f));
 
-  // Apply the transformations
-  view_matrix = view_matrix * object_translate * rain_translate;
+  // Get the view and projection matrices from the camera
+  const glm::mat4 &VIEW       = camera.view_matrix();
+  const glm::mat4 &PROJECTION = camera.projection_matrix();
+  // Calculate MVP
+  const glm::mat4 MODELVIEW   = VIEW * object_translate * rain_translate;
+  const glm::mat4 MVP         = PROJECTION * MODELVIEW;
 
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix));
+  glUniformMatrix4fv(shader_.mvpHandle, 1, false, glm::value_ptr(MVP));
 
   // The cameras up vector is (0,1,0) transform it to world space by
   // by multiplying my camera->world (view) matrix inverse
-  GLuint CamRight  = glGetUniformLocation(rain_shader_, "cam_right");
-  GLuint CamUp  = glGetUniformLocation(rain_shader_, "cam_up");
-
-  glUniform3f(CamRight, view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]);
-  glUniform3f(CamUp   , view_matrix[0][1], view_matrix[1][1], view_matrix[2][1]);
+  glUniform3f(camRightHandle_, VIEW[0][0], VIEW[1][0], VIEW[2][0]);
+  glUniform3f(camUpHandle_   , VIEW[0][1], VIEW[1][1], VIEW[2][1]);
 
   glBindBuffer(GL_ARRAY_BUFFER, particle_instance_buffer_);
-  glEnableVertexAttribArray(initialVerticesHandle);
-  glVertexAttribPointer(initialVerticesHandle, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(initialVerticesLoc_);
+  glVertexAttribPointer(initialVerticesLoc_, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
   glBindBuffer(GL_ARRAY_BUFFER, particle_position_buffer_);
-  glEnableVertexAttribArray(positionsHandle);
-  glVertexAttribPointer(positionsHandle, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(positionsLoc_);
+  glVertexAttribPointer(positionsLoc_, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
   glBindBuffer(GL_ARRAY_BUFFER, particle_colour_buffer_);
-  glEnableVertexAttribArray(colourHandle);
-  glVertexAttribPointer(colourHandle, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(colourLoc_);
+  glVertexAttribPointer(colourLoc_, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
   // Needed for instanced draws
-  glVertexAttribDivisor(initialVerticesHandle, 0);    // Same every particle
-  glVertexAttribDivisor(positionsHandle, 1);          // One per particle
-  glVertexAttribDivisor(colourHandle, 1);             // One per particle
+  glVertexAttribDivisor(initialVerticesLoc_, 0);    // Same every particle
+  glVertexAttribDivisor(positionsLoc_, 1);          // One per particle
+  glVertexAttribDivisor(colourLoc_, 1);             // One per particle
 
   // Equivalent to looping over all particles (with 4 vertices)
   glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, MAX_PARTICLES_);

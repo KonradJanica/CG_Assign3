@@ -50,9 +50,7 @@ uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
 
-uniform samplerCube skybox;
-
-uniform vec3 cameraPos;
+uniform samplerCube texMap;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
@@ -140,11 +138,11 @@ void main(void) {
   // Refractive index of water
   // Water refractions
   float ratio = 1.00 / 1.33;
-  vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
+  vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
   vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
 
   // Uncomment for water reflections
-  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
+  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
   // vec3 R = reflect(I, normalize(normal_mv));
   
 
@@ -159,7 +157,7 @@ void main(void) {
     litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
-  vec4 colour = litColour * texture(skybox, R);
+  vec4 colour = litColour * texture(texMap, R);
   // Set transparency
   colour.a = 0.9;
 

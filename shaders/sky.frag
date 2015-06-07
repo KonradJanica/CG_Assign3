@@ -1,16 +1,13 @@
 #version 130
 
-// manyAttributes.fp
-// An example of using interpolated values from the previous stage
-
 in vec4 colour; 
 in vec3 texCoords;
 
-uniform samplerCube skybox;
+uniform samplerCube texMap;
 
 out vec4 fragColour;
 
 void main(void) {
 
-	fragColour = texture(skybox, texCoords);
+	fragColour = texture(texMap, texCoords);
 }

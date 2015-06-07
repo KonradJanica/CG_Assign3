@@ -2,11 +2,17 @@
 
 #include "glm/gtx/rotate_vector.hpp"
 
-Terrain::Terrain(const GLuint program_id, const int &width, const int &height)
-  : x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
-  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), prev_spacing_rand_((rand() % 100)*0.003f - 0.15f),
-  indice_count_(0), road_indice_count_(0), terrain_program_id_(program_id),
+Terrain::Terrain(const Shader & shader, const int width, const int height) :
+  // Setup Constants
+  x_length_(width), z_length_(height), length_multiplier_(width / 32), kRandomIterations(10000*length_multiplier_),
+  // Default vars
+  generated_ticks_(0), prev_rand_(0), prev_cliff_x3_rand_(rand() % 20 + 1), prev_water_x3_rand_(rand() % 15 + 5), 
+  prev_spacing_rand_((rand() % 100)*0.003f - 0.15f), indice_count_(0), road_indice_count_(0), 
+  // The shader to use
+  shader_(shader),
+  // More Default vars
   rotation_(0), prev_rotation_(0), z_smooth_max_(10 * length_multiplier_) {
+
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -932,20 +938,13 @@ void Terrain::HelperMakeRoadCollisionMap() {
 // Creates a new vertex array object and loads in data into a vertex attribute buffer
 //   The parameters are self explanatory.
 //   @return vao_handle, the vao handle
-unsigned int Terrain::CreateVao(const GLuint program_id, const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
+unsigned int Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
     const std::vector<glm::vec2> &texture_coordinates_uv, const std::vector<int> &indices) {
 
-  glUseProgram(program_id);
-
-  assert(sizeof(glm::vec3) == sizeof(GLfloat) * 3); //Vec3 cannot be loaded to buffer this way
-
   unsigned int VAO_handle;
+  glUseProgram(shader()->Id);
   glGenVertexArrays(1, &VAO_handle);
   glBindVertexArray(VAO_handle);
-
-  int vertLoc = glGetAttribLocation(program_id, "a_vertex");
-  int normLoc = glGetAttribLocation(program_id, "a_normal");
-  int textureLoc = glGetAttribLocation(program_id, "a_texture");
 
   // Buffers to store position, colour and index data
   unsigned int buffer[4];
@@ -953,30 +952,31 @@ unsigned int Terrain::CreateVao(const GLuint program_id, const std::vector<glm::
 
   // Set vertex position
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
-  glBufferData(GL_ARRAY_BUFFER, 
+  glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec3)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertLoc);
-  glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glVertexAttribPointer(shader()->vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader()->vertLoc);
   // Normal attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(normLoc);
-  glVertexAttribPointer(normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(shader()->normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader()->normLoc);
   // Texture attributes
   glBindBuffer(GL_ARRAY_BUFFER, buffer[2]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(textureLoc);
-  glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader()->textureLoc);
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[3]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
       sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);   
-  // sizeof(iIndices), iIndices, GL_STATIC_DRAW);   
+
   // Un-bind
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
   return VAO_handle;
 }
 
@@ -987,10 +987,10 @@ unsigned int Terrain::CreateVao(TileType tile_type) {
   unsigned int vao;
   switch(tile_type) {
     case kTerrain: //and kRoad
-      vao = CreateVao(terrain_program_id(), vertices, normals, texture_coordinates_uv, indices);
+      vao = CreateVao(vertices, normals, texture_coordinates_uv, indices);
       break;
     case kRoad:
-      vao = CreateVao(terrain_program_id(), vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
+      vao = CreateVao(vertices_road_, normals_road_, texture_coordinates_uv_road_, indices_road_);
       break;
   }
   return vao;
