@@ -14,7 +14,13 @@
 
 #include "rain.h"
 
-Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(100000), rain_shader_(program_id)
+Rain::Rain(const Shader &shader) :
+  // Setup Constants
+  MAX_PARTICLES_(100000),
+  // Setup shader
+  shader_(shader),
+  // Setup VAO
+  rain_vao_(CreateVao())
 {
   // Initialize the particle buffers
   particles_ = new Particle[MAX_PARTICLES_];
@@ -27,7 +33,6 @@ Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(100000), rain_shader_(progr
   maxz_ = 100.0f;
 
   // Run initialization
-  rain_vao_ = CreateVao();
   Init();
 
 }
@@ -42,7 +47,7 @@ Rain::~Rain()
 
 unsigned int Rain::CreateVao()
 {
-  glUseProgram(rain_shader_);
+  glUseProgram(shader_.Id);
 
   // Initial declaration of the shape of the 'raindrop'
   // these values can be modified to change the shape of the rain
@@ -145,9 +150,9 @@ void Rain::UpdatePosition()
   }
 }
 
-void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
+void Rain::Render(Camera &camera, Object * car, Skybox * skybox)
 {
-  glUseProgram(rain_shader_);
+  glUseProgram(shader_.Id);
 
   // Enable blending so that rain is slightly transparent, transparency is set in the frag shader
   glEnable(GL_BLEND);
@@ -165,18 +170,10 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
   glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES_ * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, MAX_PARTICLES_ * 4 * sizeof(GLfloat), particle_colour_buffer_data_);
 
-  // Get the handle for the Model * View Matrix
-  GLint mvHandle = glGetUniformLocation(rain_shader_, "modelview_matrix");
-  if (mvHandle == -1) {
-    fprintf(stderr,"Could not find uniform: modelview_matrix In: Rain - Render\n This may cause unexpected behaviour in the program\n");
-  }
+  GLuint initialVerticesHandle = glGetAttribLocation(shader_.Id, "initial_vertices");
+  GLuint positionsHandle = glGetAttribLocation(shader_.Id, "displaced_vertices");
+  GLuint colourHandle = glGetAttribLocation(shader_.Id, "colour");
 
-  GLuint initialVerticesHandle = glGetAttribLocation(rain_shader_, "initial_vertices");
-  GLuint positionsHandle = glGetAttribLocation(rain_shader_, "displaced_vertices");
-  GLuint colourHandle = glGetAttribLocation(rain_shader_, "colour");
-
-  // Get the view matrix from the camera
-  glm::mat4 view_matrix = camera->view_matrix();
 
   // Translate based on the car, so the rain follows the car
   glm::mat4 object_translate = glm::translate(glm::mat4(1.0f), 
@@ -185,18 +182,22 @@ void Rain::Render(Camera * camera, Object * car, Skybox * skybox)
   // Translate the rain so its centre is roughly around the centre of the car
   glm::mat4 rain_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-maxx_ / 2.0f, 0.0f, -maxz_ / 2.0f));
 
-  // Apply the transformations
-  view_matrix = view_matrix * object_translate * rain_translate;
+  // Get the view and projection matrices from the camera
+  const glm::mat4 &VIEW       = camera.view_matrix();
+  const glm::mat4 &PROJECTION = camera.projection_matrix();
+  // Calculate MVP
+  const glm::mat4 MODELVIEW   = VIEW * object_translate * rain_translate;
+  const glm::mat4 MVP         = PROJECTION * MODELVIEW;
 
-  glUniformMatrix4fv(mvHandle, 1, false, glm::value_ptr(view_matrix));
+  glUniformMatrix4fv(shader_.mvpHandle, 1, false, glm::value_ptr(MVP));
 
   // The cameras up vector is (0,1,0) transform it to world space by
   // by multiplying my camera->world (view) matrix inverse
-  GLuint CamRight  = glGetUniformLocation(rain_shader_, "cam_right");
-  GLuint CamUp  = glGetUniformLocation(rain_shader_, "cam_up");
+  GLuint CamRight  = glGetUniformLocation(shader_.Id, "cam_right");
+  GLuint CamUp  = glGetUniformLocation(shader_.Id, "cam_up");
 
-  glUniform3f(CamRight, view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]);
-  glUniform3f(CamUp   , view_matrix[0][1], view_matrix[1][1], view_matrix[2][1]);
+  glUniform3f(CamRight, VIEW[0][0], VIEW[1][0], VIEW[2][0]);
+  glUniform3f(CamUp   , VIEW[0][1], VIEW[1][1], VIEW[2][1]);
 
   glBindBuffer(GL_ARRAY_BUFFER, particle_instance_buffer_);
   glEnableVertexAttribArray(initialVerticesHandle);

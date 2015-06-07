@@ -1,7 +1,6 @@
 #version 130
 
-uniform mat4 projection_matrix;
-uniform mat4 modelview_matrix;
+uniform mat4 mvp_matrix;
 
 in vec3 initial_vertices;
 in vec3 displaced_vertices;
@@ -18,5 +17,5 @@ void main()
 
   vec3 vertexpos_world = displaced_vertices + cam_right * initial_vertices.x + cam_up * initial_vertices.y;
 
-  gl_Position = projection_matrix * modelview_matrix * vec4(vertexpos_world, 1.0);
+  gl_Position = mvp_matrix * vec4(vertexpos_world, 1.0);
 }
