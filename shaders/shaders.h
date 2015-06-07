@@ -90,16 +90,17 @@ struct Shader {
       printf("\n"); // Make spacing only in stdout
     }
   }
-  private:
+
   // Checks for validity of handle and prints to stderr or to stdout appropriately
-  void CheckHandle(const GLint handle, const char * handle_name, const char * file) {
+  static void CheckHandle(const GLint handle, const char * handle_name, const char * file) {
     if (handle == -1)
       fprintf(stderr, "%s - Could not find uniform variables - %s\n", file, handle_name);
     else
       printf("%s - Found uniform var - GLint Id:%3d - %s\n", file, handle, handle_name);
   }
+
   // Checks for validity of attribute locaion and prints to stderr or to stdout appropriately
-  void CheckAttrib(const GLint a_loc, const char * a_loc_name, const char * file) {
+  static void CheckAttrib(const GLint a_loc, const char * a_loc_name, const char * file) {
     if (a_loc == -1)
       fprintf(stderr, "%s - Couldn't find attribute location - %s\n", file, a_loc_name);
     else

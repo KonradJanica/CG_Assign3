@@ -21,7 +21,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
     // Initialize Dummy Index for first equilavence check in collisions
     prev_colisn_pair_idx_ = 0;
 
-    rain_ = new Rain(shaders_->RainGeneric);
+    rain_ = new Rain(shaders_->RainGeneric, true);
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
     terrain_ = new Terrain(shaders_->LightMappedGeneric);

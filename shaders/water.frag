@@ -52,8 +52,6 @@ uniform float shininess;
 
 uniform samplerCube texMap;
 
-uniform vec3 cameraPos;
-
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 out vec4 fragColour;
@@ -140,11 +138,11 @@ void main(void) {
   // Refractive index of water
   // Water refractions
   float ratio = 1.00 / 1.33;
-  vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
+  vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
   vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
 
   // Uncomment for water reflections
-  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z) - cameraPos);
+  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
   // vec3 R = reflect(I, normalize(normal_mv));
   
 
