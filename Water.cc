@@ -63,7 +63,14 @@ Water::Water(const GLuint program_id)
   {
     fprintf(stderr,"Could not find uniform: 'numWaves' In: Water - Constructor\n This may cause unexpected behaviour in the program\n");
   }
+
   glUniform1f(wavesHandle,numWaves);  
+
+  glUniform1f(wavesHandle,8);
+
+
+  
+
    
   // Generate a random device used to randomly generate waves
   // N.B - It is not particularly important what the values for the distr are
@@ -72,6 +79,7 @@ Water::Water(const GLuint program_id)
   std::uniform_real_distribution<> distr(-1, 1);
 
   for (int i = 0; i < numWaves; ++i) {
+
 
     // Create a small buffer, as we have dynamic uniform names
     char uniformName[256];
@@ -85,7 +93,9 @@ Water::Water(const GLuint program_id)
     {
       fprintf(stderr,"Could not find uniform: amplitude[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
+
     glUniform1f(amplitudeHandle, amplitude * 5.0);
+
 
     float wavelength = 8 * M_PI / (i + 1);
     //printf("wavelength[%d] = %f \n", i, wavelength);
@@ -95,7 +105,9 @@ Water::Water(const GLuint program_id)
     {
       fprintf(stderr,"Could not find uniform: wavelength[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
+
     glUniform1f(wavelengthHandle, wavelength * 2.0);   
+
 
     float speed = 1.0f + 2*i;
     //printf("speed[%d] = %f \n", i, speed);

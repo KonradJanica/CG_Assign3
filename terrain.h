@@ -28,6 +28,7 @@
 
 class Terrain {
   public:
+    GLuint cliff_nrm_texture_;
     // These are used for collisions and it's helper functions
     typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
     typedef std::vector<boundary_pair> colisn_vec;

@@ -89,8 +89,12 @@ void Controller::PositionLights() {
   glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
   DirectionalLight dirLight;
-  dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
-  dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
+
+  dirLight.DiffuseIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  //dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  //dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  dirLight.Direction = norm_matrix * glm::vec3(0.0f, -1.0f, 0.0f);
+
 
   // Point lights
   std::vector<PointLight> pointLights;
@@ -107,6 +111,7 @@ void Controller::PositionLights() {
 
     pointLights.push_back(brakeLight);
   }
+
 
   // Spot lights
   std::vector<SpotLight> spotLights;

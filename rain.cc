@@ -14,7 +14,7 @@
 
 #include "rain.h"
 
-Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(100000), rain_shader_(program_id)
+Rain::Rain(const GLuint program_id) : MAX_PARTICLES_(500000), rain_shader_(program_id)
 {
   // Initialize the particle buffers
   particles_ = new Particle[MAX_PARTICLES_];

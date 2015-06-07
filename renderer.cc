@@ -363,7 +363,9 @@ void Renderer::Render(const Terrain * terrain, const Camera * camera) const {
   {
     printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
   }
+
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
+
   glUniform1i(texHandle2, 1);
 
   // Bind VAO and texture - Terrain
