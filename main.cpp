@@ -239,8 +239,8 @@ int main(int argc, char **argv) {
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
-  // glEnable(GL_CULL_FACE);
-  // glFrontFace(GL_CCW);
+  glEnable(GL_CULL_FACE);
+  glFrontFace(GL_CCW);
 
   // Moved to stack for speed
   Controller controller(g_window_x, g_window_y, true);

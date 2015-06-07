@@ -89,7 +89,7 @@ void Controller::Draw() {
   // Terrain
   renderer_.Render(terrain_, camera_);
 
-  // Unbind buffer
+  // Unbind buffer - dont think this is necessary - Konrad
   // glBindTexture(GL_TEXTURE_2D, 0);
   // glBindVertexArray(0);
   // glBindBuffer(GL_ARRAY_BUFFER, 0);
