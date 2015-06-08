@@ -11,7 +11,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   shaders_(renderer_.shaders()),
   camera_(Camera(shaders_, window_width, window_height)),
   light_controller_(new LightController()),
-  collision_controller_(new CollisionController),
+  collision_controller_(CollisionController()),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
   frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
@@ -199,9 +199,9 @@ void Controller::UpdateGame() {
 
   // printf("mid = (%f,%f,%f)\n",left_lane_midpoint_.x,left_lane_midpoint_.y,left_lane_midpoint_.z);
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
-  if (!collision_controller_->is_collision()) {
+  if (!collision_controller_.is_collision()) {
     UpdatePhysics();
-    game_state_ = collision_controller_->UpdateCollisions(car_, terrain_, &camera_, game_state_);
+    game_state_ = collision_controller_.UpdateCollisions(car_, terrain_, &camera_, game_state_);
   } else {
     // TODO add car off road shaking
   }
@@ -214,7 +214,7 @@ void Controller::UpdateGame() {
     if(playSound)
       system("aplay ./sounds/metal_crash.wav -q &");
     playSound = 0;
-    game_state_ = collision_controller_->CrashAnimationFall(&camera_, terrain_, car_, delta_time_, is_key_pressed_hash_);
+    game_state_ = collision_controller_.CrashAnimationFall(&camera_, terrain_, car_, delta_time_, is_key_pressed_hash_);
     return;
   }
   if (game_state_ == kCrashingCliff) {
@@ -222,7 +222,7 @@ void Controller::UpdateGame() {
     if(playSound)
       system("aplay ./sounds/metal_crash.wav -q &");
     playSound = 0;
-    game_state_ = collision_controller_->CrashAnimationCliff(&camera_, terrain_, car_, delta_time_, is_key_pressed_hash_);
+    game_state_ = collision_controller_.CrashAnimationCliff(&camera_, terrain_, car_, delta_time_, is_key_pressed_hash_);
     return;
   }
 
@@ -258,7 +258,7 @@ void Controller::UpdatePhysics() {
   }
 
   if (game_state_ == kAutoDrive) {
-    collision_controller_->AutoDrive(car_, delta_time_);
+    collision_controller_.AutoDrive(car_, delta_time_);
   }
 
 }

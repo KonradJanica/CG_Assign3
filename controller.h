@@ -71,8 +71,11 @@ class Controller {
     // The light controller
     LightController * light_controller_;
     // The Collision Controller
-    //   Detects crashes etc, TODO
-    CollisionController * collision_controller_;
+    //   Detects crashes, proceeds circular tile vector
+    //   Plays crash animation
+    //   Finds and holds middle of road
+    //   Holds car direction near car
+    CollisionController collision_controller_;
 
     // Updates light properties with view matrix from camera
 
