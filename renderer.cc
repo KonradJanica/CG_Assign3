@@ -160,7 +160,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   // We are using texture unit 0 (the default)
   // glActiveTexture(GL_TEXTURE0);
   // glUniform1i(shader->texMapHandle, 0);
-  // glActiveTexture(GL_TEXTURE1);
+  // glActiveTexture(GL_TEXTURE20);
   // glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
   // glUniform1i(shader->shadowMapHandle, 1);
 
@@ -364,7 +364,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glBindTexture(GL_TEXTURE_2D, terrain->texture());
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  glActiveTexture(GL_TEXTURE1);
+  glActiveTexture(GL_TEXTURE20);
   glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
   glUniform1i(shader.shadowMapHandle, 1);
 

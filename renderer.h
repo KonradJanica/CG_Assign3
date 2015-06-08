@@ -38,6 +38,7 @@ struct FrameBufferObject {
   // Size of texture
   textureX(1024), textureY(1024) {
 
+  glActiveTexture(GL_TEXTURE20);
   // generate namespace for the frame buffer 
   glGenFramebuffers(1, &FrameBufferShadows);
   //switch to our fbo so we can bind stuff to it
