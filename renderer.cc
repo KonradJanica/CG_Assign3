@@ -180,7 +180,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
 
     // Bind VAO
     glBindTexture(GL_TEXTURE_2D, vao_texture_handle.at(y).second);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
 
     // Populate Shader
     glBindVertexArray(vao_texture_handle.at(y).first); 
@@ -188,6 +188,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     // glBindAttribLocation(shader->Id, 1, "a_normal");
     // glBindAttribLocation(shader->Id, 2, "a_texture");
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
+    printf("indices of car shape = %d\n", object->points_per_shape_at(y));
   }
   // Un-bind
   glBindVertexArray(0);
