@@ -366,7 +366,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
   glActiveTexture(GL_TEXTURE20);
   glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-  glUniform1i(shader.shadowMapHandle, 1);
+  glUniform1i(shader.shadowMapHandle, 20);
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
@@ -391,9 +391,9 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  glActiveTexture(GL_TEXTURE1);
+  glActiveTexture(GL_TEXTURE20);
   glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-  glUniform1i(shader.shadowMapHandle, 1);
+  glUniform1i(shader.shadowMapHandle, 20);
 
   glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();
