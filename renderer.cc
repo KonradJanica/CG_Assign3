@@ -15,7 +15,7 @@ Renderer::Renderer(const bool debug_flag) :
   // Debugging state
   is_debugging_(debug_flag) {
 
-}
+  }
 
 //   Renders the passed in water to the scene
 //   Should be called in the controller
@@ -85,7 +85,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(shader.texMapHandle, 0);
-  
+
   // Create and send view matrix with translation stripped in order for skybox
   // to always be in thr right location
   const glm::mat4 &PROJECTION = camera.projection_matrix();
@@ -124,9 +124,9 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   const glm::mat4 MODEL = object->model_matrix();
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
   const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
-                                   0.0f, 0.5f, 0.0f, 0.0f,
-                                   0.0f, 0.0f, 0.5f, 0.0f,
-                                   0.5f, 0.5f, 0.5f, 1.0f);
+      0.0f, 0.5f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.5f, 0.0f,
+      0.5f, 0.5f, 0.5f, 1.0f);
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
@@ -164,24 +164,24 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
     float mtlshininess = object->shininess_at(y);
     float mtldissolve = object->dissolve_at(y);
-  glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
-  glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
-  glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
-  glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
-  glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
+    glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
+    glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
+    glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
+    glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
+    glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
 
-      // We are using texture unit 0 (the default)
-      glActiveTexture(GL_TEXTURE0);
-      glUniform1i(shader->texMapHandle, 0);
+    // We are using texture unit 0 (the default)
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(shader->texMapHandle, 0);
 
     // Bind VAO
     glBindTexture(GL_TEXTURE_2D, vao_texture_handle.at(y).second);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
 
-      // // TODO move out of loop later
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-      glUniform1i(shader->shadowMapHandle, 1);
+    // // TODO move out of loop later
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+    glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
     glBindVertexArray(vao_texture_handle.at(y).first); 
@@ -288,9 +288,9 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
   const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
-                                   0.0f, 0.5f, 0.0f, 0.0f,
-                                   0.0f, 0.0f, 0.5f, 0.0f,
-                                   0.5f, 0.5f, 0.5f, 1.0f);
+      0.0f, 0.5f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.5f, 0.0f,
+      0.5f, 0.5f, 0.5f, 1.0f);
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
@@ -356,18 +356,18 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle->size(); ++x) {
-      // We are using texture unit 0 (the default)
-      glActiveTexture(GL_TEXTURE0);
-      glUniform1i(shader->texMapHandle, 0);
+    // We are using texture unit 0 (the default)
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(shader->texMapHandle, 0);
 
-      glBindTexture(GL_TEXTURE_2D, terrain->texture());
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    glBindTexture(GL_TEXTURE_2D, terrain->texture());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
-      // // TODO move out of loop later
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-      glUniform1i(shader->shadowMapHandle, 1);
+    // // TODO move out of loop later
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+    glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
     glBindVertexArray((*terrain_vao_handle)[x]);
@@ -377,7 +377,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
-  
+
   glUniform1i(bumpHandle, 0);
 
   // ROADS
@@ -385,18 +385,18 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   int amount = terrain->road_indice_count();
   const circular_vector<unsigned int> * road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle->size(); ++x) {
-      // We are using texture unit 0 (the default)
-      glActiveTexture(GL_TEXTURE0);
-      glUniform1i(shader->texMapHandle, 0);
-      // Bind VAO Road
-      glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+    // We are using texture unit 0 (the default)
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(shader->texMapHandle, 0);
+    // Bind VAO Road
+    glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
-      // // TODO move out of loop later
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-      glUniform1i(shader->shadowMapHandle, 1);
+    // // TODO move out of loop later
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+    glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate shader
     glBindVertexArray((*road_vao_handle)[x]);
@@ -405,7 +405,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
   glUniform1i(bumpHandle, 0);
 
-  
+
   // Un-bind
   glBindVertexArray(0);
 }
