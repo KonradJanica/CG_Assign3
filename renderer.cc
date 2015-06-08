@@ -153,6 +153,14 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
   glUniformMatrix3fv(shader->normHandle, 1, false, glm::value_ptr(NORMAL));
 
+  // Apply Shadow textures
+  // We are using texture unit 0 (the default)
+  // glActiveTexture(GL_TEXTURE0);
+  // glUniform1i(shader->texMapHandle, 0);
+  // glActiveTexture(GL_TEXTURE1);
+  // glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+  // glUniform1i(shader->shadowMapHandle, 1);
+
   const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
     // Pass Surface Colours to Shader
@@ -170,18 +178,9 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
     glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
 
-    // We are using texture unit 0 (the default)
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(shader->texMapHandle, 0);
-
     // Bind VAO
     glBindTexture(GL_TEXTURE_2D, vao_texture_handle.at(y).second);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-
-    // // TODO move out of loop later
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-    glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
     glBindVertexArray(vao_texture_handle.at(y).first); 
@@ -353,52 +352,47 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
   glUniform1i(texHandle3, 2);
 
+  // Bind TERRAIN Textures
+  // We are using texture unit 0 (the default)
+  glActiveTexture(GL_TEXTURE0);
+  glUniform1i(shader->texMapHandle, 0);
+  glBindTexture(GL_TEXTURE_2D, terrain->texture());
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+  glUniform1i(shader->shadowMapHandle, 1);
+
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
   for (unsigned int x = 0; x < terrain_vao_handle->size(); ++x) {
-    // We are using texture unit 0 (the default)
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(shader->texMapHandle, 0);
-
-    glBindTexture(GL_TEXTURE_2D, terrain->texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-
-    // // TODO move out of loop later
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-    glUniform1i(shader->shadowMapHandle, 1);
-
     // Populate Shader
     glBindVertexArray((*terrain_vao_handle)[x]);
-    glBindAttribLocation(shader->Id, shader->vertLoc, "a_vertex");
-    glBindAttribLocation(shader->Id, shader->normLoc, "a_normal");
-    glBindAttribLocation(shader->Id, shader->textureLoc, "a_texture");
+    // glBindAttribLocation(shader->Id, shader->vertLoc, "a_vertex");
+    // glBindAttribLocation(shader->Id, shader->normLoc, "a_normal");
+    // glBindAttribLocation(shader->Id, shader->textureLoc, "a_texture");
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
 
   glUniform1i(bumpHandle, 0);
 
-  // ROADS
+  // Bind ROAD Textures
+  // We are using texture unit 0 (the default)
+  glActiveTexture(GL_TEXTURE0);
+  glUniform1i(shader->texMapHandle, 0);
+  glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+  glUniform1i(shader->shadowMapHandle, 1);
+
   glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();
   const circular_vector<unsigned int> * road_vao_handle = terrain->road_vao_handle();
   for (unsigned int x = 0; x < road_vao_handle->size(); ++x) {
-    // We are using texture unit 0 (the default)
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(shader->texMapHandle, 0);
     // Bind VAO Road
-    glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-
-    // // TODO move out of loop later
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-    glUniform1i(shader->shadowMapHandle, 1);
-
-    // Populate shader
     glBindVertexArray((*road_vao_handle)[x]);
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
