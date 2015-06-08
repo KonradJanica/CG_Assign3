@@ -161,17 +161,17 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   // glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
   // glUniform1i(shader->shadowMapHandle, 1);
 
-  const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = object->vao_texture_handle();
-  for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
+  const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
+  for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
     // Pass Surface Colours to Shader
     const glm::vec3 &vao_ambient = object->ambient_surface_colours_at(y);
     const glm::vec3 &vao_diffuse = object->diffuse_surface_colours_at(y);
     const glm::vec3 &vao_specular = object->specular_surface_colours_at(y);
-    float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
-    float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
-    float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
-    float mtlshininess = object->shininess_at(y);
-    float mtldissolve = object->dissolve_at(y);
+    const float mtlambient[3] = { vao_ambient.x, vao_ambient.y, vao_ambient.z };	// ambient material
+    const float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
+    const float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
+    const float mtlshininess = object->shininess_at(y);
+    const float mtldissolve = object->dissolve_at(y);
     glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
     glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
     glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
@@ -179,16 +179,15 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
 
     // Bind VAO
-    glBindTexture(GL_TEXTURE_2D, vao_texture_handle.at(y).second);
+    glBindTexture(GL_TEXTURE_2D, (*vao_texture_handle)[y].second);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
 
     // Populate Shader
-    glBindVertexArray(vao_texture_handle.at(y).first); 
+    glBindVertexArray((*vao_texture_handle)[y].first); 
     // glBindAttribLocation(shader->Id, 0, "a_vertex");
     // glBindAttribLocation(shader->Id, 1, "a_normal");
     // glBindAttribLocation(shader->Id, 2, "a_texture");
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
-    printf("indices of car shape = %d\n", object->points_per_shape_at(y));
   }
   // Un-bind
   glBindVertexArray(0);
@@ -434,10 +433,10 @@ void Renderer::RenderDepthBuffer(const Object * object, const Camera &camera) co
   // in the "MVP" uniform
   glUniformMatrix4fv(shader.depthMvpHandle, 1, GL_FALSE, glm::value_ptr(DEPTH_MVP));
 
-  const std::vector<std::pair<unsigned int, GLuint> > &vao_texture_handle = object->vao_texture_handle();
-  for (unsigned int y = 0; y < vao_texture_handle.size(); ++y) {
+  const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
+  for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
     // Pass Surface Colours to Shader
-    glBindVertexArray( vao_texture_handle.at(y).first ); 
+    glBindVertexArray((*vao_texture_handle)[y].first); 
     glDrawElements(GL_TRIANGLES, object->points_per_shape_at(y), GL_UNSIGNED_INT, 0);	// New call
   }
   // Unbind

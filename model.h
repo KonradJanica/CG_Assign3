@@ -50,7 +50,7 @@ class Model : public Object {
     // Accessor for each shapes VAO and it's corresponding texture
     //   Each VAO includes indices, vertices and UV coordinates
     //   @return vao_texture_handle_, a container for all VAOs and their corresponding textures
-    inline std::vector<std::pair<unsigned int, GLuint> > vao_texture_handle() const;
+    inline const std::vector<std::pair<GLuint, GLuint> > * vao_texture_handle() const;
 
     // Accessor for largest vertex
     //   @param enum value
@@ -110,7 +110,7 @@ class Model : public Object {
     // The file path to the mtl file (and hopefully the textures)
     std::string subdir_;
     // Each pair is a VAO with its texture
-    std::vector<std::pair<unsigned int, GLuint> > vao_texture_handle_;
+    std::vector<std::pair<GLuint, GLuint> > vao_texture_handle_;
     // Each index represents the points per shape in vao_texture_handle_
     std::vector<unsigned int> points_per_shape_;
     // The Ambient Surface Colour per vao_texture_handle_
@@ -150,8 +150,8 @@ inline const Shader * Model::shader() const {
 
 // Accessor for the VAO & Texture Handler
 //   @return vao_texture_handle_, the handler for all VAOS for the shape and their textures
-inline std::vector<std::pair<unsigned int, GLuint> > Model::vao_texture_handle() const {
-  return vao_texture_handle_;
+inline const std::vector<std::pair<unsigned int, GLuint> > * Model::vao_texture_handle() const {
+  return &vao_texture_handle_;
 }
 
 // Accessor for largest x vertex. Sample Usage:

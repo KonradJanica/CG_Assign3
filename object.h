@@ -107,7 +107,7 @@ class Object {
     // Accessor for each shapes VAO and it's corresponding texture
     //   Each VAO includes indices, vertices and UV coordinates
     //   @return vao_texture_handle_, a container for all VAOs and their corresponding textures
-    virtual std::vector<std::pair<unsigned int, GLuint> > vao_texture_handle() const = 0;
+    virtual const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle() const = 0;
     // Accessor for largest vertex
     //   @param enum value
     //   @return max_$_, the maximum cartesian coordinate of given input
