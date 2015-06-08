@@ -64,20 +64,6 @@ int         g_window_y = 480;
 long        g_past = 0;
 int         g_frames = 0;
 
-// Send the projection matrix to all shaders
-// NB - Make sure to update this loop every time we add a new shader
-void UpdateProjection() {
-  glm::mat4 projection = glm::perspective(g_fov, float(g_window_x / g_window_y), 0.1f, 100.0f);
-  for (unsigned int i = 0; i < 6; i++) {
-    glUseProgram(g_program_id[i]);
-    int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
-    if(projHandle == -1) {
-      fprintf(stderr,"Could not find uniform: 'projection_matrix' In: Main - UpdateProjection\n This may cause unexpected behaviour in the program\n");
-    }
-    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
-  }
-}
-
 // Render a frame
 void render() {
 
@@ -106,8 +92,6 @@ void idle() {
 void timer(int t) {
   // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
-
-  // UpdateProjection();
 
   glutTimerFunc(14, timer, 0);
   glutPostRedisplay();
@@ -248,9 +232,6 @@ int main(int argc, char **argv) {
   // g_controller = new Controller();
   // Setup camera global
   g_camera = g_controller->camera();
-
-  // TODO fix this - removed and hardcoded for shadows
-  // UpdateProjection();
 
   // Set our GLUT window handler callback functions
   glutKeyboardFunc(keyboardDown);
