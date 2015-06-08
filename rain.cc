@@ -234,8 +234,10 @@ void Rain::Render(Camera &camera, Object * car, Skybox * skybox) const
   // Equivalent to looping over all particles (with 4 vertices)
   glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, MAX_PARTICLES_);
 
-  glDisable(GL_BLEND);
+  // Unbind
+  glBindVertexArray(0);
 
+  glDisable(GL_BLEND);
 
 }
 
