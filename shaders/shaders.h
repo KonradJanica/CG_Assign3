@@ -32,6 +32,8 @@ struct Shader {
   const GLint   mtlDiffuseHandle;
   const GLint  mtlSpecularHandle;
   const GLint    shininessHandle;
+  // Transparency
+  const GLint     dissolveHandle;
   // Water
   const GLint       camPosHandle;
 
@@ -61,6 +63,8 @@ struct Shader {
     mtlDiffuseHandle(   glGetUniformLocation(Id, "mtl_diffuse")),
     mtlSpecularHandle(  glGetUniformLocation(Id, "mtl_specular")),
     shininessHandle(    glGetUniformLocation(Id, "shininess")),
+    // Transparency
+    dissolveHandle(     glGetUniformLocation(Id, "dissolve")),
     // Water
     camPosHandle(       glGetUniformLocation(Id, "cameraPos")),
     // GET ATTRIB LOCATIONS
@@ -83,6 +87,7 @@ struct Shader {
       CheckHandle(mtlDiffuseHandle,   "mtlDiffuseHandle",   file);
       CheckHandle(mtlSpecularHandle,  "mtlSpecularHandle",  file);
       CheckHandle(shininessHandle,    "shininessHandle",    file);
+      CheckHandle(dissolveHandle,     "dissolveHandle",     file);
       CheckHandle(camPosHandle,       "camPosHandle",       file);
       CheckAttrib(vertLoc,            "vertLoc",            file);
       CheckAttrib(normLoc,            "normLoc",            file);

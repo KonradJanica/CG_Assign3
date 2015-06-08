@@ -141,6 +141,11 @@ class Object {
     //   @return float, a float corresponding to the vao_texture_handle index
     //   @warn throws exception on error
     virtual float shininess_at(unsigned int index) const = 0;
+    // Accessor for the Dissolve vector
+    //   @param index of dissolve vector
+    //   @return float, a float corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    virtual float dissolve_at(unsigned int index) const = 0;
     // Accessor for all of the points in the shape
     //   @return amount_points_, the total amount of points => used for rendering
     virtual unsigned int amount_points() const = 0;

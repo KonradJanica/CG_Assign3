@@ -30,6 +30,8 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   // Setup rendering options
   glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  // Cull Appropriately
+  glCullFace(GL_FRONT);
 
   // Get only the needed components of the object's model matrix
   // Translation to put water where car is
@@ -76,8 +78,10 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
 
   // Draw skybox with depth testing off
   glDepthMask(GL_FALSE);
-  glUseProgram(shader.Id);
+  // Cull Appropriately
+  glCullFace(GL_BACK);
 
+  glUseProgram(shader.Id);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(shader.texMapHandle, 0);
@@ -108,7 +112,9 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   const Shader * shader = object->shader();
   glUseProgram(shader->Id);
 
-  glCullFace(GL_BACK);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND); // For windshield
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -157,10 +163,12 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
     float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
     float mtlshininess = object->shininess_at(y);
+    float mtldissolve = object->dissolve_at(y);
   glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
   glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
   glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
   glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
+  glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
 
       // We are using texture unit 0 (the default)
       glActiveTexture(GL_TEXTURE0);
@@ -184,6 +192,8 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   }
   // Un-bind
   glBindVertexArray(0);
+  glEnable(GL_CULL_FACE);
+  glDisable(GL_BLEND);
 
 }
 

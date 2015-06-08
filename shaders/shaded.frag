@@ -73,6 +73,7 @@ uniform vec3 mtl_ambient;
 uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
+uniform float dissolve;
 
 uniform int isBumped;
 
@@ -80,7 +81,6 @@ uniform sampler2D texMap;
 uniform sampler2D normMap;
 uniform sampler2D mossMap;
 uniform sampler2DShadow shadowMap;
-
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
@@ -212,5 +212,5 @@ void main(void) {
   visibility = visibility / 2 + 0.5; //Fit range between [0,0.5]
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), visibility * litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
-  //fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+  fragColour.a = dissolve;
 }

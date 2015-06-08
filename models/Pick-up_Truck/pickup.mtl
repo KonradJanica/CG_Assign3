@@ -18,7 +18,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-tp.jpg
+map_Kd p206-tp.jpg
 
 newmtl rwheel.bmp_rwheel.jpg_rwheel.jp
 illum 2
@@ -27,7 +27,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/rwheel.jpg
+map_Kd rwheel.jpg
 
 newmtl p206-sd2.bmp_p206-sd2_p206-sd2.
 illum 2
@@ -36,7 +36,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-sd2.jpg
+map_Kd p206-sd2.jpg
 
 newmtl brakedisc.bmp_brakedi_brakedis.
 illum 2
@@ -45,7 +45,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/brakedis.jpg
+map_Kd brakedis.jpg
 
 newmtl p206-sd.bmp_p206-sd.j_p206-sd.j
 illum 2
@@ -54,7 +54,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-sd.jpg
+map_Kd p206-sd.jpg
 
 newmtl gen-trd.bmp_gen-trd.j_gen-trd.j
 illum 2
@@ -63,7 +63,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/gen-trd.jpg
+map_Kd gen-trd.jpg
 
 newmtl p206-wh2.bmp_p206-wh2_p206-wh2.
 illum 2
@@ -72,7 +72,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-wh2.jpg
+map_Kd p206-wh2.jpg
 
 newmtl spokes.bmp_spokes.jpg_spokes.jp
 illum 2
@@ -81,7 +81,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/spokes.jpg
+map_Kd spokes.jpg
 
 newmtl p206-bk.bmp_p206-bk.j_p206-bk.j
 illum 2
@@ -90,7 +90,7 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-bk.jpg
+map_Kd p206-bk.jpg
 
 newmtl p206-fnt.bmp_p206-fnt_p206-fnt.
 illum 2
@@ -99,4 +99,4 @@ Ka 0.000000 0.000000 0.000000
 Ks 0.125000 0.125000 0.125000
 Ke 0.000000 0.000000 0.000000
 Ns 1.000000
-map_Kd C:\aPrograming\CG_Assign3\models\Car/p206-fnt.jpg
+map_Kd p206-fnt.jpg

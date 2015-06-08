@@ -57,6 +57,7 @@ void Model::ConstructShadedModel() {
     diffuse_surface_colours_.push_back(working_material->diffuse);
     specular_surface_colours_.push_back(working_material->specular);
     shininess_.push_back(working_material->shininess);
+    dissolve_.push_back(working_material->dissolve);
 
     shape_index++;
     next_shape = model_data_->shape_at(shape_index);

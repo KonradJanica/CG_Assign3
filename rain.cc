@@ -177,6 +177,8 @@ void Rain::Render(Camera &camera, Object * car, Skybox * skybox) const
   // Enable blending so that rain is slightly transparent, transparency is set in the frag shader
   glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  // Cull Appropriately
+  glCullFace(GL_BACK);
 
   glBindVertexArray(rain_vao_);
 

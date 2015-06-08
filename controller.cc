@@ -27,7 +27,8 @@ Controller::Controller(const int window_width, const int window_height, const bo
     terrain_ = new Terrain(shaders_->LightMappedGeneric);
 
   // Add starting models
-  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
+  // AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
+  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj", true);
   // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
@@ -69,10 +70,10 @@ void Controller::Draw() {
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glViewport(0, 0, 1024, 1024);
 
-  // Car with physics
-  renderer_.RenderDepthBuffer(car_, camera_);
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, camera_);
+  // Car with physics
+  renderer_.RenderDepthBuffer(car_, camera_);
   // Road-signs TODO
 
   // binds the shadow mapping for reading
@@ -82,21 +83,21 @@ void Controller::Draw() {
   glViewport(0, 0, camera_.width(), camera_.height());
   glBindTexture(GL_TEXTURE_2D, renderer_.fbo_.depth_texture_);
 
-  //NB MitchNote - DO NOT MOVE WHERE THIS IS RENDERED, IT MUST BE RENDERED FIRST!!!
+  // Ordering of renderering is very important due to transparency
   renderer_.RenderSkybox(skybox_, camera_);
-  // Car with physics
-  renderer_.Render(car_, camera_);
+  // Water
+  renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Terrain
   renderer_.Render(terrain_, camera_);
+  // Car with physics
+  renderer_.Render(car_, camera_);
+  // Rain (particles)
+  rain_->Render(camera_, car_, skybox_);
 
   // Unbind buffer - dont think this is necessary - Konrad
   // glBindTexture(GL_TEXTURE_2D, 0);
   // glBindVertexArray(0);
   // glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  // DONE SHADOWS
-  renderer_.RenderWater(water_, car_, skybox_, camera_);
-  rain_->Render(camera_, car_, skybox_);
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);

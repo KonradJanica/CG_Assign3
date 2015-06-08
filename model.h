@@ -92,6 +92,12 @@ class Model : public Object {
     //   @warn throws exception on error
     inline float shininess_at(unsigned int index) const;
 
+    // Accessor for the Dissolve vector
+    //   @param index of dissolve vector
+    //   @return float, a float corresponding to the vao_texture_handle index
+    //   @warn throws exception on error
+    inline float dissolve_at(unsigned int index) const;
+
     // Accessor for all of the points in the shape
     //   @return amount_points_, the total amount of points => used for rendering
     inline unsigned int amount_points() const;
@@ -115,6 +121,8 @@ class Model : public Object {
     std::vector<glm::vec3> specular_surface_colours_;
     // The Shininess of the normal per vao_texture_handle_
     std::vector<float> shininess_;
+    // The Dissolve of the texture per vao_texture_handle_
+    std::vector<float> dissolve_;
     // Amount of points of shape in total
     unsigned int amount_points_;
     // Members contain min/max of the cartesian coordinates of the model
@@ -232,6 +240,16 @@ inline glm::vec3 Model::specular_surface_colours_at(unsigned int index) const {
 inline float Model::shininess_at(unsigned int index) const {
   assert(index < shininess_.size() && "Trying to access vector out of bounds");
   return shininess_.at(index);
+}
+
+// Accessor for the Dissolve vector. Sample Usage:
+//  float dis = model->dissolve_at(3)
+//   @param index of dissolve vector
+//   @return float, a float corresponding to the vao_texture_handle index
+//   @warn throws exception on error
+inline float Model::dissolve_at(unsigned int index) const {
+  assert(index < dissolve_.size() && "Trying to access vector out of bounds");
+  return dissolve_[index];
 }
 
 // Accessor for all of the points in the shape. Sample Usage:
