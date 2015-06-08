@@ -66,6 +66,9 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
   glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
   glDisable(GL_BLEND);
+
+  // Unbind
+  glBindVertexArray(0);
 }
 
 //   Renders the passed in skybox to the scene
@@ -217,6 +220,8 @@ void Renderer::RenderAxis(const Camera &camera) const {
     glDrawElements(GL_LINES, 2*3, GL_UNSIGNED_INT, 0);	// New call. 2 vertices * 3 lines
     // Reset Renderering options
     glEnable(GL_DEPTH_TEST);
+    // Unbind
+    glBindVertexArray(0);
   }
 }
 
@@ -374,6 +379,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
+  // Unbind
+  glBindVertexArray(0);
 
   glUniform1i(bumpHandle, 0);
 
@@ -398,7 +405,6 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   }
 
   glUniform1i(bumpHandle, 0);
-
 
   // Un-bind
   glBindVertexArray(0);
