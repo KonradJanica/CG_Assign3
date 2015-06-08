@@ -342,7 +342,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
   int bumpHandle = glGetUniformLocation(shader.Id, "isBumped");
 
-
+    glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
 
   glUniform1i(texHandle2, 1);
@@ -353,6 +353,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   {
     printf("TERRAIN COULDNT FIND MOSS MAPPINGS\n");
   }
+  glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, terrain->road_bump());
 
   glUniform1i(texHandle3, 2);
