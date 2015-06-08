@@ -69,8 +69,8 @@ void render() {
 
   // Clear the buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f,0.0f,0.0f,0.0f);
-    glViewport(0,0,640,480);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
+  glViewport(0,0,640,480);
 
   // Call the daw function of the controller which handles drawing the objects
   g_controller->Draw();
@@ -94,6 +94,11 @@ void timer(int t) {
   g_controller->UpdateGame();
 
   glutTimerFunc(14, timer, 0);
+  glutPostRedisplay();
+}
+
+void ReshapeFunc(GLint new_width, GLint new_height) {
+  g_camera->ChangeWidthHeight(new_width, new_height);
   glutPostRedisplay();
 }
 
@@ -238,6 +243,7 @@ int main(int argc, char **argv) {
   glutKeyboardUpFunc(KeyboardUp);
   glutMotionFunc(MotionFunc);
   glutMouseFunc(MouseFunc);
+  glutReshapeFunc(ReshapeFunc);
   // glutSpecialFunc(SpecialPressed); // arrow keys etc.
   // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);

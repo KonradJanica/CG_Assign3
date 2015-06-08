@@ -64,11 +64,10 @@ void Controller::AddModel(const Shader &shader, const std::string &model_filenam
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
-  // DRAW TO THE SHADOW BUFFER
+  // Draw to shadow buffer
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo()->FrameBufferShadows);
-	glClear(GL_DEPTH_BUFFER_BIT);
-  glClearColor(0.0f,0.0f,0.0f,0.0f);
-  glViewport(0, 0, 1024, 1024);
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glViewport(0, 0, renderer_.fbo()->textureX, renderer_.fbo()->textureY);
 
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, camera_);
@@ -76,12 +75,12 @@ void Controller::Draw() {
   renderer_.RenderDepthBuffer(car_, camera_);
   // Road-signs TODO
 
-  // binds the shadow mapping for reading
+  // Draw to screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  // Bind shadow map texture
+  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, camera_.width(), camera_.height());
-  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
 
   // Ordering of renderering is very important due to transparency
   renderer_.RenderSkybox(skybox_, camera_);
@@ -93,11 +92,6 @@ void Controller::Draw() {
   renderer_.Render(car_, camera_);
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
-
-  // Unbind buffer - dont think this is necessary - Konrad
-  // glBindTexture(GL_TEXTURE_2D, 0);
-  // glBindVertexArray(0);
-  // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
