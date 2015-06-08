@@ -280,8 +280,8 @@ GLuint Renderer::EnableAxis() const {
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
 void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
-  const Shader * shader = terrain->shader();
-  glUseProgram(shader->Id);
+  const Shader &shader = terrain->shader();
+  glUseProgram(shader.Id);
   glCullFace(GL_BACK);
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -316,10 +316,10 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glm::mat3 NORMAL;
   // NORMAL = glm::mat3(view_matrix);
   NORMAL = glm::inverse(glm::transpose(glm::mat3(VIEW)));
-  glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
-  glUniformMatrix4fv(shader->mvpHandle, 1, false, glm::value_ptr(MVP));
-  glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
-  glUniformMatrix3fv(shader->normHandle, 1, false, glm::value_ptr(NORMAL));
+  glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
+  glUniformMatrix4fv(shader.mvpHandle, 1, false, glm::value_ptr(MVP));
+  glUniformMatrix4fv(shader.depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
+  glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
   // Pass Surface Colours to Shader
   const glm::vec3 &vao_ambient = glm::vec3(0.5f,0.5f,0.5f);
@@ -329,18 +329,18 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   const float mtldiffuse[3] = { vao_diffuse.x, vao_diffuse.y, vao_diffuse.z };	// diffuse material
   const float mtlspecular[3] = { vao_specular.x, vao_specular.y, vao_specular.z };	// specular material
   const float mtlshininess = 0.8f; 
-  glUniform3fv(shader->mtlAmbientHandle, 1, mtlambient);
-  glUniform3fv(shader->mtlDiffuseHandle, 1, mtldiffuse);
-  glUniform3fv(shader->mtlSpecularHandle, 1, mtlspecular);
-  glUniform1fv(shader->shininessHandle, 1, &mtlshininess);
+  glUniform3fv(shader.mtlAmbientHandle, 1, mtlambient);
+  glUniform3fv(shader.mtlDiffuseHandle, 1, mtldiffuse);
+  glUniform3fv(shader.mtlSpecularHandle, 1, mtlspecular);
+  glUniform1fv(shader.shininessHandle, 1, &mtlshininess);
 
-  int texHandle2 = glGetUniformLocation(shader->Id, "normMap");
+  int texHandle2 = glGetUniformLocation(shader.Id, "normMap");
   if(texHandle2 == -1)
   {
     printf("TERRAIN COULDNT FIND NORMAL MAPPINGS\n");
   }
 
-  int bumpHandle = glGetUniformLocation(shader->Id, "isBumped");
+  int bumpHandle = glGetUniformLocation(shader.Id, "isBumped");
 
 
   glBindTexture(GL_TEXTURE_2D, terrain->cliff_bump());
@@ -348,7 +348,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   glUniform1i(texHandle2, 1);
   glUniform1i(bumpHandle, 1);
 
-  int texHandle3 = glGetUniformLocation(shader->Id, "mossMap");
+  int texHandle3 = glGetUniformLocation(shader.Id, "mossMap");
   if(texHandle3 == -1)
   {
     printf("TERRAIN COULDNT FIND MOSS MAPPINGS\n");
@@ -360,13 +360,13 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // Bind TERRAIN Textures
   // We are using texture unit 0 (the default)
   glActiveTexture(GL_TEXTURE0);
-  glUniform1i(shader->texMapHandle, 0);
+  glUniform1i(shader.texMapHandle, 0);
   glBindTexture(GL_TEXTURE_2D, terrain->texture());
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-  glUniform1i(shader->shadowMapHandle, 1);
+  glUniform1i(shader.shadowMapHandle, 1);
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
@@ -387,13 +387,13 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // Bind ROAD Textures
   // We are using texture unit 0 (the default)
   glActiveTexture(GL_TEXTURE0);
-  glUniform1i(shader->texMapHandle, 0);
+  glUniform1i(shader.texMapHandle, 0);
   glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-  glUniform1i(shader->shadowMapHandle, 1);
+  glUniform1i(shader.shadowMapHandle, 1);
 
   glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();

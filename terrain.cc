@@ -1009,7 +1009,7 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
     const std::pair<GLuint, GLuint> &uv_indices, circular_vector<std::pair<GLuint, GLuint> > &vbo_handle) {
 
   GLuint VAO_handle;
-  glUseProgram(shader()->Id);
+  glUseProgram(shader().Id);
   glGenVertexArrays(1, &VAO_handle);
   glBindVertexArray(VAO_handle);
 
@@ -1022,18 +1022,18 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
   glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.back().first);
   glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec3)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(shader()->vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(shader()->vertLoc);
+  glVertexAttribPointer(shader().vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader().vertLoc);
   // Normal attributes
   glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.back().second);
   glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(shader()->normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(shader()->normLoc);
+  glVertexAttribPointer(shader().normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader().normLoc);
   // UV
   glBindBuffer(GL_ARRAY_BUFFER, uv_indices.first);
-  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(shader()->textureLoc);
+  glVertexAttribPointer(shader().textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader().textureLoc);
   // Indices
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
