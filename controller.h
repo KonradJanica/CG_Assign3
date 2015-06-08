@@ -12,9 +12,12 @@
 #include "object.h"
 #include "renderer.h"
 #include "light_controller.h"
+#include "collision_controller.h"
 #include "Skybox.h"
 #include "Water.h"
 #include "rain.h"
+
+#include "constants.h"
 
 #include "glm/glm.hpp"
 #include <GL/glew.h>
@@ -29,22 +32,8 @@
 #include <GL/glut.h>
 #endif
 
-#define M_PI 3.14159265358979323846
-#define DEG2RAD(x) ((x)*M_PI/180.0)
-#define RAD2DEG(x) ((x)*180.0/M_PI)
-
 class Controller {
   public:
-    // Enum for game states
-    enum State {
-      kStart = 0,
-      kPause = 1,
-      kResume = 2,
-      kAutoDrive = 3,
-      kCrashingFall = 4,
-      kCrashingCliff = 5,
-      kGameOver = 6,
-    };
 
     // Construct with window dimensions & verbose debugging mode
     Controller(const int window_width, const int window_height, const bool debug_flag = false);
@@ -81,6 +70,9 @@ class Controller {
     Camera camera_;
     // The light controller
     LightController * light_controller_;
+    // The Collision Controller
+    //   Detects crashes etc, TODO
+    CollisionController * collision_controller_;
 
     // Updates light properties with view matrix from camera
 
@@ -101,30 +93,7 @@ class Controller {
     bool playSound;
 
     // The current game state
-    State game_state_;
-    // The users camera state (for animations)
-    Camera::State camera_state_;
-    // The state of the previous collision tick
-    bool is_collision_;
-    // The midpoint of the road where the car is
-    glm::vec3 left_lane_midpoint_;
-    // The previous midpoint, updated during autodrive
-    glm::vec3 prev_left_lane_midpoint_;
-    // The direction vector of the road where the car is
-    glm::vec3 road_direction_;
-    // The rotation of the road where the car is
-    float road_y_rotation_;
-    // The angle of the car and the direction of road
-    //   Angle is clockwise from facing of road
-    //   This includes the cars centripetal direction
-    float car_angle_;
-    // Has the car hit the right side cliff yet?
-    //   Used in left (cliff) animation
-    bool is_cliff_hit_;
-    // Used in left (cliff) animation for collision detection using determinate
-    bool is_prev_positive_;
-    // The impact speed of the car for the left (cliff) side animation
-    float impact_speed_;
+    kGameState game_state_;
 
     // INTERNAL TICKS
     // The controllers camera update tick
@@ -135,41 +104,6 @@ class Controller {
     // The controllers physics update tick
     //   Checks keypresses and calculates acceleration
     void UpdatePhysics();
-
-    // TODO comment
-    unsigned char prev_colisn_pair_idx_;
-    // TODO comment
-    void UpdateCollisions();
-    // COLLISION HELPERS
-    // Checks whether car is between boundary pair
-    //   Creates 4 triangles out of the 4 points of the given square and returns 
-    //   @param car, the car object (to find it's position)
-    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-    //   @return true if car is inside corner of rectangle
-    //   @warn input must be square for accurate results
-    bool IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
-    // Checks whether car is between a pair of points
-    //   @param car, the car vec3 (to find it's position)
-    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-    //   @return true if car is within the points
-    bool IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp);
-
-    float colisn_anim_ticks_;
-    // The animation played when the car falls off the right (water) side
-    //   Is calculated using the vertices stored by terrain
-    //   Finds the closest vertice to car and doesn't allow it to go below it
-    //   Once complete resets the state to kAutoDrive
-    // @warn Pretty inefficent way of checking for collisions but it's only
-    //       calculated during this state.
-    void CrashAnimationFall();
-    // The animation played when the car drives off the road on left (cliff) side
-    //   Is calculated using 1 row of vertices stored by terrain
-    //   Finds the closest vertice to car and calculates determinate, when determinate
-    //     of middle of road and car position are opposite there is a colisn
-    //   A recovery occurs when both determinates are opposite but closest dis is too far
-    // @warn This collision can fall through if delta time makes the car velocity larger
-    //       than the catch dis, may be an issue for systems with poor performance
-    void CrashAnimationCliff();
 
     void PositionLights();
 

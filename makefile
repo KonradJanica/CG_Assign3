@@ -28,7 +28,7 @@ ifneq (, $(findstring MINGW, $(PLATFORM)))
 endif
 
 CC = g++ -Wno-switch-enum -std=c++11
-LINK = model_data.o model.o object.o terrain.o camera.o renderer.o light_controller.o Skybox.o Water.o rain.o controller.o main.o
+LINK = model_data.o model.o object.o terrain.o camera.o renderer.o collision_controller.o light_controller.o Skybox.o Water.o rain.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o shaders/shader_compiler/shader.o
 
 .PHONY:  clean
@@ -42,8 +42,11 @@ assign3$(EXT): $(LINK) $(LIB)
 main.o: model_data.h model.h camera.h renderer.h main.cpp 
 	$(CC) $(CPPFLAGS) -c main.cpp
 
-controller.o: controller.cc controller.h light_controller.h renderer.h camera.h terrain.h object.h model.h
+controller.o: controller.cc controller.h light_controller.h renderer.h camera.h terrain.h object.h model.h constants.h
 	$(CC) $(CPPFLAGS) -c controller.cc
+
+collision_controller.o: collision_controller.cc collision_controller.h object.h camera.h terrain.h constants.h
+	$(CC) $(CPPFLAGS) -c collision_controller.cc
 
 light_controller.o: light_controller.cc light_controller.h
 	$(CC) $(CPPFLAGS) -c light_controller.cc
