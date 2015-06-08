@@ -371,9 +371,9 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
     // Populate Shader
     glBindVertexArray((*terrain_vao_handle)[x]);
-    // glBindAttribLocation(shader->Id, 0, "a_vertex");
-    // glBindAttribLocation(shader->Id, 1, "a_normal");
-    // glBindAttribLocation(shader->Id, 2, "a_texture");
+    glBindAttribLocation(shader->Id, shader->vertLoc, "a_vertex");
+    glBindAttribLocation(shader->Id, shader->normLoc, "a_normal");
+    glBindAttribLocation(shader->Id, shader->textureLoc, "a_texture");
     int amount = terrain->indice_count();
     glDrawElements(GL_TRIANGLES, amount, GL_UNSIGNED_INT, 0);	// New call
   }
