@@ -21,8 +21,6 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
   // More Default vars
   rotation_(0), prev_rotation_(0), z_smooth_max_(10 * length_multiplier_) {
 
-    printf("HERE\n");
-
     // New Seed
     srand(time(NULL));
     // Setup Vars
@@ -79,9 +77,14 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
 //   Resets the generation ticks to 0, E.g. begins generating next tile
 //   Sets up for generating next terrain tile over several ticks
 void Terrain::ProceedTiles() {
-  // TODO free/delete GL VAOs
-  // glDeleteVertexArrays(1, &terrain_vao_handle_[0]);
-  // glDeleteVertexArrays(1, &road_vao_handle_[0]);
+  // Free VBO memory
+  glDeleteBuffers(1, &terrain_vbo_handle_.front().first);
+  glDeleteBuffers(1, &terrain_vbo_handle_.front().second);
+  glDeleteBuffers(1, &road_vbo_handle_.front().first);
+  glDeleteBuffers(1, &road_vbo_handle_.front().second);
+  terrain_vbo_handle_.pop_front();
+  road_vbo_handle_.pop_front();
+  // Free VAO memory
   glDeleteVertexArrays(1, &terrain_vao_handle_[0]);
   glDeleteVertexArrays(1, &road_vao_handle_[0]);
   terrain_vao_handle_.pop_front();
@@ -305,21 +308,21 @@ std::pair<GLuint, GLuint> Terrain::InitializeIndicesAndUV(const TileType tile_ty
 
   // Setup VBOs
   // Buffers to store index and UV data
-  GLuint buffer[2];
-  glGenBuffers(2, buffer);
+  std::pair<GLuint, GLuint> buffer_pair;
+  // GLuint buffer[2];
+  glGenBuffers(1, &buffer_pair.first);
+  glGenBuffers(1, &buffer_pair.second);
   // Texture attributes
-  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+  glBindBuffer(GL_ARRAY_BUFFER, buffer_pair.first);
   glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec2) * texture_coordinates_uv.size(), &texture_coordinates_uv[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(shader()->textureLoc);
+  // glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  // glEnableVertexAttribArray(shader()->textureLoc);
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_pair.second);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
       sizeof(int)*indices.size(), &indices[0], GL_STATIC_DRAW);
-  // Return the buffers for deletion reference
-  const std::pair<GLuint, GLuint> buffer_pair(buffer[0], buffer[1]);
 
   return buffer_pair;
 }
@@ -336,10 +339,12 @@ void Terrain::InitializeRoadIndicesAndUV(std::vector<int> &indices, std::vector<
   // 31 quads in row, 2 triangles in quad, 3 rows, 3 vertices per triangle
   //   Above based on 32 x_length_ & z_length_
   // indices_road_.assign(indices.begin(), indices.begin()+31*2*3*3);
-  indices.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
+  std::vector<int> new_indices;
+  new_indices.assign(indices.begin(), indices.begin()+(x_length_-1)*2*((18-15)*length_multiplier_)*3);
+  indices = new_indices;
 
   // CONSTRUCT UV COORDINATES
-  std::vector<glm::vec2> temp_uv(x_length_*z_length_, glm::vec2());
+  std::vector<glm::vec2> temp_uv(x_length_*z_length_);
   int offset;
   // First, build the data for the vertex buffer
   for (int y = 0; y < z_length_; y++) {
@@ -996,10 +1001,12 @@ void Terrain::colisn_pop() {
 // Creates a new vertex array object for a heightmap (Indices and UV are constants)
 //   @param vertices, the vertices of the heightmap
 //   @param normals, the normals of the heightmap
-//   @param vbo_handle, a pair of VBOs: first = indices, second = UV
+//   @param uv_indices, a pair of VBOs: first = indices, second = UV
+//   @param vbo_handle, the next vertex/normal pair for deletion reference
 //   @return vao_handle, the vao handle
+//   @warn modifies vbo_handle purposefully
 GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
-    const std::pair<GLuint, GLuint> &vbo_handle) const {
+    const std::pair<GLuint, GLuint> &uv_indices, circular_vector<std::pair<GLuint, GLuint> > &vbo_handle) {
 
   GLuint VAO_handle;
   glUseProgram(shader()->Id);
@@ -1007,29 +1014,30 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
   glBindVertexArray(VAO_handle);
 
   // Buffers to store position and normals and index data
-  GLuint buffer[2];
-  glGenBuffers(2, buffer);
+  vbo_handle.push_back(std::pair<GLuint, GLuint>());
+  glGenBuffers(1, &vbo_handle.back().first);
+  glGenBuffers(1, &vbo_handle.back().second);
 
   // Set vertex position
-  glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.back().first);
   glBufferData(GL_ARRAY_BUFFER,
       sizeof(glm::vec3)*vertices.size(), &vertices[0], GL_STATIC_DRAW);
   glVertexAttribPointer(shader()->vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader()->vertLoc);
   // Normal attributes
-  glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.back().second);
   glBufferData(GL_ARRAY_BUFFER,
-      sizeof(glm::vec3) * normals_.size(), &normals_[0], GL_STATIC_DRAW);
+      sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
   glVertexAttribPointer(shader()->normLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader()->normLoc);
   // UV
-  glBindBuffer(GL_ARRAY_BUFFER, vbo_handle.first);
-  glVertexAttribPointer(shader()->textureLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glBindBuffer(GL_ARRAY_BUFFER, uv_indices.first);
+  glVertexAttribPointer(shader()->textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader()->textureLoc);
   // Indices
   // Set element attributes. Notice the change to using GL_ELEMENT_ARRAY_BUFFER
   // We don't attach this to a shader label, instead it controls how rendering is performed
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_handle.second);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, uv_indices.second);
 
   // Un-bind
   glBindVertexArray(0);
@@ -1040,16 +1048,16 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
 //   Also stores created VBOs to allow deleting the reference
 //   @param  tile_type  An enum representing the proper members to use
 //   @return vao_handle, the vao handle
-GLuint Terrain::CreateVao(TileType tile_type) const {
+GLuint Terrain::CreateVao(TileType tile_type) {
   GLuint vao;
   // Create storage pair (for freeing buffer)
   // std::pair<GLuint, GLuint> store_vbo(buffer[0], buffer[1]);
   switch(tile_type) {
     case kTerrain: //and kRoad
-      vao = CreateVao(vertices_, normals_, terrain_vbo_uv_indices_);
+      vao = CreateVao(vertices_, normals_, terrain_vbo_uv_indices_, terrain_vbo_handle_);
       break;
     case kRoad:
-      vao = CreateVao(vertices_road_, normals_road_, road_vbo_uv_indices_);
+      vao = CreateVao(vertices_road_, normals_road_, road_vbo_uv_indices_, road_vbo_handle_);
       break;
   }
   return vao;

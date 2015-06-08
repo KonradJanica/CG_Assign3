@@ -312,15 +312,16 @@ class Terrain {
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param vertices, the vertices of the heightmap
     //   @param normals, the normals of the heightmap
-    //   @param vbo_handle, a pair of VBOs: first = indices, second = UV
+    //   @param uv_indices, a pair of VBOs: first = indices, second = UV
+    //   @param vbo_handle, the next vertex/normal pair for deletion reference
     //   @return vao_handle, the vao handle
-    //   @return vao_handle, the vao handle
+    //   @warn modifies vbo_handle purposefully
     GLuint CreateVao(const std::vector<glm::vec3> &vertices, const std::vector<glm::vec3> &normals,
-        const std::pair<GLuint, GLuint> &vbo_handle) const;
+        const std::pair<GLuint, GLuint> &uv_indices, circular_vector<std::pair<GLuint, GLuint> > &vbo_handle);
     // Creates a new vertex array object and loads in data into a vertex attribute buffer
     //   @param  tile_type  An enum representing the proper members to use
     //   @return vao_handle, the vao handle
-    GLuint CreateVao(TileType tile_type) const;
+    GLuint CreateVao(TileType tile_type);
     // Creates a texture pointer from file
     //   @return  GLuint  The int pointing to the opengl texture data
     GLuint LoadTexture(const std::string &filename) const;
