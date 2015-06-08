@@ -180,7 +180,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
@@ -366,7 +366,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate Shader
@@ -395,7 +395,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
       // // TODO move out of loop later
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, fbo_.depth_texture_);
+      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
       glUniform1i(shader->shadowMapHandle, 1);
 
     // Populate shader
@@ -424,7 +424,7 @@ void Renderer::RenderDepthBuffer(const Object * object, const Camera &camera) co
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
   const glm::vec3 snapped_cam_pos = glm::vec3(
       floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
       float(),
@@ -463,7 +463,7 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) 
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
   const glm::vec3 snapped_cam_pos = glm::vec3(
       floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
       float(),

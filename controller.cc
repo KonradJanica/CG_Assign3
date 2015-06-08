@@ -65,7 +65,7 @@ void Controller::AddModel(const Shader &shader, const std::string &model_filenam
 //   Should be called in the render loop
 void Controller::Draw() {
   // DRAW TO THE SHADOW BUFFER
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo_.frame_buffer_name_);
+  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo()->FrameBufferShadows);
 	glClear(GL_DEPTH_BUFFER_BIT);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glViewport(0, 0, 1024, 1024);
@@ -81,7 +81,7 @@ void Controller::Draw() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, camera_.width(), camera_.height());
-  glBindTexture(GL_TEXTURE_2D, renderer_.fbo_.depth_texture_);
+  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
 
   // Ordering of renderering is very important due to transparency
   renderer_.RenderSkybox(skybox_, camera_);

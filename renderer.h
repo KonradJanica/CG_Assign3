@@ -24,27 +24,32 @@
 #include <GL/glut.h>
 #endif
 
-// TODO
+// The FBO that holds the depth texture
+//   Used for shadow mapping
 struct FrameBufferObject {
-  GLuint frame_buffer_name_;
-  GLuint depth_texture_;
+  // Size of texture
+  const unsigned int textureX;
+  const unsigned int textureY;
 
-  FrameBufferObject() {
-  // Setup depth buffer //TODO FIX THIS!
-  unsigned int windowX = 1024, windowY = 1024;
+  GLuint FrameBufferShadows;
+  GLuint DepthTexture;
+
+  FrameBufferObject() :
+  // Size of texture
+  textureX(1024), textureY(1024) {
 
   // generate namespace for the frame buffer 
-  glGenFramebuffers(1, &frame_buffer_name_);
+  glGenFramebuffers(1, &FrameBufferShadows);
   //switch to our fbo so we can bind stuff to it
-  glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_name_);
+  glBindFramebuffer(GL_FRAMEBUFFER, FrameBufferShadows);
 
   // and depthbuffer
-  glGenTextures(1, &depth_texture_);
+  glGenTextures(1, &DepthTexture);
   // create the depth texture and attach it to the frame buffer.
-  glBindTexture(GL_TEXTURE_2D, depth_texture_);
+  glBindTexture(GL_TEXTURE_2D, DepthTexture);
 
   // Give an empty image to OpenGL ( the last "0" )
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, windowX, windowY, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, textureX, textureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -59,7 +64,7 @@ struct FrameBufferObject {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   // Set "renderedTexture" as our depth attachement
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_texture_, 0);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, DepthTexture, 0);
 
   // Instruct openGL that we won't bind a color texture with the currently binded FBO
   glDrawBuffer(GL_NONE);
@@ -115,16 +120,15 @@ class Renderer {
 
     // Accessor for a shaders pointer
     inline const Shaders * shaders() const;
-
-    // // The Depth buffer texture index
-    // GLuint depth_texture_;
-    // // The Frame buffer to hold the Depth buffer
-    // GLuint frame_buffer_name_;
-    FrameBufferObject fbo_;
-    // The shaders object (holds and compiles all shaders)
-    const Shaders shaders_;
+    // Accessor for a fbo pointer
+    inline const FrameBufferObject * fbo() const;
 
   private:
+    // The FBO to hold the shadow map buffer and it's depth texture
+    const FrameBufferObject fbo_;
+
+    // The shaders object (holds and compiles all shaders)
+    const Shaders shaders_;
 
     // The VAO Handle for the Axis Coordinates
     const GLuint coord_vao_handle_;
@@ -138,5 +142,9 @@ inline const Shaders * Renderer::shaders() const {
   return &shaders_;
 }
 
+// Accessor for a fbo pointer
+inline const FrameBufferObject * Renderer::fbo() const {
+  return &fbo_;
+}
 
 #endif
