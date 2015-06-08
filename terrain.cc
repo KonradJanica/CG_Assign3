@@ -1041,6 +1041,8 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
 
   // Un-bind
   glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   return VAO_handle;
 }
 

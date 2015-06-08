@@ -123,6 +123,7 @@ unsigned int Model::CreateVao ( const RawModelData::Shape *shape ) {
   // Un-bind
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   return vao_handle;
 }
