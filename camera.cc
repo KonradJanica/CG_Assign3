@@ -173,9 +173,9 @@ void Camera::UpdateCarTick(const Object * car) {
       direction.z = car->direction().z;
       cam_front_ = direction;
       cam_pos_ = car->translation();
-      cam_pos_.x += 0.14f * direction.x;
-      cam_pos_.z += 0.14f * direction.z;
-      cam_pos_.y += 0.22f;
+      cam_pos_.x += -0.08f * direction.x;
+      cam_pos_.z += -0.08f * direction.z;
+      cam_pos_.y += 0.28f;
       break;
     }
     case kFreeView:
