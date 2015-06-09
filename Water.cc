@@ -91,7 +91,7 @@ Water::Water(const Shader &shader) :
     {
       fprintf(stderr,"Could not find uniform: speed[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform1f(speedHandle, speed);
+    glUniform1f(speedHandle, speed * 2.0);
   
     float angle = distr(eng);
     //printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
