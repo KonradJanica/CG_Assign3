@@ -166,6 +166,11 @@ void Controller::PositionLights() {
     headlight.Attenuation.Constant = 0.3f;
     headlight.Attenuation.Linear = 0.01f;
     headlight.Attenuation.Exp = 0.01f;
+    
+    if (is_key_pressed_hash_.at('r')) {
+      headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+      headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+    }
 
     spotLights.push_back(headlight);
   }
@@ -178,6 +183,7 @@ void Controller::PositionLights() {
   // }
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
+
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
   light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }
