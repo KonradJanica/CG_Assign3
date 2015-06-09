@@ -91,6 +91,7 @@ glm::vec3 Sun::sun_direction() const {
         sun_target_x_-sun_start_,
         -10.0f - sun_height_,
         0));
+  dir *= -1;
   return dir;
 }
 
@@ -99,4 +100,9 @@ glm::vec3 Sun::sun_diffuse() const {
   glm::vec3 converted = sun_diffuse_;
   converted /= 255.0f;
   return converted;
+}
+
+// TODO
+bool Sun::IsDay() const {
+  return (time_of_day() >= 6 && time_of_day() < 18);
 }

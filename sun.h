@@ -46,6 +46,8 @@ class Sun {
     glm::vec3 sun_direction() const;
     // TODO
     glm::vec3 sun_diffuse() const;
+    // TODO
+    bool IsDay() const;
 
   private:
     // SUN/MOON MOVE POSITIONAL CONSTANTS

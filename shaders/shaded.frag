@@ -40,7 +40,7 @@ struct SpotLight
 const int MAX_POINT_LIGHTS = 10;
 const int MAX_SPOT_LIGHTS = 10;
 // Bias for trimming shadow acne
-const float BIAS = 0.002;
+const float BIAS = 0.001;
 
 // Light properties
 uniform int gNumPointLights;
