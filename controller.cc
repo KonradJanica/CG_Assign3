@@ -90,15 +90,17 @@ void Controller::Draw() {
     renderer_.Render(signs[x], camera_, sun_);
   }
   if (camera_.state() == Camera::kFirstPerson) {
-  // Rain (particles)
-  rain_->Render(camera_, car_, skybox_);
+    // Rain (particles)
+    if (sun_.time_of_day() != 12)
+      rain_->Render(camera_, car_, skybox_);
   // Car with physics
   renderer_.Render(car_, camera_, sun_);
   } else {
-  // Car with physics
-  renderer_.Render(car_, camera_, sun_);
-  // Rain (particles)
-  rain_->Render(camera_, car_, skybox_);
+    // Car with physics
+    renderer_.Render(car_, camera_, sun_);
+    // Rain (particles)
+    if (sun_.time_of_day() != 12)
+      rain_->Render(camera_, car_, skybox_);
   }
 
   // Axis only renders in debugging mode
@@ -115,10 +117,14 @@ void Controller::PositionLights() {
 
   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
   dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
-  dirLight.SpecularIntensity = glm::vec3(0.30f, 0.30f, 0.30f);
+  dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
   dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
   dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
-  dirLight.SpecularIntensity *= 1.0f - sun_.LightIntensityMultiplier();
+  // dirLight.SpecularIntensity *= 1.0f - sun_.LightIntensityMultiplier();
+  // if (!sun_.IsDay()) {
+  //   dirLight.SpecularIntensity.x *= 1.0f - sun_.LightIntensityMultiplier();
+  //   dirLight.SpecularIntensity.y *= 1.0f - sun_.LightIntensityMultiplier();
+  // }
   dirLight.Direction =  sun_.sun_direction();
 
   // Point lights
