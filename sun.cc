@@ -2,8 +2,8 @@
 
 Sun::Sun(const Camera * camera, const bool is_debug) :
   // Initialize Constants
-  kMinHeight(0.0f),
-  kMaxHeight(20.0f),
+  kMinHeight(10.0f),
+  kMaxHeight(30.0f),
   kMornPos(30.0f),
   kDawnPos(-40.0f),
   kSmoothDuration(150), //Must be less than kTicksPerHour
@@ -110,4 +110,10 @@ glm::vec3 Sun::sun_diffuse() const {
 // TODO
 bool Sun::IsDay() const {
   return (time_of_day() >= 6 && time_of_day() < 18);
+}
+
+// TODO
+float Sun::LightIntensityMultiplier() const {
+
+  return 1.0f;
 }

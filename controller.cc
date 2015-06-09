@@ -108,7 +108,7 @@ void Controller::Draw() {
 void Controller::PositionLights() {
   glm::mat4 view_matrix = camera_.view_matrix();
   glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
-  glm::mat3 norm_matrix = glm::mat3(view_matrix);
+  // glm::mat3 norm_matrix = glm::mat3(view_matrix);
 
   DirectionalLight dirLight;
 
@@ -167,9 +167,11 @@ void Controller::PositionLights() {
   }
 
   light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
-  // dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
-  // dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
-  // dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  if (sun_.IsDay()) {
+    dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
+    dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+    dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  }
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);

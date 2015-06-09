@@ -48,6 +48,8 @@ class Sun {
     glm::vec3 sun_diffuse() const;
     // TODO
     bool IsDay() const;
+    // TODO
+    float LightIntensityMultiplier() const;
 
   private:
     // SUN/MOON MOVE POSITIONAL CONSTANTS
