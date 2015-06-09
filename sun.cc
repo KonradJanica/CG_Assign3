@@ -6,7 +6,7 @@ Sun::Sun(const Camera * camera, const bool is_debug) :
   kMaxHeight(30.0f),
   kMornPos(30.0f),
   kDawnPos(-40.0f),
-  kSmoothDuration(150), //Must be less than kTicksPerHour
+  kSmoothDuration(200), //Must be less than kTicksPerHour
   kTicksPerHour(200),
   kHeightMove((kMaxHeight-kMinHeight)/6.0f/kSmoothDuration),
   kHorizontalMove((kDawnPos-kMornPos)/12.0f/kSmoothDuration),
@@ -19,7 +19,7 @@ Sun::Sun(const Camera * camera, const bool is_debug) :
   kDawnEnd(21),
   kMinRedning(glm::vec3(255.0f,253.0f,214.0f)),
   kMaxRedning(glm::vec3(255.0f,127.0f,112.0f)),
-  kIntensityPercentageGrow(1.0f / 6.0f),
+  kIntensityPercentageGrow(1.0f / 6.0f / kSmoothDuration),
   // Default vars
   time_of_day_(6),
   sun_start_(camera->cam_pos().x + kMornPos),
@@ -57,11 +57,12 @@ void Sun::UpdateHour() {
 
   // Update next position adders
   // next_sun_start_ = ((camera_->cam_pos().x+kMornPos)+sun_start_displacement_) / 2;
-  next_sun_start_ = kHorizontalMove;
+  // next_sun_start_ = kHorizontalMove;
   // next_sun_start_ =  kHorizontalMove;
   if (time_of_day_ == 6 || time_of_day_ == 18) { // Reset once reach horizon
     sun_start_displacement_ = camera_->cam_pos().x + kMornPos;
-    sun_start_ = sun_start_displacement_;
+    // sun_start_ = sun_start_displacement_;
+    // sun_start_ = camera_->cam_pos().x + kMornPos;
   }
   next_sun_target_x_ = (camera_->cam_pos().x-sun_target_x_) / kSmoothDuration;
   next_sun_target_z_ = (camera_->cam_pos().z-sun_target_z_) / kSmoothDuration;
@@ -83,7 +84,9 @@ void Sun::UpdateHour() {
 // Smooth the positions over kSmoothDuration
 void Sun::SmoothPosition() {
   if (smooth_tick_count_ < kSmoothDuration) {
-    sun_start_ += next_sun_start_;
+    // sun_start_ += next_sun_start_;
+    sun_start_ = sun_start_displacement_ + kHorizontalMove * kSmoothDuration;
+    sun_start_displacement_ = (camera_->cam_pos().x + kMornPos + sun_start_displacement_) / 2.0f;
     sun_target_x_ += next_sun_target_x_;
     sun_target_z_ += next_sun_target_z_;
     sun_height_ += next_sun_height_;
@@ -95,7 +98,7 @@ void Sun::SmoothPosition() {
 glm::vec3 Sun::sun_direction() const {
   glm::vec3 dir = glm::normalize(glm::vec3(
         sun_target_x_-sun_start_,
-        -10.0f - (sun_height_ - 30.0f), //-30 for cool effect on diffuse light
+        -10.0f - (sun_height_ - 50.0f), //-30 for cool effect on diffuse light
         0));
   dir *= -1;
   return dir;
@@ -116,46 +119,69 @@ bool Sun::IsDay() const {
 // TODO
 float Sun::LightIntensityMultiplier() const {
   float multi;
+  const float current_smooth_tick_intensity =
+    kIntensityPercentageGrow * (smooth_tick_count_ + 0);
   switch(time_of_day()) {
-    case 0:
-    case 12:
+    // Going up
+    case 11:
+    case 23:
       multi = 1.0f;
       break;
-    case 1:
-    case 13:
-    case 11:
-      multi = 1.0f - (1 * kIntensityPercentageGrow);
-      break;
-    case 2:
-    case 14:
     case 10:
-      multi = 1.0f - (2 * kIntensityPercentageGrow);
+    case 22:
+      multi = (5.0f/6.0f + current_smooth_tick_intensity);
       break;
-    case 3:
-    case 15:
     case 9:
-      multi = 1.0f - (3 * kIntensityPercentageGrow);
+    case 21:
+      multi = (4.0f/6.0f + current_smooth_tick_intensity);
       break;
-    case 4:
-    case 16:
     case 8:
-      multi = 1.0f - (4 * kIntensityPercentageGrow);
+    case 20:
+      multi = (3.0f/6.0f + current_smooth_tick_intensity);
       break;
-    case 5:
-    case 17:
     case 7:
-      multi = 1.0f - (5 * kIntensityPercentageGrow);
+    case 19:
+      multi = (2.0f/6.0f + current_smooth_tick_intensity);
       break;
     case 6:
     case 18:
-      multi = 1.0f - (6 * kIntensityPercentageGrow);
+      multi = (1.0f/6.0f + current_smooth_tick_intensity);
       break;
+    // Going down
+    case 12:
+    case 0:
+      multi = (1.0f - current_smooth_tick_intensity);
+      break;
+    case 13:
+    case 1:
+      multi = (5.0f/6.0f - current_smooth_tick_intensity);
+      break;
+    case 14:
+    case 2:
+      multi = (4.0f/6.0f - current_smooth_tick_intensity);
+      break;
+    case 15:
+    case 3:
+      multi = (3.0f/6.0f - current_smooth_tick_intensity);
+      break;
+    case 16:
+    case 4:
+      multi = (2.0f/6.0f - current_smooth_tick_intensity);
+      break;
+    case 17:
+    case 5:
+      multi = (1.0f/6.0f - current_smooth_tick_intensity);
+      break;
+
     default:
       multi = 1.0f;
+      if (is_debugging_)
+        printf("LIGHTING SMOOTHING SWITCH FAIL IN SUN\n");
   }
 
   if (!IsDay()) // less lighting at night
-    multi *= 0.5f;
+    multi *= 0.8f;
+  // printf("mult = %f\n",multi);
 
   return multi;
 }

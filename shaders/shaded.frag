@@ -104,7 +104,6 @@ vec4 phongLight(in BaseLight light, in vec3 lightDirection, in vec3 normal)
 { 
   vec4 ambientColour = vec4(light.AmbientIntensity * mtl_ambient, 1.0);
   vec4 diffuseColour = vec4(0.0, 0.0, 0.0, 0.0);
-  // vec4 diffuseColour = vec4(light.DiffuseIntensity * mtl_diffuse, 1.0);
   vec4 specularColour = vec4(0.0, 0.0, 0.0, 0.0);
 
   float diffuseFactor = dot(-lightDirection, normal);
@@ -194,6 +193,7 @@ void main(void) {
   float visibility = texture(shadowMap, vec3(a_shadow_coord.xy, (a_shadow_coord.z-BIAS)/a_shadow_coord.w) );
   visibility = visibility / 2 + 0.5; //Fit range between [0,0.5]
   visibility *= shadowIntensity;
+  litColour *= 1.6+(1-shadowIntensity);
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), visibility * litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
   fragColour.a = dissolve;

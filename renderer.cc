@@ -168,11 +168,11 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
   {
     printf("OBJECT COULDNT FIND SHADOW INTENSITY\n");
   }
-  if (sun.IsDay()) {
+  // if (sun.IsDay()) {
     glUniform1f(shadowIntensityHandle, 1.0f);
-  } else {
-    glUniform1f(shadowIntensityHandle, 0.5f);
-  }
+  // } else {
+    // glUniform1f(shadowIntensityHandle, 0.7f);
+  // }
 
   const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
@@ -198,10 +198,11 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(shader->texMapHandle, 0);
     glBindTexture(GL_TEXTURE_2D, (*vao_texture_handle)[y].second);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
-    glActiveTexture(GL_TEXTURE20);
-    glUniform1i(shader->shadowMapHandle, 20);
-    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
+    // These shadows on car aint working FIXME
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
+    // glActiveTexture(GL_TEXTURE20);
+    // glUniform1i(shader->shadowMapHandle, 20);
+    // glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
 
     // Populate Shader
     glBindVertexArray((*vao_texture_handle)[y].first); 
@@ -388,11 +389,11 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   {
     printf("TERRAIN COULDNT FIND SHADOW INTENSITY\n");
   }
-  if (sun.IsDay()) {
-    glUniform1f(shadowIntensityHandle, 1.0f);
-  } else {
-    glUniform1f(shadowIntensityHandle, 0.5f);
-  }
+  // if (sun.IsDay()) {
+  //   glUniform1f(shadowIntensityHandle, 0.3f);
+  // } else {
+    glUniform1f(shadowIntensityHandle, 0.3f);
+  // }
 
   // Bind TERRAIN Textures
   // We are using texture unit 0 (the default)
