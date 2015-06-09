@@ -90,10 +90,10 @@ void Controller::Draw() {
   renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Terrain
   renderer_.Render(terrain_, camera_, sun_);
-  // Car with physics
-  renderer_.Render(car_, camera_, sun_);
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
+  // Car with physics
+  renderer_.Render(car_, camera_, sun_);
 
   // Unbind buffer - dont think this is necessary - Konrad
   // glBindTexture(GL_TEXTURE_2D, 0);
