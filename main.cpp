@@ -64,27 +64,13 @@ int         g_window_y = 480;
 long        g_past = 0;
 int         g_frames = 0;
 
-// Send the projection matrix to all shaders
-// NB - Make sure to update this loop every time we add a new shader
-void UpdateProjection() {
-  glm::mat4 projection = glm::perspective(g_fov, float(g_window_x / g_window_y), 0.1f, 100.0f);
-  for (unsigned int i = 0; i < 6; i++) {
-    glUseProgram(g_program_id[i]);
-    int projHandle = glGetUniformLocation(g_program_id[i], "projection_matrix");
-    if(projHandle == -1) {
-      fprintf(stderr,"Could not find uniform: 'projection_matrix' In: Main - UpdateProjection\n This may cause unexpected behaviour in the program\n");
-    }
-    glUniformMatrix4fv( projHandle, 1, false, glm::value_ptr(projection) );
-  }
-}
-
 // Render a frame
 void render() {
 
   // Clear the buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f,0.0f,0.0f,0.0f);
-    glViewport(0,0,640,480);
+  glClearColor(0.0f,0.0f,0.0f,0.0f);
+  glViewport(0,0,640,480);
 
   // Call the daw function of the controller which handles drawing the objects
   g_controller->Draw();
@@ -107,9 +93,12 @@ void timer(int t) {
   // Let the controller handle updating the state of the game
   g_controller->UpdateGame();
 
-  // UpdateProjection();
-
   glutTimerFunc(14, timer, 0);
+  glutPostRedisplay();
+}
+
+void ReshapeFunc(GLint new_width, GLint new_height) {
+  g_camera->ChangeWidthHeight(new_width, new_height);
   glutPostRedisplay();
 }
 
@@ -249,14 +238,12 @@ int main(int argc, char **argv) {
   // Setup camera global
   g_camera = g_controller->camera();
 
-  // TODO fix this - removed and hardcoded for shadows
-  // UpdateProjection();
-
   // Set our GLUT window handler callback functions
   glutKeyboardFunc(keyboardDown);
   glutKeyboardUpFunc(KeyboardUp);
   glutMotionFunc(MotionFunc);
   glutMouseFunc(MouseFunc);
+  glutReshapeFunc(ReshapeFunc);
   // glutSpecialFunc(SpecialPressed); // arrow keys etc.
   // glutSpecialUpFunc(SpecialReleased);
   glutIdleFunc(idle);
