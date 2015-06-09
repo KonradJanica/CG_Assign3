@@ -64,11 +64,9 @@ void Controller::AddModel(const Shader &shader, const std::string &model_filenam
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
-
-  // DRAW TO THE SHADOW BUFFER
+  // Draw to shadow buffer
   glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo()->FrameBufferShadows);
   glClear(GL_DEPTH_BUFFER_BIT);
-  glClearColor(0.0f,0.0f,0.0f,0.0f);
   glViewport(0, 0, renderer_.fbo()->textureX, renderer_.fbo()->textureY);
 
   // Car with physics
@@ -77,12 +75,12 @@ void Controller::Draw() {
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, sun_);
 
-  // binds the shadow mapping for reading
+  // Draw to screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  // Bind shadow map texture
+  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, camera_.width(), camera_.height());
-  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
 
   // Ordering of renderering is very important due to transparency
   renderer_.RenderSkybox(skybox_, camera_);
@@ -94,11 +92,6 @@ void Controller::Draw() {
   rain_->Render(camera_, car_, skybox_);
   // Car with physics
   renderer_.Render(car_, camera_, sun_);
-
-  // Unbind buffer - dont think this is necessary - Konrad
-  // glBindTexture(GL_TEXTURE_2D, 0);
-  // glBindVertexArray(0);
-  // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
@@ -166,6 +159,11 @@ void Controller::PositionLights() {
     headlight.Attenuation.Constant = 0.3f;
     headlight.Attenuation.Linear = 0.01f;
     headlight.Attenuation.Exp = 0.01f;
+    
+    if (is_key_pressed_hash_.at('r')) {
+      headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+      headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+    }
 
     spotLights.push_back(headlight);
   }
@@ -178,6 +176,7 @@ void Controller::PositionLights() {
   // }
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
+
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
   light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }
@@ -245,6 +244,7 @@ void Controller::UpdateGame() {
   if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
       || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')) {
     game_state_ = kStart;
+    playSound = 1;
   }
 }
 

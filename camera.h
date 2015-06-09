@@ -63,6 +63,8 @@ class Camera {
     // Changes the current state of the camera to the specified state
     //   @param State, the mode and orientation state of the camera
     inline void ChangeState(State state);
+    // Changes width and height member variables
+    inline void ChangeWidthHeight(GLint new_width, GLint new_height);
     // Better method using is_key_pressed_hash for multiple inputs
     void Movement(float delta_time, const std::vector<bool> &is_key_pressed_hash);
     // Changes Direction by X and Y mouse inputs
@@ -168,6 +170,13 @@ class Camera {
 inline void Camera::ChangeState(State state) {
   state_ = state;
 }
+
+// Changes width and height member variables
+inline void Camera::ChangeWidthHeight(GLint new_width, GLint new_height) {
+  width_ = new_width;
+  height_ = new_height;
+}
+
 // Mutates the cameras position
 //   @warn Used to setup default camera, not tested for other use
 //   @warn probably shouldn't be inline but compiler will handle it..

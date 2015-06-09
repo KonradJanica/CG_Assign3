@@ -49,7 +49,7 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   const glm::mat4 MODEL = object_translate * water_translate;
   const glm::mat4 MODELVIEW = VIEW * MODEL;
   // Make NORMAL
-  const glm::mat3 NORMAL = glm::mat3(VIEW);
+  const glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(MODELVIEW)));
 
   // Send Uniforms
   glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(MODELVIEW));
@@ -155,9 +155,7 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
 
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  glm::mat3 NORMAL;
-  // NORMAL = glm::mat3(view_matrix);
-  NORMAL = glm::inverse(glm::transpose(glm::mat3(VIEW)));
+  glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(VIEW * MODEL)));
   glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
   glUniformMatrix4fv(shader->mvpHandle, 1, false, glm::value_ptr(MVP));
   glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
@@ -339,9 +337,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
 
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
-  glm::mat3 NORMAL;
-  // NORMAL = glm::mat3(view_matrix);
-  NORMAL = glm::inverse(glm::transpose(glm::mat3(VIEW)));
+  glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(VIEW * MODEL)));
   glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
   glUniformMatrix4fv(shader.mvpHandle, 1, false, glm::value_ptr(MVP));
   glUniformMatrix4fv(shader.depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
