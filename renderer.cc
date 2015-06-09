@@ -133,20 +133,20 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  // const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   // const glm::vec3 snapped_cam_pos = glm::vec3(
   //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
   //     float(),
   //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
   // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  // const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
+  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
+  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
+  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 D_MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
@@ -163,6 +163,16 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
   glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
   glUniformMatrix3fv(shader->normHandle, 1, false, glm::value_ptr(NORMAL));
 
+  int shadowIntensityHandle = glGetUniformLocation(shader->Id, "shadowIntensity");
+  if(shadowIntensityHandle == -1)
+  {
+    printf("OBJECT COULDNT FIND SHADOW INTENSITY\n");
+  }
+  if (sun.IsDay()) {
+    glUniform1f(shadowIntensityHandle, 1.0f);
+  } else {
+    glUniform1f(shadowIntensityHandle, 0.5f);
+  }
 
   const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
@@ -191,11 +201,7 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	
     glActiveTexture(GL_TEXTURE20);
     glUniform1i(shader->shadowMapHandle, 20);
-    if (sun.IsDay()) {
-      glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
-    } else {
-      glBindTexture(GL_TEXTURE_2D, 0);
-    }
+    glBindTexture(GL_TEXTURE_2D, fbo_.DepthTexture);
 
     // Populate Shader
     glBindVertexArray((*vao_texture_handle)[y].first); 
@@ -310,20 +316,20 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
+  // const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
   // const glm::vec3 snapped_cam_pos = glm::vec3(
   //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
   //     float(),
   //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
   // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  // const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
+  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
+  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
+  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 D_MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
@@ -376,6 +382,17 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   glBindTexture(GL_TEXTURE_2D, terrain->road_bump());
 
   glUniform1i(texHandle3, 2);
+
+  int shadowIntensityHandle = glGetUniformLocation(shader.Id, "shadowIntensity");
+  if(shadowIntensityHandle == -1)
+  {
+    printf("TERRAIN COULDNT FIND SHADOW INTENSITY\n");
+  }
+  if (sun.IsDay()) {
+    glUniform1f(shadowIntensityHandle, 1.0f);
+  } else {
+    glUniform1f(shadowIntensityHandle, 0.5f);
+  }
 
   // Bind TERRAIN Textures
   // We are using texture unit 0 (the default)
@@ -448,20 +465,20 @@ void Renderer::RenderDepthBuffer(const Object * object, const Sun &sun) const {
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
+  // const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
   // const glm::vec3 snapped_cam_pos = glm::vec3(
   //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
   //     float(),
   //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
   // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  // const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
+  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
+  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
+  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 MODEL = object->model_matrix();
   const glm::mat4 DEPTH_MVP = PROJECTION * VIEW * MODEL;
@@ -494,20 +511,20 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Sun &sun) const 
 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
+  // const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
   // const glm::vec3 snapped_cam_pos = glm::vec3(
   //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
   //     float(),
   //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
   // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
   // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  // const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
+  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
+  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
+  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
+  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = PROJECTION * VIEW * MODEL;

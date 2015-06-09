@@ -90,6 +90,7 @@ class Sun {
     char time_of_day_;
     // Sun position vars
     float sun_start_;
+    float sun_start_displacement_;
     float sun_target_x_;
     float sun_target_z_;
     float sun_height_;

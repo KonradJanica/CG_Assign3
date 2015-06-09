@@ -22,6 +22,7 @@ Sun::Sun(const Camera * camera, const bool is_debug) :
   // Default vars
   time_of_day_(6),
   sun_start_(camera->cam_pos().x + kMornPos),
+  sun_start_displacement_(sun_start_),
   sun_target_x_(camera->cam_pos().x),
   sun_target_z_(camera->cam_pos().z),
   sun_height_((kMaxHeight-kMinHeight)/6.0f),
@@ -54,9 +55,13 @@ void Sun::UpdateHour() {
 
 
   // Update next position adders
+  // next_sun_start_ = ((camera_->cam_pos().x+kMornPos)+sun_start_displacement_) / 2;
   next_sun_start_ = kHorizontalMove;
-  if (time_of_day_ == 0 || time_of_day_ == 12) // Reset once reach horizon
-    sun_start_ = camera_->cam_pos().x + kMornPos;
+  // next_sun_start_ =  kHorizontalMove;
+  if (time_of_day_ == 6 || time_of_day_ == 18) { // Reset once reach horizon
+    sun_start_displacement_ = camera_->cam_pos().x + kMornPos;
+    sun_start_ = sun_start_displacement_;
+  }
   next_sun_target_x_ = (camera_->cam_pos().x-sun_target_x_) / kSmoothDuration;
   next_sun_target_z_ = (camera_->cam_pos().z-sun_target_z_) / kSmoothDuration;
   if (time_of_day() < 6)
