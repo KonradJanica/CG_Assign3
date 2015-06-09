@@ -188,7 +188,7 @@ void main(void) {
 
 	if(isBumped > 0)
   {
-    litColour = mix(litColour, texture(mossMap, a_tex_coord), 0.1);
+    litColour = mix(litColour, texture(mossMap, a_tex_coord), 0.2);
   }
 
   float visibility = texture(shadowMap, vec3(a_shadow_coord.xy, (a_shadow_coord.z-BIAS)/a_shadow_coord.w) );
