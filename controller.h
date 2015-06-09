@@ -13,6 +13,7 @@
 #include "renderer.h"
 #include "sun.h"
 #include "light_controller.h"
+#include "roadsign.h"
 #include "collision_controller.h"
 #include "Skybox.h"
 #include "Water.h"
@@ -39,8 +40,12 @@ class Controller {
     // Construct with window dimensions & verbose debugging mode
     Controller(const int window_width, const int window_height, const bool debug_flag = false);
 
-    // Add a wireframe model from .obj file to the scene
-    void AddModel(const Shader & shader, const std::string &model_filename, const bool is_car = false);
+    // Creates a model for the member vector (or car_)
+    //   @param shader, a shader class holding shader to use and uniforms
+    //   @param model_filename, a string containing the path of the .obj file
+    //   @warn the model is created on the heap and memory must be freed afterwards
+    Object * AddObject(const Shader & shader, const std::string &model_filename);
+
     // Render the scene (all member models)
     //   @warn uses the renderer object
     //   // TODO const?
@@ -82,13 +87,16 @@ class Controller {
 
     // Updates light properties with view matrix from camera
 
-    // All the static models and their transforms in the scene
-    std::vector<Object *> objects_;
+    // The terrain object
+    Terrain * terrain_;
+    // The road sign factory
+    //   Holds all road signs and has members to position them
+    RoadSign road_sign_;
     // The moving car
     //   An object with physics
     Object * car_;
-    // The terrain object
-    Terrain * terrain_;
+    // All the static models and their transforms in the scene
+    std::vector<Object *> objects_;
     // The skybox object
     Skybox * skybox_;
     // The water object

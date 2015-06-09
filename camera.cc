@@ -89,13 +89,11 @@ void Camera::Movement(float delta_time, const std::vector<bool> &is_key_pressed_
 void Camera::UpdateProjections() {
   projection_matrix_ = glm::perspective(fov_, (float)width_ / (float)height_, 0.1f, 100.0f);
   ShadersProjectionIterator iter(shaders_);
-  iter = iter.begin();
-  while (iter != iter.end()) {
+  for (iter = iter.begin(); iter != iter.end(); ++iter) {
     const Shader * shader = *(iter);
     glUseProgram(shader->Id);
     if (shader->projHandle != -1) // Only update found projections
       glUniformMatrix4fv(shader->projHandle, 1, false, glm::value_ptr(projection_matrix_));
-    ++iter;
   }
 }
 

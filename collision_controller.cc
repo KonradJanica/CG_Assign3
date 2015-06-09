@@ -340,7 +340,8 @@ bool CollisionController::IsInside(const glm::vec3 &car, const std::pair<glm::ve
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 kGameState CollisionController::UpdateCollisions(
     const Object * car_, Terrain * terrain_,
-    Camera * camera_, kGameState current_state) {
+    Camera * camera_, RoadSign * road_sign,
+    kGameState current_state) {
   // Setup vars
   const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
   const glm::vec3 &car = car_->translation();
@@ -384,6 +385,9 @@ kGameState CollisionController::UpdateCollisions(
 
     terrain_->colisn_pop();
     terrain_->ProceedTiles();
+    road_sign->ShiftIndexes();
+    // Try to spawn a road sign
+    road_sign->SignSpawn();
     prev_colisn_pair_idx_ = 0;
   } else {
 

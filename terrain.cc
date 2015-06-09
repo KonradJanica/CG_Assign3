@@ -36,7 +36,7 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     int center_right_x = x_length_ - x_length_/2;
     x_cliff_position_ = center_right_x, z_cliff_position_ = center_z;
     // Reserve space (required to ensure default iterators are not invalidated)
-    // colisn_boundary_pairs_.reserve(6);
+    colisn_boundary_pairs_.reserve(10);
 
     // Textures
     glActiveTexture(GL_TEXTURE0);
@@ -60,11 +60,15 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     GenerateStartingTerrain(kStraight);
     GenerateStartingTerrain(kStraight);
     GenerateStartingTerrain(kStraight);
+    tile_turn_.push_back(kStraight);
+    tile_turn_.push_back(kStraight);
+    tile_turn_.push_back(kStraight);
 
     for (int x = 0; x < 5; ++x) {
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
       RandomizeGeneration(true);
+      tile_turn_.push_back(kStraight);
     }
 
     // Pop off first and second collision map which is already behind car
@@ -99,6 +103,23 @@ void Terrain::ProceedTiles() {
   prev_rand_ = rand() % 3;
   z_smooth_max_ = (rand() % 3 + 8)*length_multiplier_;
   RandomizeGeneration();
+
+  // Store type for road sign generation
+  //   Can be optimzed to enter enum directly and
+  //   skip switch but this is much more readable
+  RoadType next_turn;
+  switch(prev_rand_) {
+    case 0:
+      next_turn = kStraight;
+      break;
+    case 1:
+      next_turn = kTurnLeft;
+      break;
+    case 2:
+      next_turn = kTurnRight;
+      break;
+  }
+  tile_turn_.push_back(next_turn);
 }
 
 // Generates the next part of tile for spreading over multiple ticks
@@ -113,31 +134,24 @@ void Terrain::GenerationTick() {
 
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration(const bool is_start) {
-  if (is_start) {
-    switch(prev_rand_) {
-      case 0:
-        GenerateStartingTerrain(kStraight);
-        break;
-      case 1:
-        GenerateStartingTerrain(kTurnLeft);
-        break;
-      case 2:
-        GenerateStartingTerrain(kTurnRight);
-        break;
-    }
-  } else {
-    switch(prev_rand_) {
-      case 0:
-        GenerateTerrain(kStraight);
-        break;
-      case 1:
-        GenerateTerrain(kTurnLeft);
-        break;
-      case 2:
-        GenerateTerrain(kTurnRight);
-        break;
-    }
+  // Can be optimzed to enter enum directly and
+  // skip switch but this is much more readable
+  RoadType next_turn;
+  switch(prev_rand_) {
+    case 0:
+      next_turn = kStraight;
+      break;
+    case 1:
+      next_turn = kTurnLeft;
+      break;
+    case 2:
+      next_turn = kTurnRight;
+      break;
   }
+  if (is_start)
+    GenerateStartingTerrain(next_turn);
+  else
+    GenerateTerrain(next_turn);
 }
 
 // Generate Terrain tile piece with road
@@ -166,9 +180,9 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
   // Collision map for current road tile
   HelperMakeRoadCollisionMap();
   // Make VAOs
-  unsigned int terrain_vao = CreateVao(kTerrain);
+  GLuint terrain_vao = CreateVao(kTerrain);
   terrain_vao_handle_.push_back(terrain_vao);
-  unsigned int road_vao = CreateVao(kRoad);
+  GLuint road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
 
 }
@@ -232,14 +246,14 @@ void Terrain::GenerateTerrain(RoadType road_type) {
     case 6:
       {
         // Make terrain VAO
-        unsigned int terrain_vao = CreateVao(kTerrain);
+        GLuint terrain_vao = CreateVao(kTerrain);
         terrain_vao_handle_.push_back(terrain_vao);
         break;
       }
     case 7:
       {
         // Make road VAO
-        unsigned int road_vao = CreateVao(kRoad);
+        GLuint road_vao = CreateVao(kRoad);
         road_vao_handle_.push_back(road_vao);
         break;
       }
@@ -952,39 +966,53 @@ void Terrain::HelperMakeRoadNormals() {
 //   Finds all edge vertices of road in order then pairs them with the closest vertices
 //   on the opposite side of the road
 // @warn  requires a preceeding call to HelperMakeRoadVertices otherwise undefined behaviour
-// @warn  this is O(n^2) with n = 36  TODO improve complexity
 void Terrain::HelperMakeRoadCollisionMap() {
-  unsigned int x_new_row_size = 18 * length_multiplier_ - 15 * length_multiplier_;
-  std::vector<glm::vec3> left_side, right_side;
-  left_side.reserve(z_length_);
-  right_side.reserve(z_length_);
-  // Make both sides
-  for (unsigned int z = 0; z < z_length_; ++z){
-    const glm::vec3 &left = vertices_road_.at(0 + z);
-    const glm::vec3 &right = vertices_road_.at(z + z_length_ * (x_new_row_size));
-    left_side.push_back(left); // left? side vertices
-    right_side.push_back(right); // other side vertices
-  }
+  // NOT NECCESSARY ANYMORE 96x96 FULLY FIXES THIS
+  //
+  // unsigned int x_new_row_size = 18 * length_multiplier_ - 15 * length_multiplier_;
+  // std::vector<glm::vec3> left_side, right_side;
+  // left_side.reserve(z_length_);
+  // right_side.reserve(z_length_);
+  // // Make both sides
+  // for (unsigned int z = 0; z < z_length_; ++z){
+  //   const glm::vec3 &left = vertices_road_.at(0 + z);
+  //   const glm::vec3 &right = vertices_road_.at(z + z_length_ * (x_new_row_size));
+  //   left_side.push_back(left); // left? side vertices
+  //   right_side.push_back(right); // other side vertices
+  // }
 
+  // colisn_vec tile_map;
+  // tile_map.reserve(z_length_);
+  // std::pair<glm::vec3,glm::vec3> min_max_x_pair;
+  // // Pair left side to it's closest point on opposite side
+  // for (unsigned int z = 0; z < z_length_; ++z) {
+  //   const glm::vec3 &left = left_side.at(z);
+  //   min_max_x_pair.first = left;
+  //   float smallest_diff = glm::distance(left_side.at(z), right_side.front());
+  //   glm::vec3 closest_point = right_side.front();
+  //   for (unsigned int x = 1; x < z_length_; ++x) {
+  //     float curr_diff = glm::distance(left_side.at(z), right_side.at(x));
+  //     if (curr_diff < smallest_diff) {
+  //       smallest_diff = curr_diff;
+  //       closest_point = right_side.at(x);
+  //     }
+  //   }
+  //   min_max_x_pair.second = closest_point;
+  //
+  //   tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
+  // }
+
+  unsigned int x_new_row_size = 18 * length_multiplier_ - 15 * length_multiplier_;
   colisn_vec tile_map;
   tile_map.reserve(z_length_);
   std::pair<glm::vec3,glm::vec3> min_max_x_pair;
-  // Pair left side to it's closest point on opposite side
-  for (unsigned int z = 0; z < z_length_; ++z) {
-    const glm::vec3 &left = left_side.at(z);
-    min_max_x_pair.first = left;
-    float smallest_diff = glm::distance(left_side.at(z), right_side.front());
-    glm::vec3 closest_point = right_side.front();
-    for (unsigned int x = 1; x < z_length_; ++x) {
-      float curr_diff = glm::distance(left_side.at(z), right_side.at(x));
-      if (curr_diff < smallest_diff) {
-        smallest_diff = curr_diff;
-        closest_point = right_side.at(x);
-      }
-    }
-    min_max_x_pair.second = closest_point;
+  for (unsigned int z = 0; z < z_length_; ++z){
+    const glm::vec3 &left = vertices_road_.at(0 + z);
+    const glm::vec3 &right = vertices_road_.at(z + z_length_ * (x_new_row_size));
+    min_max_x_pair.first = left; // left? side vertices
+    min_max_x_pair.second = right; // other side vertices
 
-    tile_map.push_back(min_max_x_pair); // doesnt insert when duplicate
+    tile_map.push_back(min_max_x_pair);
   }
 
   colisn_boundary_pairs_.push_back(tile_map);
@@ -996,6 +1024,8 @@ void Terrain::colisn_pop() {
   colisn_boundary_pairs_.pop_front();
   colisn_lst_water_.pop_front();
   colisn_lst_cliff_.pop_front();
+  // for road signs
+  tile_turn_.pop_front();
 }
 
 // Creates a new vertex array object for a heightmap (Indices and UV are constants)

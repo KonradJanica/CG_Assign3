@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "terrain.h"
 #include "object.h"
+#include "roadsign.h"
 
 #include "constants.h"
 
@@ -29,7 +30,8 @@ class CollisionController {
     // TODO comment
     kGameState UpdateCollisions(
         const Object * car_, Terrain * terrain_,
-        Camera * camera_, kGameState current_state);
+        Camera * camera_, RoadSign * road_sign,
+        kGameState current_state);
 
     // TODO comment
     void AutoDrive(Object * car, const float delta_time);

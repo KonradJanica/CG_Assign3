@@ -13,6 +13,9 @@ Controller::Controller(const int window_width, const int window_height, const bo
   sun_(Sun(camera(), debug_flag)),
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
+  terrain_(new Terrain(shaders_->LightMappedGeneric)),
+  road_sign_(RoadSign(shaders_, terrain_)),
+  car_(AddObject(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
   frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
@@ -24,41 +27,28 @@ Controller::Controller(const int window_width, const int window_height, const bo
     rain_ = new Rain(shaders_->RainGeneric, debug_flag);
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
-    terrain_ = new Terrain(shaders_->LightMappedGeneric);
 
   // Add starting models
   // AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
-  AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj", true);
   // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
-  AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
+  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
 
 }
 
 // Adds a model to the member vector
-//   @param program_id, a shader program
+//   @param shader, a shader class holding shader to use and uniforms
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
-//   TODO split Car into it's own
-void Controller::AddModel(const Shader &shader, const std::string &model_filename, const bool is_car) {
-  if (is_car) {
-    car_ = new Model(shader, model_filename,
-        glm::vec3(1.12f, 0.55f, 35.0f),       // Translation  move behind first tile (i.e. start on 2nd tile)
-        // old car glm::vec3(0.0f,  0.0f, 0.0f),  // Rotation
-        glm::vec3(0.0f, 20.0f, 0.0f),        // Rotation
-        glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
-        60, false); // starting speed and debugging mode
-    // This block fixes car being moved to the wrong spot initially
-    // CollisionController->UpdateCollisions(car_, terrain_, camera_, game_state_);
-    // prev_left_lane_midpoint_ = left_lane_midpoint_;
-  } else {
-    Object * object = new Model(shader, model_filename,
-        glm::vec3(1.4f, 0.0f, 50.0f), // Translation
-        glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
-        glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale
-    objects_.push_back(object);
-  }
+Object * Controller::AddObject(const Shader &shader, const std::string &model_filename) {
+  Object * object = new Model(shader, model_filename,
+      glm::vec3(1.12f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
+      glm::vec3(0.0f, 20.0f, 0.0f),       // Rotation
+      glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
+      60, false); // starting speed and debugging mode
+
+  return object;
 }
 
 // Renders all models in the vector member
@@ -71,7 +61,14 @@ void Controller::Draw() {
 
   // Car with physics
   renderer_.RenderDepthBuffer(car_, sun_);
-  // Road-signs TODO
+  // Road-signs
+  const std::vector<Object*> signs = road_sign_.signs();
+  const std::vector<int> active_signs = road_sign_.active_signs();
+  for (unsigned int x = 0; x < signs.size(); ++x) {
+    if (active_signs[x] >= 0) {
+    renderer_.RenderDepthBuffer(signs[x], sun_);
+    }
+  }
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, sun_);
 
@@ -88,6 +85,12 @@ void Controller::Draw() {
   renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Terrain
   renderer_.Render(terrain_, camera_, sun_);
+  // Road-signs
+  for (unsigned int x = 0; x < signs.size(); ++x) {
+    if (active_signs[x] >= 0) {
+    renderer_.Render(signs[x], camera_, sun_);
+    }
+  }
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
   // Car with physics
@@ -216,7 +219,7 @@ void Controller::UpdateGame() {
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   if (!collision_controller_.is_collision()) {
     UpdatePhysics();
-    game_state_ = collision_controller_.UpdateCollisions(car_, terrain_, &camera_, game_state_);
+    game_state_ = collision_controller_.UpdateCollisions(car_, terrain_, &camera_, &road_sign_, game_state_);
   } else {
     // TODO add car off road shaking
   }

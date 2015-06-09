@@ -32,12 +32,20 @@
 
 class Terrain {
   public:
-    GLuint cliff_nrm_texture_;
     // These are used for collisions and it's helper functions
     typedef std::pair<glm::vec3, glm::vec3> boundary_pair;
     typedef std::vector<boundary_pair> colisn_vec;
     typedef std::vector<glm::vec3> anim_vec;
     typedef circular_vector<anim_vec> anim_container;
+    // Constants
+    enum RoadType {
+      kStraight = 0,
+      kTurnLeft = 1,
+      kTurnRight = 2,
+    };
+
+    // TODO remove from public
+    GLuint cliff_nrm_texture_;
 
     // Construct with width and height specified
     Terrain(const Shader &shader, const int width = 96, const int height = 96);
@@ -76,6 +84,9 @@ class Terrain {
     // Accessor for the cliff collision checking data structure
     //   See this func implementation for details
     inline const circular_vector<std::vector<glm::vec3> > * colisn_lst_cliff() const;
+    // Accessor for the turn type for tile at index
+    //   Used for road sign type spawn decision
+    inline const circular_vector<RoadType> * tile_turn() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     void colisn_pop();
@@ -91,11 +102,6 @@ class Terrain {
     enum TileType {
       kTerrain = 0,
       kRoad = 1,
-    };
-    enum RoadType {
-      kStraight = 0,
-      kTurnLeft = 1,
-      kTurnRight = 2,
     };
     // The amount of ticks to spread height generation over
     const signed char kHeightGenerationTicks = 50;
@@ -172,6 +178,9 @@ class Terrain {
     circular_vector<std::vector<glm::vec3> > colisn_lst_water_;
     // The collisions for the left (cliff) side
     circular_vector<std::vector<glm::vec3> > colisn_lst_cliff_;
+
+    // Road Sign Vars
+    circular_vector<RoadType> tile_turn_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -393,6 +402,11 @@ inline const circular_vector<std::vector<glm::vec3> > * Terrain::colisn_lst_wate
 //   Holds a line of vertices left (cliff) side of road for crashing animation
 inline const circular_vector<std::vector<glm::vec3> > * Terrain::colisn_lst_cliff() const {
   return &colisn_lst_cliff_;
+}
+// Accessor for the turn type for tile at index
+//   Used for road sign type spawn decision
+inline const circular_vector<Terrain::RoadType> * Terrain::tile_turn() const {
+  return &tile_turn_;
 }
 
 #endif
