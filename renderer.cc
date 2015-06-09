@@ -303,6 +303,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_POINT_SMOOTH);
 
   const glm::mat4 &PROJECTION = camera.projection_matrix();
   const glm::mat4 VIEW = camera.view_matrix();
@@ -396,8 +398,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   glActiveTexture(GL_TEXTURE0);
   glUniform1i(shader.texMapHandle, 0);
   glBindTexture(GL_TEXTURE_2D, terrain->texture());
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
   glActiveTexture(GL_TEXTURE20);
   glUniform1i(shader.shadowMapHandle, 20);
   if (sun.IsDay()) {
@@ -446,6 +448,8 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
 
   // Un-bind
   glBindVertexArray(0);
+  glDisable(GL_LINE_SMOOTH);
+  glDisable(GL_POINT_SMOOTH);
 }
 
 // Draws/Renders the passed in terrain to the scene
