@@ -89,10 +89,17 @@ void Controller::Draw() {
     // if (active_signs[x] >= 0) // no point
     renderer_.Render(signs[x], camera_, sun_);
   }
+  if (camera_.state() == Camera::kFirstPerson) {
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
   // Car with physics
   renderer_.Render(car_, camera_, sun_);
+  } else {
+  // Car with physics
+  renderer_.Render(car_, camera_, sun_);
+  // Rain (particles)
+  rain_->Render(camera_, car_, skybox_);
+  }
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
@@ -106,19 +113,12 @@ void Controller::PositionLights() {
 
   DirectionalLight dirLight;
 
-  // if (sun_.IsDay()) {
-  //   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
-  //   dirLight.AmbientIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
-  // } else {
-  //   dirLight.DiffuseIntensity = glm::vec3(0.30f, 0.30f, 0.30f);
-  //   dirLight.AmbientIntensity = glm::vec3(0.001f, 0.001f, 0.001f);
-  // }
   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
   dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
+  dirLight.SpecularIntensity = glm::vec3(0.30f, 0.30f, 0.30f);
   dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
   dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
-  dirLight.SpecularIntensity = glm::vec3(0.10f, 0.10f, 0.10f);
-  // dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
+  dirLight.SpecularIntensity *= 1.0f - sun_.LightIntensityMultiplier();
   dirLight.Direction =  sun_.sun_direction();
 
   // Point lights
@@ -170,11 +170,6 @@ void Controller::PositionLights() {
   }
 
   light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
-  // if (sun_.IsDay()) {
-  //   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
-  //   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
-  //   dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
-  // }
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
 
