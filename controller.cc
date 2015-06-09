@@ -245,6 +245,7 @@ void Controller::UpdateGame() {
   if (is_key_pressed_hash_.at('w') || is_key_pressed_hash_.at('s')
       || is_key_pressed_hash_.at('a') || is_key_pressed_hash_.at('d')) {
     game_state_ = kStart;
+    playSound = 1;
   }
 }
 
