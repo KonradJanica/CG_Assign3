@@ -65,9 +65,8 @@ void Controller::Draw() {
   const std::vector<Object*> signs = road_sign_.signs();
   const std::vector<int> active_signs = road_sign_.active_signs();
   for (unsigned int x = 0; x < signs.size(); ++x) {
-    if (active_signs[x] >= 0) {
+    // if (active_signs[x] >= 0) // no point
     renderer_.RenderDepthBuffer(signs[x], sun_);
-    }
   }
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, sun_);
@@ -87,9 +86,8 @@ void Controller::Draw() {
   renderer_.Render(terrain_, camera_, sun_);
   // Road-signs
   for (unsigned int x = 0; x < signs.size(); ++x) {
-    if (active_signs[x] >= 0) {
+    // if (active_signs[x] >= 0) // no point
     renderer_.Render(signs[x], camera_, sun_);
-    }
   }
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
@@ -116,7 +114,7 @@ void Controller::PositionLights() {
   //   dirLight.AmbientIntensity = glm::vec3(0.001f, 0.001f, 0.001f);
   // }
   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
-  dirLight.AmbientIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
   dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
   dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
   dirLight.SpecularIntensity = glm::vec3(0.10f, 0.10f, 0.10f);
