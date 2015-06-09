@@ -11,6 +11,7 @@
 #include "object.h"
 #include "Skybox.h"
 #include "Water.h"
+#include "sun.h"
 #include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
@@ -98,15 +99,15 @@ class Renderer {
     //   @param Object * object, an object to render
     //   @warn this function is not responsible for NULL PTRs
     //   @warn uses camera pointer for view matrix
-    void Render(const Object * object, const Camera &camera) const;
+    void Render(const Object * object, const Camera &camera, const Sun &sun) const;
     // TODO
-    void RenderDepthBuffer(const Object * car, const Camera &camera) const;
+    void RenderDepthBuffer(const Object * car, const Sun &sun) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @warn uses camera pointer for view matrix
-    void Render(const Terrain * terrain, const Camera &camera) const;
+    void Render(const Terrain * terrain, const Camera &camera, const Sun &sun) const;
     // TODO
-    void RenderDepthBuffer(const Terrain * terrain, const Camera &camera) const;
+    void RenderDepthBuffer(const Terrain * terrain, const Sun &sun) const;
     // Render Coordinate Axis 
     //   Only renders in debugging mode
     //   @warn requires VAO from EnableAxis

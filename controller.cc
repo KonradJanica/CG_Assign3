@@ -10,6 +10,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   renderer_(Renderer(debug_flag)),
   shaders_(renderer_.shaders()),
   camera_(Camera(shaders_, window_width, window_height)),
+  sun_(Sun(camera(), debug_flag)),
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
   // State and var defaults
@@ -70,9 +71,9 @@ void Controller::Draw() {
   glViewport(0, 0, 1024, 1024);
 
   // Terrain
-  renderer_.RenderDepthBuffer(terrain_, camera_);
+  renderer_.RenderDepthBuffer(terrain_, sun_);
   // Car with physics
-  renderer_.RenderDepthBuffer(car_, camera_);
+  renderer_.RenderDepthBuffer(car_, sun_);
   // Road-signs TODO
 
   // binds the shadow mapping for reading
@@ -87,9 +88,9 @@ void Controller::Draw() {
   // Water
   renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Terrain
-  renderer_.Render(terrain_, camera_);
+  renderer_.Render(terrain_, camera_, sun_);
   // Car with physics
-  renderer_.Render(car_, camera_);
+  renderer_.Render(car_, camera_, sun_);
   // Rain (particles)
   rain_->Render(camera_, car_, skybox_);
 
@@ -110,11 +111,11 @@ void Controller::PositionLights() {
 
   DirectionalLight dirLight;
 
-  dirLight.DiffuseIntensity = glm::vec3(0.2f, 0.2f, 0.2f);
-  //dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  dirLight.AmbientIntensity = glm::vec3(0.10f, 0.10f, 0.10f);
   dirLight.SpecularIntensity = glm::vec3(0.01f, 0.01f, 0.01f);
-  dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
-
+  // dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
+  dirLight.Direction =  sun_.sun_direction();
 
   // Point lights
   std::vector<PointLight> pointLights;
@@ -192,6 +193,9 @@ void Controller::UpdateGame() {
       delta_time_ = delta_time;
     // printf("dt = %f\n",delta_time_);
   }
+
+  // Update Sun/Moon position
+  sun_.Update();
 
   // Send time for water
   water_->SendTime(current_frame);

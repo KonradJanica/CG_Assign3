@@ -111,7 +111,7 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera &camera) const {
+void Renderer::Render(const Object * object, const Camera &camera, const Sun &sun) const {
   const Shader * shader = object->shader();
   glUseProgram(shader->Id);
 
@@ -134,12 +134,14 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
-  const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-      float(),
-      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  // const glm::vec3 snapped_cam_pos = glm::vec3(
+  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
+  //     float(),
+  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
+  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
+  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 D_MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
@@ -167,6 +169,7 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
   const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
     // Pass Surface Colours to Shader
+    //   @note diffuse removed because Sun controls it
     const glm::vec3 &vao_ambient = object->ambient_surface_colours_at(y);
     const glm::vec3 &vao_diffuse = object->diffuse_surface_colours_at(y);
     const glm::vec3 &vao_specular = object->specular_surface_colours_at(y);
@@ -279,7 +282,7 @@ GLuint Renderer::EnableAxis() const {
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
 //   @param vec4 light_pos, The position of the Light for lighting
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
+void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &sun) const {
   const Shader &shader = terrain->shader();
   glUseProgram(shader.Id);
   glCullFace(GL_BACK);
@@ -299,12 +302,14 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
-  const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-      float(),
-      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  // const glm::vec3 snapped_cam_pos = glm::vec3(
+  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
+  //     float(),
+  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
+  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
+  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
   const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 D_MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
@@ -416,7 +421,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 //   @param vec4 light_pos, The position of the Light for lighting
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
-void Renderer::RenderDepthBuffer(const Object * object, const Camera &camera) const {
+void Renderer::RenderDepthBuffer(const Object * object, const Sun &sun) const {
   const Shader &shader = shaders_.DepthBuffer;
   glUseProgram(shader.Id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -426,12 +431,14 @@ void Renderer::RenderDepthBuffer(const Object * object, const Camera &camera) co
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
-  const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-      float(),
-      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  // const glm::vec3 snapped_cam_pos = glm::vec3(
+  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
+  //     float(),
+  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
+  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
+  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 MODEL = object->model_matrix();
   const glm::mat4 DEPTH_MVP = PROJECTION * VIEW * MODEL;
@@ -455,7 +462,7 @@ void Renderer::RenderDepthBuffer(const Object * object, const Camera &camera) co
 //   @param vec4 light_pos, The position of the Light for lighting
 //   TODO this is depth buffer
 //   @warn Not responsible for NULL PTRs
-void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) const {
+void Renderer::RenderDepthBuffer(const Terrain * terrain, const Sun &sun) const {
   const Shader &shader = shaders_.DepthBuffer;
   glUseProgram(shader.Id);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -465,12 +472,14 @@ void Renderer::RenderDepthBuffer(const Terrain * terrain, const Camera &camera) 
   // Compute the MVP matrix from the light's point of view
   const glm::mat4 PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
   const glm::vec2 texel_size = glm::vec2(1.0f/fbo_.textureX, 1.0f/fbo_.textureY);
-  const glm::vec3 snapped_cam_pos = glm::vec3(
-      floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-      float(),
-      floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x-35.0f,10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x+35.0f,-10.0f,snapped_cam_pos.z);
+  // const glm::vec3 snapped_cam_pos = glm::vec3(
+  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
+  //     float(),
+  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
+  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
+  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
+  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
+  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
   const glm::mat4 VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
   const glm::mat4 MODEL = glm::mat4(1.0);
   const glm::mat4 DEPTH_MVP = PROJECTION * VIEW * MODEL;
