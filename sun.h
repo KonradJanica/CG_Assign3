@@ -84,6 +84,8 @@ class Sun {
     // Min/Max Diffuse
     const glm::vec3 kMinRedning;
     const glm::vec3 kMaxRedning;
+    // The intensity grow/shrink per hour factor
+    const float kIntensityPercentageGrow;
 
     // The time of day
     //   No. is in range [0,24)

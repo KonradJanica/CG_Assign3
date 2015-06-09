@@ -112,13 +112,17 @@ void Controller::PositionLights() {
 
   DirectionalLight dirLight;
 
-  if (sun_.IsDay()) {
-    dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
-    dirLight.AmbientIntensity = glm::vec3(1.10f, 1.10f, 1.10f);
-  } else {
-    dirLight.DiffuseIntensity = glm::vec3(0.30f, 0.30f, 0.30f);
-    dirLight.AmbientIntensity = glm::vec3(0.001f, 0.001f, 0.001f);
-  }
+  // if (sun_.IsDay()) {
+  //   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  //   dirLight.AmbientIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  // } else {
+  //   dirLight.DiffuseIntensity = glm::vec3(0.30f, 0.30f, 0.30f);
+  //   dirLight.AmbientIntensity = glm::vec3(0.001f, 0.001f, 0.001f);
+  // }
+  dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  dirLight.AmbientIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
+  dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
   dirLight.SpecularIntensity = glm::vec3(0.10f, 0.10f, 0.10f);
   // dirLight.Direction =  glm::vec3(0.0f, -1.0f, 0.0f);
   dirLight.Direction =  sun_.sun_direction();
@@ -167,11 +171,11 @@ void Controller::PositionLights() {
   }
 
   light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
-  if (sun_.IsDay()) {
-    dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
-    dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
-    dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
-  }
+  // if (sun_.IsDay()) {
+  //   dirLight.DiffuseIntensity = glm::vec3(0.7f, 0.7f, 0.7f);
+  //   dirLight.AmbientIntensity = glm::vec3(0.3f, 0.3f, 0.3f);
+  //   dirLight.SpecularIntensity = glm::vec3(0.5f, 0.5f, 0.5f);
+  // }
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);

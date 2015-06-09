@@ -19,6 +19,7 @@ Sun::Sun(const Camera * camera, const bool is_debug) :
   kDawnEnd(21),
   kMinRedning(glm::vec3(255.0f,253.0f,214.0f)),
   kMaxRedning(glm::vec3(255.0f,127.0f,112.0f)),
+  kIntensityPercentageGrow(1.0f / 6.0f),
   // Default vars
   time_of_day_(6),
   sun_start_(camera->cam_pos().x + kMornPos),
@@ -94,7 +95,7 @@ void Sun::SmoothPosition() {
 glm::vec3 Sun::sun_direction() const {
   glm::vec3 dir = glm::normalize(glm::vec3(
         sun_target_x_-sun_start_,
-        -10.0f - sun_height_,
+        -10.0f - (sun_height_ - 30.0f), //-30 for cool effect on diffuse light
         0));
   dir *= -1;
   return dir;
@@ -114,6 +115,47 @@ bool Sun::IsDay() const {
 
 // TODO
 float Sun::LightIntensityMultiplier() const {
+  float multi;
+  switch(time_of_day()) {
+    case 0:
+    case 12:
+      multi = 1.0f;
+      break;
+    case 1:
+    case 13:
+    case 11:
+      multi = 1.0f - (1 * kIntensityPercentageGrow);
+      break;
+    case 2:
+    case 14:
+    case 10:
+      multi = 1.0f - (2 * kIntensityPercentageGrow);
+      break;
+    case 3:
+    case 15:
+    case 9:
+      multi = 1.0f - (3 * kIntensityPercentageGrow);
+      break;
+    case 4:
+    case 16:
+    case 8:
+      multi = 1.0f - (4 * kIntensityPercentageGrow);
+      break;
+    case 5:
+    case 17:
+    case 7:
+      multi = 1.0f - (5 * kIntensityPercentageGrow);
+      break;
+    case 6:
+    case 18:
+      multi = 1.0f - (6 * kIntensityPercentageGrow);
+      break;
+    default:
+      multi = 1.0f;
+  }
 
-  return 1.0f;
+  if (!IsDay()) // less lighting at night
+    multi *= 0.5f;
+
+  return multi;
 }
