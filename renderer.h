@@ -66,7 +66,7 @@ struct FrameBufferObject {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   // Set "renderedTexture" as our depth attachement
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, DepthTexture, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, DepthTexture, 0);
 
   // Instruct openGL that we won't bind a color texture with the currently binded FBO
   glDrawBuffer(GL_NONE);
