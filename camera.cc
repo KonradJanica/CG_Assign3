@@ -25,7 +25,7 @@
 Camera::Camera(const Shaders * shaders, 
     const int window_width, const int window_height, const float fov) :
   // Default Vars - VIEWING
-  state_(kFreeView),
+  state_(kChase),
   cam_pos_(glm::vec3(0.0f,5.0f,-10.0f)),
   cam_front_(glm::vec3(0.0f, -0.5f, 1.0f)),
   cam_up_(glm::vec3(0.0f, 1.0f, 0.0f)),

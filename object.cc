@@ -9,6 +9,7 @@ Object::Object(const glm::vec3 &translation,
   translation_(translation), rotation_(rotation), scale_(scale),
   displacement_(0), speed_(default_speed), centri_speed_(0), default_speed_(default_speed), 
   centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),
+  velocity_x_(0.0f), velocity_z_(0.1f), //Not zero for starting camera (pos behind car)
   is_debugging_(debugging_on) {
     UpdateModelMatrix();
   }
@@ -17,13 +18,14 @@ Object::Object(const glm::vec3 &translation,
 //   @param  the gear ratio
 //   @return  the max speed of given gear ratio
 float Object::MaxSpeedPerGear(float g_num) {
-  const float DIFFERENTIALRATIO = 3.42, TRANSMISSIONEFFICIENCY = 0.7;
-  const float WHEELRADIUS = 0.33; //metres  radius of tire
+  const float DIFFERENTIALRATIO = 3.42;
+  // const float TRANSMISSIONEFFICIENCY = 0.7;
+  // const float WHEELRADIUS = 0.33; //metres  radius of tire
   const float WHEELROTATIONDISTANCE = 2.14; //metres
   const float MAXRPM = 4400;
   float MAXSPEEDCONVERT = MAXRPM/g_num/DIFFERENTIALRATIO/60*WHEELROTATIONDISTANCE*3.6;
   return MAXSPEEDCONVERT;
-};
+}
 
 // Works out the maximum force per gear
 //   @param  the gear ratio
@@ -35,7 +37,7 @@ float Object::MaxEngineForcePerGear(float g_num, float max_torque) {
   const float WHEELRADIUS = 0.33; //metres  radius of tire
   float ENGINEFORCE = MAXTORQUE*g_num*DIFFERENTIALRATIO*TRANSMISSIONEFFICIENCY/WHEELRADIUS;
   return ENGINEFORCE;
-};
+}
 
 // Updates the all the movement data for the object
 // @warn should be called in controller tick
@@ -244,6 +246,11 @@ void Object::ControllerMovementTick(float delta_time_in, const std::vector<bool>
   translation_.z += delta_time * velocity_z_;
   displacement_.x += delta_time * velocity_x_;
   displacement_.z += delta_time * velocity_z_;
+
+  if (speed() == 0) {
+    velocity_x_ = direction_x;
+    velocity_z_ = direction_z;
+  }
 }
 
 // Updates the transform matrix using glLookAt
