@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 #else
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
 #endif
-  glutCreateWindow("Many Attributes");
+  glutCreateWindow("Assign3");
 
   // Initialize GLEW
   glewExperimental = true; // Needed for core profile
