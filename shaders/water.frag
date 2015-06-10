@@ -159,7 +159,7 @@ void main(void) {
 
   vec4 colour = litColour * texture(texMap, R);
   // Set transparency
-  colour.a = 0.9;
+  colour.a = 0.8;
 
   fragColour = mix(vec4(0.7,0.7,0.9,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
 

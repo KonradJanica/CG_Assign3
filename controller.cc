@@ -64,10 +64,12 @@ void Controller::Draw() {
   // Road-signs
   const std::vector<Object*> signs = road_sign_.signs();
   const std::vector<int> active_signs = road_sign_.active_signs();
-  for (unsigned int x = 0; x < signs.size(); ++x) {
-    // if (active_signs[x] >= 0) // no point
-    renderer_.RenderDepthBuffer(signs[x], sun_);
-  }
+
+  // Unfortunately this does not work
+  // for (unsigned int x = 0; x < signs.size(); ++x) {
+  //   // if (active_signs[x] >= 0) // no point
+  //   renderer_.RenderDepthBuffer(signs[x], sun_);
+  // }
   // Terrain
   renderer_.RenderDepthBuffer(terrain_, sun_);
 
