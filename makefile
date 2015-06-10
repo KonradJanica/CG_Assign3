@@ -34,7 +34,7 @@ LIB = lib/tiny_obj_loader/tiny_obj_loader.o shaders/shader_compiler/shader.o
 .PHONY:  clean
 
 all : assign3$(EXT)
-	./assign3$(EXT)
+	# ./assign3$(EXT)
 
 assign3$(EXT): $(LINK) $(LIB)
 	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
