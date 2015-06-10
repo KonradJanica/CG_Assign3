@@ -18,7 +18,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   car_(AddObject(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
-  frames_past_(0), frames_count_(0), delta_time_(16), is_debugging_(debug_flag) {
+  frames_past_(0), frames_count_(0), delta_time_(18), is_debugging_(debug_flag) {
 
     is_key_pressed_hash_.reserve(256);
     is_key_pressed_hash_.resize(256);
@@ -204,8 +204,10 @@ void Controller::UpdateGame() {
 
     // Work out average miliseconds per tick
     const GLfloat delta_time = 1.0f/fps * 1000.0f;
-    if (abs(delta_time_ - delta_time) < 5)
+    if (abs(delta_time_ - delta_time) < 5) // Dont allow too high fluc
       delta_time_ = delta_time;
+    if (delta_time_ > 20) // Cap at 50 fps delta (will run in slowmo on less fps)
+      delta_time_ = 20;
     // printf("dt = %f\n",delta_time_);
   }
 
