@@ -17,7 +17,7 @@ RoadSign::RoadSign(const Shaders * shaders, const Terrain * terrain) :
         }
 
 Object * RoadSign::SignSpawn() {
-  for (int x = 0; x < signs_.size(); ++x) {
+  for (unsigned int x = 0; x < signs_.size(); ++x) {
     // Check if sign can be used
     if (active_signs_[x] < 0) {
       const auto turn_type_vec = terrain_->tile_turn();

@@ -22,7 +22,7 @@ CollisionController::CollisionController() :
 // @warn This collision can fall through if delta time makes the car velocity larger
 //       than the catch dis, may be an issue for systems with poor performance
 kGameState CollisionController::CrashAnimationCliff(
-    Camera * camera_, const Terrain * terrain_, Object * car_,
+    Camera * camera_, const Terrain * terrain_, Car * car_,
     float delta_time_, const std::vector<bool> &is_key_pressed_hash_) {
 
   // Lock camera state
@@ -184,7 +184,7 @@ kGameState CollisionController::CrashAnimationCliff(
 // @warn Pretty inefficent way of checking for collisions but it's only
 //       calculated during this state.
 kGameState CollisionController::CrashAnimationFall(
-    Camera * camera_, const Terrain * terrain_, Object * car_,
+    Camera * camera_, const Terrain * terrain_, Car * car_,
     float delta_time_, const std::vector<bool> &is_key_pressed_hash_) {
 
   // Lock camera state
@@ -339,7 +339,7 @@ bool CollisionController::IsInside(const glm::vec3 &car, const std::pair<glm::ve
 // TODO comment
 //   Also calculates the middle of the road and it's direction if game state is autodrive
 kGameState CollisionController::UpdateCollisions(
-    const Object * car_, Terrain * terrain_,
+    const Car * car_, Terrain * terrain_,
     Camera * camera_, RoadSign * road_sign,
     kGameState current_state) {
   // Setup vars
@@ -463,7 +463,7 @@ kGameState CollisionController::UpdateCollisions(
 }
 
 // TODO comment
-void CollisionController::AutoDrive(Object * car, float delta_time) {
+void CollisionController::AutoDrive(Car * car, float delta_time) {
     car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
     if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
       // These position updates are from object movement tick

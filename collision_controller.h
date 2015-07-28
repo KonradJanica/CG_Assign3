@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include "camera.h"
 #include "terrain.h"
-#include "object.h"
+#include "car.h"
 #include "roadsign.h"
 
 #include "constants.h"
@@ -29,12 +29,12 @@ class CollisionController {
 
     // TODO comment
     kGameState UpdateCollisions(
-        const Object * car_, Terrain * terrain_,
+        const Car * car_, Terrain * terrain_,
         Camera * camera_, RoadSign * road_sign,
         kGameState current_state);
 
     // TODO comment
-    void AutoDrive(Object * car, const float delta_time);
+    void AutoDrive(Car * car, const float delta_time);
 
     // ANIMATION FUNCTIONS
     // The animation played when the car falls off the right (water) side
@@ -44,7 +44,7 @@ class CollisionController {
     // @warn Pretty inefficent way of checking for collisions but it's only
     //       calculated during this state.
     kGameState CrashAnimationFall(
-        Camera * camera_, const Terrain * terrain_, Object * car_,
+        Camera * camera_, const Terrain * terrain_, Car * car_,
         float delta_time_, const std::vector<bool> &is_key_pressed_hash_);
 
     // The animation played when the car drives off the road on left (cliff) side
@@ -55,7 +55,7 @@ class CollisionController {
     // @warn This collision can fall through if delta time makes the car velocity larger
     //       than the catch dis, may be an issue for systems with poor performance
     kGameState CrashAnimationCliff(
-        Camera * camera_, const Terrain * terrain_, Object * car_,
+        Camera * camera_, const Terrain * terrain_, Car * car_,
         float delta_time_, const std::vector<bool> &is_key_pressed_hash_);
 
     // TODO comment

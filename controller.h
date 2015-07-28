@@ -100,7 +100,7 @@ class Controller {
     RoadSign road_sign_;
     // The moving car
     //   An object with physics
-    Object * car_;
+    Car * car_;
     // All the static models and their transforms in the scene
     std::vector<Object *> objects_;
     // The skybox object

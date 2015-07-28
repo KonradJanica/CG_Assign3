@@ -15,7 +15,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   collision_controller_(CollisionController()),
   terrain_(new Terrain(shaders_->LightMappedGeneric)),
   road_sign_(RoadSign(shaders_, terrain_)),
-  car_(AddObject(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
+  car_(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
   frames_past_(0), frames_count_(0), delta_time_(18), is_debugging_(debug_flag) {
