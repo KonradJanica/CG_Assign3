@@ -5,11 +5,9 @@ Object::Object(const Shader &shader,
                const std::string &model_filename,
                const glm::vec3 &translation,
                const glm::vec3 &rotation,
-               const glm::vec3 &scale,
-               float default_speed, bool debugging_on)
-  : Model(shader, model_filename,
-      translation, rotation, scale,
-      default_speed, debugging_on),
+               const glm::vec3 &scale)
+  : Model(shader,
+          model_filename),
   kDefaultHeight(translation.y),
   translation_(translation), rotation_(rotation), scale_(scale)
   {

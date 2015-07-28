@@ -28,12 +28,11 @@ Controller::Controller(const int window_width, const int window_height, const bo
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
 
+    cars_.push_back(AddCar(shaders_->LightMappedGeneric, "models/Car/car-n.obj"));
+
   // Add starting models
   // AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
   // AddModel(shaders_->LightMappedGeneric, "models/Car/car-n.obj", true);
-  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
-  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
-  // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
 
 }
 
@@ -46,7 +45,7 @@ Object * Controller::AddObject(const Shader &shader, const std::string &model_fi
       glm::vec3(0.95f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
       glm::vec3(0.0f, 20.0f, 0.0f),       // Rotation
       glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
-      60, false); // starting speed and debugging mode
+      false); // Debugging mode
 
   return object;
 }
@@ -296,5 +295,7 @@ void Controller::UpdatePhysics() {
   if (game_state_ == kAutoDrive) {
     collision_controller_.AutoDrive(car_, delta_time_);
   }
+
+  cars_[0]->ControllerMovementTick(delta_time_);
 
 }

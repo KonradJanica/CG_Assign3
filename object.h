@@ -37,9 +37,7 @@ class Object : public Model {
            const std::string &model_filename,
            const glm::vec3 &translation,
            const glm::vec3 &rotation,
-           const glm::vec3 &scale,
-           float default_speed = 0,
-           bool debugging_on = false);
+           const glm::vec3 &scale);
 
     // Updates the model matrix using glLookAt
     //  Should be called everytime pos,dir or up changes (but can be optimized to be only called once)
@@ -72,6 +70,8 @@ class Object : public Model {
     glm::mat4 model_matrix_;
 
     // World transformations
+    // The position of the object in the world
+    glm::vec3 translation_;
     // The rotation the object is facing
     glm::vec3 rotation_;
     // The direction of the object
@@ -85,11 +85,6 @@ class Object : public Model {
     // Add a wireframe model from .obj file to the scene
     void AddModel(GLuint program_id, const std::string &model_filename);
 
-  protected:
-    // World transformations
-    // The position of the object in the world
-    glm::vec3 translation_;
-    
 };
 
 // ACCESSORS:

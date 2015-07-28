@@ -54,12 +54,12 @@ class Car : public Object {
     inline float velocity_z() const;
 
     // PHYSICS:
-    // Updates the all the movement data for the object
+    // Updates all the movement data for the PLAYER object
     // @warn should be called in controller tick
     void ControllerMovementTick(float delta_time, const std::vector<bool> &is_key_pressed_hash);
-    // Sets the acceleration of the object to given amount
-    // TODO comment
-    void CalcPosition();
+    // Updates all the movement data for the NPC object
+    // @warn should be called in controller tick
+    void ControllerMovementTick(float delta_time);
     // Accessor for the current speed of the object
     //   @return speed_, the current speed of the object
     inline float speed() const;

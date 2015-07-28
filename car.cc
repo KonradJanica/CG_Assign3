@@ -10,8 +10,7 @@ Car::Car(const Shader &shader,
   : Object(shader, model_filename,
       translation,
       rotation,
-      scale,
-      default_speed, debugging_on),
+      scale),
   displacement_(0), speed_(default_speed), centri_speed_(0), default_speed_(default_speed),
   centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),
   velocity_x_(0.0f), velocity_z_(0.1f), //Not zero for starting camera (pos behind car)
@@ -43,7 +42,7 @@ float Car::MaxEngineForcePerGear(float g_num, float max_torque) {
   return ENGINEFORCE;
 }
 
-// Updates the all the movement data for the object
+// Updates all the movement data for the PLAYER object
 // @warn should be called in controller tick
 void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &is_key_pressed_hash) {
   // Convert delta_time to ticks per second
@@ -51,7 +50,6 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   const float delta_time = delta_time_in / 1000;
   float TURNRATE = 100 * delta_time;
   float ENGINEFORCE = 9000; //newtons (real 1st Gear value is 9000)
-  // TODO put into separate constants class
   const float MASS = 1500; //kg
   const float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
   const float AIRRESSISTANCE = 0.4257;  //proportional constant
@@ -246,10 +244,47 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   velocity_z_ /= SPEEDSCALE;
 
   // CALCULATE NEW POSITION => p = p+dt*v
-  translation_.x += delta_time * velocity_x_;
-  translation_.z += delta_time * velocity_z_;
+  glm::vec3 new_translation = translation();
+  new_translation.x += delta_time * velocity_x_;
+  new_translation.z += delta_time * velocity_z_;
+  set_translation(new_translation);
+
   displacement_.x += delta_time * velocity_x_;
   displacement_.z += delta_time * velocity_z_;
+
+  if (speed() == 0) {
+    velocity_x_ = direction_x;
+    velocity_z_ = direction_z;
+  }
+}
+
+// Updates all the movement data for the NPC object
+// @warn should be called in controller tick
+void Car::ControllerMovementTick(float delta_time_in) {
+  // Convert delta_time to ticks per second
+  //   Currently ticks per milisecond
+  const float delta_time = delta_time_in / 1000;
+
+  // CONSTANTS
+  const float SPEEDSCALE = 10; //the conversions from real speed to game movement
+
+  // SETUP VARS
+  // The current velocity vector
+  float direction_x = direction().x;
+  float direction_z = direction().z;
+  velocity_x_ = speed_ * direction_x;
+  velocity_z_ = speed_ * direction_z;
+
+  if (is_debugging_) {
+    printf("speed = %f\n", speed_);
+  }
+  // convert speed to game world speed
+  velocity_x_ /= SPEEDSCALE;
+  velocity_z_ /= SPEEDSCALE;
+
+  // CALCULATE NEW POSITION => p = p+dt*v
+  translation_.x += delta_time * velocity_x_;
+  translation_.z += delta_time * velocity_z_;
 
   if (speed() == 0) {
     velocity_x_ = direction_x;

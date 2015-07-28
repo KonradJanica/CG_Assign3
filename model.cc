@@ -1,9 +1,6 @@
 #include "model.h"
 
-Model::Model(const Shader &shader, const std::string &model_filename,
-    // Next line of parameters are optional variables for object (parent) construction
-    const glm::vec3 &position, const glm::vec3 &rotation, const glm::vec3 &scale,
-    float speed, bool debug)
+Model::Model(const Shader &shader, const std::string &model_filename)
 : shader_(shader), amount_points_(0) {
 
   model_data_ = new ModelData( model_filename );

@@ -98,11 +98,12 @@ class Controller {
     // The road sign factory
     //   Holds all road signs and has members to position them
     RoadSign road_sign_;
-    // The moving car
+    // The player moving car
     //   An object with physics
-    Car * car_;
-    // All the static models and their transforms in the scene
-    std::vector<Object *> objects_;
+    Car * const car_;
+    // The NPC moving cars
+    //   Objects with physics
+    std::vector<Car *> cars_;
     // The skybox object
     Skybox * skybox_;
     // The water object
