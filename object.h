@@ -25,11 +25,8 @@
 #define DEG2RAD(x) ((x)*M_PI/180.0)
 #define RAD2DEG(x) ((x)*180.0/M_PI)
 
-// Object call contains a model by inhertiance
+// Object is a Model with model_matrix transformations
 //  Adds extra methods and members to control matrix transformations
-//  Can also hold physics information if it is a moving object
-//  Physics are enabled if Physics * physics_extension_ != 0
-//  @usage Object * car = new model(program_id, "car-n.obj")
 class Object : public Model {
   public:
     const float kDefaultHeight;

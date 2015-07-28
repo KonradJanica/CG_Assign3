@@ -28,7 +28,7 @@ ifneq (, $(findstring MINGW, $(PLATFORM)))
 endif
 
 CC = g++ -Wno-switch-enum -std=c++11
-LINK = model_data.o model.o object.o terrain.o roadsign.o collision_controller.o light_controller.o Skybox.o Water.o rain.o sun.o camera.o renderer.o controller.o main.o
+LINK = model_data.o model.o object.o car.o terrain.o roadsign.o collision_controller.o light_controller.o Skybox.o Water.o rain.o sun.o camera.o renderer.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o shaders/shader_compiler/shader.o
 
 .PHONY:  clean
@@ -39,16 +39,16 @@ all : assign3$(EXT)
 assign3$(EXT): $(LINK) $(LIB)
 	$(CC) $(CPPFLAGS) -o assign3 $(LINK) $(LIB) $(GL_LIBS)
 
-main.o: model_data.h model.h camera.h renderer.h main.cpp
+main.o: model_data.h model.h camera.h renderer.h controller.h Skybox.h main.cpp
 	$(CC) $(CPPFLAGS) -c main.cpp
 
-controller.o: controller.cc controller.h light_controller.h renderer.h camera.h roadsign.h terrain.h object.h model.h constants.h
+controller.o: controller.cc controller.h light_controller.h renderer.h camera.h roadsign.h terrain.h object.h car.h constants.h
 	$(CC) $(CPPFLAGS) -c controller.cc
 
 sun.o: sun.cc sun.h camera.h
 	$(CC) $(CPPFLAGS) -c sun.cc
 
-collision_controller.o: collision_controller.cc collision_controller.h object.h camera.h terrain.h constants.h
+collision_controller.o: collision_controller.cc collision_controller.h car.h camera.h terrain.h constants.h
 	$(CC) $(CPPFLAGS) -c collision_controller.cc
 
 light_controller.o: light_controller.cc light_controller.h
@@ -63,7 +63,7 @@ Water.o: Water.cc Water.h
 rain.o: rain.cc rain.h
 	$(CC) $(CPPFLAGS) -c rain.cc
 
-renderer.o: renderer.cc renderer.h camera.h terrain.h object.h model.h
+renderer.o: renderer.cc renderer.h camera.h terrain.h object.h car.h
 	$(CC) $(CPPFLAGS) -c renderer.cc
 
 camera.o: camera.cc camera.h
@@ -75,14 +75,17 @@ roadsign.o: roadsign.cc roadsign.h terrain.h object.h
 terrain.o: terrain.cc terrain.h
 	$(CC) $(CPPFLAGS) -c terrain.cc
 
-model.o: model.cc model.h object.h model_data.h
-	$(CC) $(CPPFLAGS) -c model.cc
-
-object.o: object.cc object.h
-	$(CC) $(CPPFLAGS) -c object.cc
-
 model_data.o: model_data.cc model_data.h
 	$(CC) $(CPPFLAGS) -c model_data.cc
+
+model.o: model.cc model.h model_data.h
+	$(CC) $(CPPFLAGS) -c model.cc
+
+object.o: object.cc object.h model.h
+	$(CC) $(CPPFLAGS) -c object.cc
+
+car.o: car.cc car.h model.h
+	$(CC) $(CPPFLAGS) -c car.cc
 
 $(LIB):
 	$(MAKE) -C lib/tiny_obj_loader

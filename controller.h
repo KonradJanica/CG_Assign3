@@ -10,6 +10,7 @@
 #include "camera.h"
 #include "terrain.h"
 #include "object.h"
+#include "car.h"
 #include "renderer.h"
 #include "sun.h"
 #include "light_controller.h"
@@ -40,11 +41,16 @@ class Controller {
     // Construct with window dimensions & verbose debugging mode
     Controller(const int window_width, const int window_height, const bool debug_flag = false);
 
-    // Creates a model for the member vector (or car_)
+    // Creates an object for the member vector
     //   @param shader, a shader class holding shader to use and uniforms
     //   @param model_filename, a string containing the path of the .obj file
     //   @warn the model is created on the heap and memory must be freed afterwards
     Object * AddObject(const Shader & shader, const std::string &model_filename);
+    // Creates a car for the member vector
+    //   @param shader, a shader class holding shader to use and uniforms
+    //   @param model_filename, a string containing the path of the .obj file
+    //   @warn the model is created on the heap and memory must be freed afterwards
+    Car * AddCar(const Shader & shader, const std::string &model_filename);
 
     // Render the scene (all member models)
     //   @warn uses the renderer object

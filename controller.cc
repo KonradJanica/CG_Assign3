@@ -37,7 +37,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
 
 }
 
-// Adds a model to the member vector
+// Adds an object to the member vector
 //   @param shader, a shader class holding shader to use and uniforms
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
@@ -49,6 +49,20 @@ Object * Controller::AddObject(const Shader &shader, const std::string &model_fi
       60, false); // starting speed and debugging mode
 
   return object;
+}
+
+// Adds a car (object with physics) to the member vector
+//   @param shader, a shader class holding shader to use and uniforms
+//   @param model_filename, a string containing the path of the .obj file
+//   @warn the model is created on the heap and memory must be freed afterwards
+Car * Controller::AddCar(const Shader &shader, const std::string &model_filename) {
+  Car * car = new Car(shader, model_filename,
+      glm::vec3(0.95f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
+      glm::vec3(0.0f, 20.0f, 0.0f),       // Rotation
+      glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
+      60, false); // starting speed and debugging mode
+
+  return car;
 }
 
 // Renders all models in the vector member
