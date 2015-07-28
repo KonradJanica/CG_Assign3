@@ -55,6 +55,7 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   const float AIRRESSISTANCE = 0.4257;  //proportional constant
   const float FRICTION = AIRRESSISTANCE * 30;
   const float SPEEDSCALE = 10; //the conversions from real speed to game movement
+  // WARN speedscale = 5 breaks tiling (7 seems to work)
   const float WEIGHT = MASS * 9.8; // m * g
   const float LENGTH = 4.8; //metres  length of car
   const float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
@@ -283,8 +284,10 @@ void Car::ControllerMovementTick(float delta_time_in) {
   velocity_z_ /= SPEEDSCALE;
 
   // CALCULATE NEW POSITION => p = p+dt*v
-  translation_.x += delta_time * velocity_x_;
-  translation_.z += delta_time * velocity_z_;
+  glm::vec3 new_translation = translation();
+  new_translation.x += delta_time * velocity_x_;
+  new_translation.z += delta_time * velocity_z_;
+  set_translation(new_translation);
 
   if (speed() == 0) {
     velocity_x_ = direction_x;
