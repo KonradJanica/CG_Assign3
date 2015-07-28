@@ -144,7 +144,7 @@ void Camera::ChangeZoom(const int &y) {
 
 // Update upon Car movement tick
 //   Called in Car's physics tick
-void Camera::UpdateCarTick(const Object * car) {
+void Camera::UpdateCarTick(const Car * car) {
   // Follow car in Chase and FirstPerson mode
   // Only lock view to car in Chase mode
   // Only lock position to car in FirstPerson mode

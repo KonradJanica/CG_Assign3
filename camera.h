@@ -20,7 +20,7 @@
 #include <cassert>
 #include "model_data.h"
 #include "model.h"
-#include "object.h"
+#include "car.h"
 #include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
@@ -82,7 +82,7 @@ class Camera {
     void ChangeZoom(const int &y);
     // Update upon Car movement tick
     //   Called in Car's physics tick
-    void UpdateCarTick(const Object * car);
+    void UpdateCarTick(const Car * car);
     // Update the Camera Matrix
     void UpdateCamera();
     // Updates all the currently loaded shaders' projection uniforms
