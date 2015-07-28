@@ -78,7 +78,7 @@ void RoadSign::ShiftIndexes() {
 //   @param model_filename, a string containing the path of the .obj file
 Object * RoadSign::AddModel(const Shaders * shaders, const std::string &model_filename) const {
   const Shader &shader = shaders->LightMappedGeneric;
-  Object * object = new Model(shader, model_filename,
+  Object * object = new Object(shader, model_filename,
       glm::vec3(2.2f, 0.0f, 50.0f), // Translation
       glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
       glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale

@@ -5,7 +5,6 @@
 #include <string>
 #include <cassert>
 #include "model_data.h"
-#include "object.h"
 #include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
@@ -20,10 +19,10 @@
 
 #include "lib/stb_image/stb_image.h"
 
-// Is a child of Object, inherits extra transformation members and methods
+// A model to draw via opengl
 //   Creates and stores VAO and Material data for rendering
 //   @usage Object * car = new model(program_id, "car-n.obj")
-class Model : public Object {
+class Model {
   public:
     // Enum for vertex coordinates
     //   used in GetMax

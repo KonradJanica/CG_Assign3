@@ -1,11 +1,16 @@
 #include "object.h"
 
 // Construct with position setting parameters
-Object::Object(const glm::vec3 &translation,
+Object::Object(const Shader &shader,
+               const std::string &model_filename,
+               const glm::vec3 &translation,
                const glm::vec3 &rotation,
                const glm::vec3 &scale,
                float default_speed, bool debugging_on)
-  : kDefaultHeight(translation.y),
+  : Model(shader, model_filename,
+      translation, rotation, scale,
+      default_speed, debugging_on),
+  kDefaultHeight(translation.y),
   translation_(translation), rotation_(rotation), scale_(scale),
   displacement_(0), speed_(default_speed), centri_speed_(0), default_speed_(default_speed), 
   centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),

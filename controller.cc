@@ -42,7 +42,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
 //   @param model_filename, a string containing the path of the .obj file
 //   @warn the model is created on the heap and memory must be freed afterwards
 Object * Controller::AddObject(const Shader &shader, const std::string &model_filename) {
-  Object * object = new Model(shader, model_filename,
+  Object * object = new Object(shader, model_filename,
       glm::vec3(0.95f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
       glm::vec3(0.0f, 20.0f, 0.0f),       // Rotation
       glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
