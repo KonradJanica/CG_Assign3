@@ -54,7 +54,7 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   const float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
   const float AIRRESSISTANCE = 0.4257;  //proportional constant
   const float FRICTION = AIRRESSISTANCE * 30;
-  const float SPEEDSCALE = 10; //the conversions from real speed to game movement
+  const float SPEEDSCALE = 5; //the conversions from real speed to game movement
   // WARN speedscale = 5 breaks tiling (7 seems to work)
   const float WEIGHT = MASS * 9.8; // m * g
   const float LENGTH = 4.8; //metres  length of car

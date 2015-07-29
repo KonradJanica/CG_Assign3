@@ -104,7 +104,7 @@ class Terrain {
       kRoad = 1,
     };
     // The amount of ticks to spread height generation over
-    const signed char kHeightGenerationTicks = 50;
+    const signed char kHeightGenerationTicks = 20;
     // The amount of ticks to spread VAO creation over
     const signed char kVaoGenerationTicks = 5;
     // Width of the heightmap
