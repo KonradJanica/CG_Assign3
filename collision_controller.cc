@@ -371,7 +371,8 @@ kGameState CollisionController::UpdateCollisions(
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
   it = closest_it;
-  it++;
+  if (it != head.end())
+    it++;
   // Reduce autodrive jerking
   if (it != head.end())
     it++;
