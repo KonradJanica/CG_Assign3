@@ -13,6 +13,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   sun_(Sun(camera(), debug_flag)),
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
+  npc_car_controller_(NpcCarController(shaders_, terrain_, &renderer_, &camera_, &sun_)),
   terrain_(new Terrain(shaders_->LightMappedGeneric)),
   road_sign_(RoadSign(shaders_, terrain_, &renderer_, &camera_, &sun_)),
   car_(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
@@ -27,9 +28,6 @@ Controller::Controller(const int window_width, const int window_height, const bo
     rain_ = new Rain(shaders_->RainGeneric, debug_flag);
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
-
-    // cars_.push_back(AddCar(shaders_->LightMappedGeneric, "models/Car/car-n.obj"));
-    cars_.push_back(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj"));
 
   // Add starting models
   // AddModel(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup.obj", true);
@@ -74,7 +72,7 @@ void Controller::Draw() {
 
   // Car with physics
   renderer_.RenderDepthBuffer(car_, sun_);
-  renderer_.RenderDepthBuffer(cars_[0], sun_);
+  // renderer_.RenderDepthBuffer(cars_[0], sun_);
 
   // Road-signs
   const std::vector<Object*> signs = road_sign_.signs();
@@ -112,11 +110,13 @@ void Controller::Draw() {
       rain_->Render(camera_, car_, skybox_);
   // Car with physics
   renderer_.Render(car_, camera_, sun_);
-  renderer_.Render(cars_[0], camera_, sun_);
+  // renderer_.Render(cars_[0], camera_, sun_);
+  npc_car_controller_.DrawCars();
   } else {
     // Car with physics
     renderer_.Render(car_, camera_, sun_);
-    renderer_.Render(cars_[0], camera_, sun_);
+    // renderer_.Render(cars_[0], camera_, sun_);
+    npc_car_controller_.DrawCars();
     // Rain (particles)
     if (sun_.time_of_day() != 12)
       rain_->Render(camera_, car_, skybox_);
@@ -205,7 +205,6 @@ void Controller::PositionLights() {
 // The main control tick
 //   Controls everything: camera, inputs, physics, collisions
 void Controller::UpdateGame() {
-  cars_[0]->ControllerMovementTick(delta_time_);
 
   // Lights need to be transformed with view/normal matrix
   PositionLights();
@@ -248,6 +247,8 @@ void Controller::UpdateGame() {
   car_->UpdateModelMatrix();
 
   UpdateCamera();
+
+  npc_car_controller_.UpdateCars(delta_time_);
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo

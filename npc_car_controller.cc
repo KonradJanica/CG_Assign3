@@ -1,4 +1,4 @@
-#include "npc_collision_controller.h"
+#include "npc_car_controller.h"
 
 NpcCarController::NpcCarController(const Shaders * shaders,
                    const Terrain * terrain,
@@ -80,6 +80,13 @@ void NpcCarController::ShiftIndexes() {
   }
 }
 
+// Update physics of all cars
+void NpcCarController::UpdateCars(float delta_time) {
+  for (Car * c : cars_) {
+    c->ControllerMovementTick(delta_time);
+  }
+}
+
 // Render all roadsigns
 void NpcCarController::DrawCars() const {
   for (Car * c : cars_) {
@@ -93,10 +100,10 @@ void NpcCarController::DrawCars() const {
 Car * NpcCarController::AddCar(const std::string &model_filename) const {
   const Shader &shader = shaders_->LightMappedGeneric;
   Car * car = new Car(shader, model_filename,
-      glm::vec3(2.2f, 0.0f, 50.0f),      // Translation
-      glm::vec3(0.0f, 20.0f, 0.0f),      // Rotation
-      glm::vec3(0.9f, 0.9f*1.3f, 0.9f),  // Scale
-      10, false); // default speed and debug mode
+      glm::vec3(0.95f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
+      glm::vec3(0.0f,  0.0f, 0.0f),       // Rotation
+      glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
+      10, false); // starting speed and debugging mode
 
   return car;
 }

@@ -16,6 +16,7 @@
 #include "light_controller.h"
 #include "roadsign.h"
 #include "collision_controller.h"
+#include "npc_car_controller.h"
 #include "Skybox.h"
 #include "Water.h"
 #include "rain.h"
@@ -84,12 +85,16 @@ class Controller {
     Sun sun_;
     // The light controller
     LightController * light_controller_;
-    // The Collision Controller
+    // The Player Car Collision Controller
     //   Detects crashes, proceeds circular tile vector
     //   Plays crash animation
     //   Finds and holds middle of road
     //   Holds car direction near car
     CollisionController collision_controller_;
+    // The NPC Car Collision Controller
+    //   Detects crashes on player vs npc cars
+    //   Plays crash animation
+    NpcCarController npc_car_controller_;
 
     // Updates light properties with view matrix from camera
 
@@ -101,9 +106,6 @@ class Controller {
     // The player moving car
     //   An object with physics
     Car * const car_;
-    // The NPC moving cars
-    //   Objects with physics
-    std::vector<Car *> cars_;
     // The skybox object
     Skybox * skybox_;
     // The water object

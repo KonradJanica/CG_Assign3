@@ -40,15 +40,18 @@ class NpcCarController {
     //   Reactivates past signs
     void ShiftIndexes();
 
+    // Update physics of all cars
+    void UpdateCars(float delta_time);
+
     // Render all roadsigns
     void DrawCars() const;
 
     // Accessor for the signs
     //   Used for rendering the signs
-    inline std::vector<Car*> signs() const;
+    inline std::vector<Car*> cars() const;
     // Accessor for the signs that are active
     //   Used to optimize draw
-    inline std::vector<int> active_signs() const;
+    inline std::vector<int> active_cars() const;
 
   private:
     const Shaders * shaders_;
@@ -74,12 +77,12 @@ class NpcCarController {
 
 // Accessor for the signs
 //   Used for rendering the signs
-inline std::vector<Car*> NpcCarController::signs() const {
+inline std::vector<Car*> NpcCarController::cars() const {
   return cars_;
 }
 // Accessor for the signs that are active
 //   Used to optimize draw
-inline std::vector<int> NpcCarController::active_signs() const {
+inline std::vector<int> NpcCarController::active_cars() const {
   return active_cars_;
 }
 
