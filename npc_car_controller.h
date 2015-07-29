@@ -33,13 +33,6 @@ class NpcCarController {
              const Camera * camera,
              const Sun * sun);
 
-    // TODO comment, make const
-    Car * SignSpawn();
-
-    // Moves the active signs indexes
-    //   Reactivates past signs
-    void ShiftIndexes();
-
     // Update physics of all cars
     void UpdateCars(float delta_time);
 
@@ -60,11 +53,6 @@ class NpcCarController {
     const Camera * camera_;
     const Sun * sun_;
 
-    // The actual road sign objects
-    //   The indexing is as listed below
-    // sign_60_;
-    // sign_left_;
-    // sign_right_;
     std::vector<Car*> cars_;
 
     // The active signs (in above order)
