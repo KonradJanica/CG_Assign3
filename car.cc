@@ -293,4 +293,6 @@ void Car::ControllerMovementTick(float delta_time_in) {
     velocity_x_ = direction_x;
     velocity_z_ = direction_z;
   }
+
+  UpdateModelMatrix();
 }
