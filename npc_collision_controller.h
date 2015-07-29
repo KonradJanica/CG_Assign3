@@ -1,12 +1,12 @@
-#ifndef ASSIGN3_ROADSIGN_H_
-#define ASSIGN3_ROADSIGN_H_
+#ifndef ASSIGN3_NPCCOLLISIONCONTROLLER_H_
+#define ASSIGN3_NPCCOLLISIONCONTROLLER_H_
 
 #include <string>
 #include <vector>
 #include <cassert>
 #include <cstdlib>
 #include "terrain.h"
-#include "object.h"
+#include "car.h"
 #include "renderer.h"
 #include "camera.h"
 #include "sun.h"
@@ -25,16 +25,16 @@
 #include <GL/glut.h>
 #endif
 
-class RoadSign {
+class NpcCollisionController {
   public:
-    RoadSign(const Shaders * shaders,
+    NpcCollisionController(const Shaders * shaders,
              const Terrain * terrain,
              const Renderer * renderer,
              const Camera * camera,
              const Sun * sun);
 
     // TODO comment, make const
-    Object * SignSpawn();
+    Car * SignSpawn();
 
     // Moves the active signs indexes
     //   Reactivates past signs
@@ -45,7 +45,7 @@ class RoadSign {
 
     // Accessor for the signs
     //   Used for rendering the signs
-    inline std::vector<Object*> signs() const;
+    inline std::vector<Car*> signs() const;
     // Accessor for the signs that are active
     //   Used to optimize draw
     inline std::vector<int> active_signs() const;
@@ -62,24 +62,24 @@ class RoadSign {
     // sign_60_;
     // sign_left_;
     // sign_right_;
-    std::vector<Object*> signs_;
+    std::vector<Car*> signs_;
 
     // The active signs (in above order)
     //   index = order, value = index in circular_vector
     std::vector<int> active_signs_;
 
-    Object * AddModel(const Shaders * shaders, const std::string &file_name) const;
+    Car * AddModel(const Shaders * shaders, const std::string &file_name) const;
 
 };
 
 // Accessor for the signs
 //   Used for rendering the signs
-inline std::vector<Object*> RoadSign::signs() const {
+inline std::vector<Car*> NpcCollisionController::signs() const {
   return signs_;
 }
 // Accessor for the signs that are active
 //   Used to optimize draw
-inline std::vector<int> RoadSign::active_signs() const {
+inline std::vector<int> NpcCollisionController::active_signs() const {
   return active_signs_;
 }
 

@@ -1,6 +1,6 @@
-#include "roadsign.h"
+#include "npc_collision_controller.h"
 
-RoadSign::RoadSign(const Shaders * shaders,
+NpcCollisionController::NpcCollisionController(const Shaders * shaders,
                    const Terrain * terrain,
                    const Renderer * renderer,
                    const Camera * camera,
@@ -23,7 +23,7 @@ RoadSign::RoadSign(const Shaders * shaders,
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/60.obj");
         }
 
-Object * RoadSign::SignSpawn() {
+Car * NpcCollisionController::SignSpawn() {
   for (unsigned int x = 0; x < signs_.size(); ++x) {
     // Check if sign can be used
     if (active_signs_[x] < 0) {
@@ -69,7 +69,7 @@ Object * RoadSign::SignSpawn() {
 
 // Moves the active signs indexes
 //   Reactivates past signs
-void RoadSign::ShiftIndexes() {
+void NpcCollisionController::ShiftIndexes() {
   // int x = 0;
   for (auto it = active_signs_.begin();
       it != active_signs_.end(); ++it) {
@@ -81,8 +81,8 @@ void RoadSign::ShiftIndexes() {
 }
 
 // Render all roadsigns
-void RoadSign::DrawSigns() const {
-  for (Object * o : signs_) {
+void NpcCollisionController::DrawSigns() const {
+  for (Car * o : signs_) {
     renderer_->Render(o, *camera_, *sun_);
   }
 }
@@ -90,12 +90,13 @@ void RoadSign::DrawSigns() const {
 // Creates a model for the member
 //   @param shader, a shader program
 //   @param model_filename, a string containing the path of the .obj file
-Object * RoadSign::AddModel(const Shaders * shaders, const std::string &model_filename) const {
+Car * NpcCollisionController::AddModel(const Shaders * shaders, const std::string &model_filename) const {
   const Shader &shader = shaders->LightMappedGeneric;
-  Object * object = new Object(shader, model_filename,
-      glm::vec3(2.2f, 0.0f, 50.0f), // Translation
-      glm::vec3(0.0f, 20.0f, 0.0f), // Rotation
-      glm::vec3(0.9f, 0.9f*1.3f, 0.9f)); // Scale
+  Car * object = new Car(shader, model_filename,
+      glm::vec3(2.2f, 0.0f, 50.0f),      // Translation
+      glm::vec3(0.0f, 20.0f, 0.0f),      // Rotation
+      glm::vec3(0.9f, 0.9f*1.3f, 0.9f),  // Scale
+      10, false); // default speed and debug mode
 
   return object;
 }

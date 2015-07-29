@@ -14,7 +14,7 @@ Controller::Controller(const int window_width, const int window_height, const bo
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
   terrain_(new Terrain(shaders_->LightMappedGeneric)),
-  road_sign_(RoadSign(shaders_, terrain_)),
+  road_sign_(RoadSign(shaders_, terrain_, &renderer_, &camera_, &sun_)),
   car_(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
@@ -102,10 +102,10 @@ void Controller::Draw() {
   // Terrain
   renderer_.Render(terrain_, camera_, sun_);
   // Road-signs
-  for (unsigned int x = 0; x < signs.size(); ++x) {
-    // if (active_signs[x] >= 0) // no point
-    renderer_.Render(signs[x], camera_, sun_);
-  }
+  road_sign_.DrawSigns();
+
+  // Draw Rain (when raining) and ensure doesn't
+  //   clip through the player car
   if (camera_.state() == Camera::kFirstPerson) {
     // Rain (particles)
     if (sun_.time_of_day() != 12)
