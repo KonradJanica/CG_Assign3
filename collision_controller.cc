@@ -12,7 +12,6 @@ CollisionController::CollisionController() :
     // Initialize Dummy Index for first equilavence check in collisions
     prev_colisn_pair_idx_ = 0;
     prev_colisn_pair_container_idx_ = 0;
-
 }
 
 // The animation played when the car drives off the road on left (cliff) side
@@ -478,6 +477,7 @@ kGameState CollisionController::UpdateCollisionsNPC(
   const glm::vec3 &car = car_->translation();
   const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
   Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
+    printf("prev idx = %d, what? = %d\n", prev_colisn_pair_container_idx_, prev_colisn_pair_idx_);
 
   // Find closest edge point
   Terrain::boundary_pair closest_pair;
@@ -495,9 +495,12 @@ kGameState CollisionController::UpdateCollisionsNPC(
       closest_pair = *it;
       closest_it = it;
     }
+    // printf("Dis = %f, curr_dis = %f\n", dis, cur_dis);
     it++;
     ++prev_colisn_pair_idx_;
   }
+  if (it == head.end())
+    printf("HMMM OKAY\n");
   Terrain::boundary_pair next_pair;
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
@@ -509,7 +512,6 @@ kGameState CollisionController::UpdateCollisionsNPC(
 
   if (it == head.end()) {
     ++prev_colisn_pair_container_idx_;
-    printf("prev idx = %d", prev_colisn_pair_container_idx_);
     // Get next pair from next vector in circular_vector
     closest_it = (*col)[prev_colisn_pair_container_idx_].begin(); // reassign to find new midpoint etc.
     // TODO ensure no fall off (col)
@@ -592,9 +594,10 @@ kGameState CollisionController::UpdateCollisionsNPC(
 
 // Uses the left lane midpoint calculated in the collision update tick to
 //   automatically drive the car (or npc cars)
-//   Checks for alignment when passing the point, otherwise just uses rotation
+//   Store previous point and either directs to next point or road direction
 void CollisionController::AutoDrive(Car * car, float delta_time) {
     car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
+
     if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;

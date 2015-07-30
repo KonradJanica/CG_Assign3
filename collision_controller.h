@@ -99,7 +99,7 @@ class CollisionController {
     // TODO comment
     unsigned char prev_colisn_pair_idx_;
     // TODO comment
-    unsigned char prev_colisn_pair_container_idx_;
+    char prev_colisn_pair_container_idx_;
 
     // TODO comment
     float colisn_anim_ticks_;

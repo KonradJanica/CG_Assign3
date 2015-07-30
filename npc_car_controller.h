@@ -60,9 +60,7 @@ class NpcCarController {
     // The NPC Cars
     std::vector<Car*> cars_;
     // Their assosicated collision controllers
-    std::vector<CollisionController> collision_controllers_;
-    // Their assosicated pointers
-    std::vector<CollisionController*> collision_controllers_ptrs_;
+    std::vector<CollisionController*> collision_controllers_;
 
     // The active cars (in above order)
     //   index = order, value = index in circular_vector
@@ -85,7 +83,7 @@ inline std::vector<int> NpcCarController::active_cars() const {
 // Accessor for the Collision Controllers
 //   Used for decrementing the vector indices
 inline std::vector<CollisionController*> NpcCarController::collision_controllers() const {
-  return collision_controllers_ptrs_;
+  return collision_controllers_;
 }
 
 #endif

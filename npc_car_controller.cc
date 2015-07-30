@@ -16,7 +16,8 @@ NpcCarController::NpcCarController(const Shaders * shaders,
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
 
-    collision_controllers_.assign(cars_.size(), CollisionController());
+    // collision_controllers_.assign(cars_.size(), CollisionController());
+    collision_controllers_.push_back(new CollisionController());
     active_cars_.assign(3, -1);
 
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
@@ -31,12 +32,13 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
   // }
 
     // printf("HERE\n");
-  for (unsigned int x = 0; x < cars_.size(); ++x) {
+  // for (unsigned int x = 0; x < cars_.size(); ++x) {
+  for (unsigned int x = 0; x < 1; ++x) {
     Car * c = cars_[x];
-    CollisionController cc = collision_controllers_[x];
+    CollisionController * cc = collision_controllers_[x];
 
-    cc.UpdateCollisionsNPC(c, terrain_, current_state);
-    cc.AutoDrive(c, delta_time);
+    cc->UpdateCollisionsNPC(c, terrain_, current_state);
+    cc->AutoDrive(c, delta_time);
 
     c->UpdateModelMatrix();
   }
