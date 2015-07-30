@@ -31,6 +31,12 @@ class CollisionController {
     kGameState UpdateCollisions(
         const Car * car_, Terrain * terrain_,
         Camera * camera_, RoadSign * road_sign,
+        const std::vector<CollisionController*> &npc_controllers,
+        kGameState current_state);
+
+    // TODO comment
+    kGameState UpdateCollisionsNPC(
+        const Car * car_, const Terrain * terrain_,
         kGameState current_state);
 
     // TODO comment
@@ -61,6 +67,10 @@ class CollisionController {
     // TODO comment
     inline bool is_collision() const;
 
+    // Decrement all circular_vector indexes
+    //   Fixes indexing (for npcs) when terrain tiles pop
+    inline void decrement_vector_index();
+
   private:
     // The users camera state (for animations)
     Camera::State camera_state_;
@@ -88,6 +98,8 @@ class CollisionController {
 
     // TODO comment
     unsigned char prev_colisn_pair_idx_;
+    // TODO comment
+    unsigned char prev_colisn_pair_container_idx_;
 
     // TODO comment
     float colisn_anim_ticks_;
@@ -111,6 +123,12 @@ class CollisionController {
 // TODO comment
 inline bool CollisionController::is_collision() const {
   return is_collision_;
+}
+// Decrement all circular_vector indexes
+//   Fixes indexing (for npcs) when terrain tiles pop
+inline void CollisionController::decrement_vector_index() {
+  if (prev_colisn_pair_container_idx_ > 0)
+  --prev_colisn_pair_container_idx_;
 }
 
 #endif

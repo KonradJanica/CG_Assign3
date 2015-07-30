@@ -11,10 +11,10 @@ Controller::Controller(const int window_width, const int window_height, const bo
   shaders_(renderer_.shaders()),
   camera_(Camera(shaders_, window_width, window_height)),
   sun_(Sun(camera(), debug_flag)),
+  terrain_(new Terrain(shaders_->LightMappedGeneric)),
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
   npc_car_controller_(NpcCarController(shaders_, terrain_, &renderer_, &camera_, &sun_)),
-  terrain_(new Terrain(shaders_->LightMappedGeneric)),
   road_sign_(RoadSign(shaders_, terrain_, &renderer_, &camera_, &sun_)),
   car_(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
@@ -240,7 +240,11 @@ void Controller::UpdateGame() {
   // printf("car = (%f,%f,%f)\n",car_->translation().x,car_->translation().y,car_->translation().z);
   if (!collision_controller_.is_collision()) {
     UpdatePhysics();
-    game_state_ = collision_controller_.UpdateCollisions(car_, terrain_, &camera_, &road_sign_, game_state_);
+    game_state_ = collision_controller_.UpdateCollisions(
+        car_, terrain_,
+        &camera_, &road_sign_,
+        npc_car_controller_.collision_controllers(),
+        game_state_);
   } else {
     // TODO add car off road shaking
   }
@@ -248,7 +252,7 @@ void Controller::UpdateGame() {
 
   UpdateCamera();
 
-  npc_car_controller_.UpdateCars(delta_time_);
+  npc_car_controller_.UpdateCars(delta_time_, game_state_);
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo

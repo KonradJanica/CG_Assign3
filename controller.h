@@ -83,6 +83,8 @@ class Controller {
     Camera camera_;
     // The Sun object to control environment lighting
     Sun sun_;
+    // The terrain object
+    Terrain * terrain_;
     // The light controller
     LightController * light_controller_;
     // The Player Car Collision Controller
@@ -98,8 +100,6 @@ class Controller {
 
     // Updates light properties with view matrix from camera
 
-    // The terrain object
-    Terrain * terrain_;
     // The road sign factory
     //   Holds all road signs and has members to position them
     RoadSign road_sign_;

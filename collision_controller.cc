@@ -11,6 +11,7 @@ CollisionController::CollisionController() :
 
     // Initialize Dummy Index for first equilavence check in collisions
     prev_colisn_pair_idx_ = 0;
+    prev_colisn_pair_container_idx_ = 0;
 
 }
 
@@ -341,6 +342,7 @@ bool CollisionController::IsInside(const glm::vec3 &car, const std::pair<glm::ve
 kGameState CollisionController::UpdateCollisions(
     const Car * car_, Terrain * terrain_,
     Camera * camera_, RoadSign * road_sign,
+    const std::vector<CollisionController*> &npc_controllers,
     kGameState current_state) {
   // Setup vars
   const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
@@ -386,6 +388,10 @@ kGameState CollisionController::UpdateCollisions(
     terrain_->colisn_pop();
     terrain_->ProceedTiles();
     road_sign->ShiftIndexes();
+    // Decrement all vector indexes for npc controllers
+    for (CollisionController * cc : npc_controllers) {
+      cc->decrement_vector_index();
+    }
     // Try to spawn a road sign
     road_sign->SignSpawn();
     prev_colisn_pair_idx_ = 0;
@@ -463,16 +469,140 @@ kGameState CollisionController::UpdateCollisions(
 }
 
 // TODO comment
+//   Also calculates the middle of the road and it's direction if game state is autodrive
+kGameState CollisionController::UpdateCollisionsNPC(
+    const Car * car_, const Terrain * terrain_,
+    kGameState current_state) {
+  // Setup vars
+  const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
+  const glm::vec3 &car = car_->translation();
+  const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
+  Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
+
+  // Find closest edge point
+  Terrain::boundary_pair closest_pair;
+  float dis = FLT_MAX;
+  Terrain::colisn_vec::const_iterator closest_it = head.begin();
+
+  --prev_colisn_pair_idx_;
+  while (it != head.end()) {
+    const glm::vec3 &cur_vec = it->first; // current vector pair
+    float cur_dis = glm::distance(cur_vec, car);
+    if (cur_dis > dis) {
+      break;
+    } else {
+      dis = cur_dis;
+      closest_pair = *it;
+      closest_it = it;
+    }
+    it++;
+    ++prev_colisn_pair_idx_;
+  }
+  Terrain::boundary_pair next_pair;
+  // Get vertice pair next to closest
+  //   but make sure it isn't the last pair overwise pop
+  it = closest_it;
+  it++;
+  // Reduce autodrive jerking
+  if (it != head.end())
+    it++;
+
+  if (it == head.end()) {
+    ++prev_colisn_pair_container_idx_;
+    printf("prev idx = %d", prev_colisn_pair_container_idx_);
+    // Get next pair from next vector in circular_vector
+    closest_it = (*col)[prev_colisn_pair_container_idx_].begin(); // reassign to find new midpoint etc.
+    // TODO ensure no fall off (col)
+    it = closest_it;
+    it++; // We want next point (i.e. end-1 == begin)
+    next_pair = *it;
+
+    prev_colisn_pair_idx_ = 0;
+  } else {
+
+    // If conditions flow through then make box with neighbours of the closest pair
+    //   and check if car is inside the box
+    next_pair = *it;
+  }
+  // Make boundary box the neighbours of current pair
+
+  // Check if car is in range
+  // if (IsInside(car, *closest_it)) {
+  //   //inside bounds
+  //   is_collision_ = false;
+  // } else {
+  //   printf("collision on edge of road!\n");
+  //   is_collision_ = true;
+  // }
+
+  // Calculate middle of road and it's direction
+  // Get the next points to smooth it
+  it = closest_it;
+  it++;
+  // Find midpoint
+  glm::vec3 road_midpoint = ((*it).first+(*it).second);
+  road_midpoint /= 2;
+  road_midpoint.y = car_->translation().y;
+  // Find lane midpoints
+  left_lane_midpoint_ = road_midpoint + (*it).second;
+  left_lane_midpoint_ /= 2;
+  // Find road direction
+  glm::vec3 first_point = closest_it->first;
+  glm::vec3 next_point = next_pair.first;
+  glm::vec3 direction = next_point - first_point;
+  road_direction_ = glm::normalize(direction);
+  road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+
+  // BLOCK BELOW IS UNUSED BUT COULD BE USED FOR BLOCKING TURNING AROUND
+  // Find angle between car dir and road dir
+  //   Angle is clockwise from direction of road
+  // glm::vec2 dir = glm::vec2(car_->direction().x, car_->direction().z);
+  // TODO remove top line (saved for getting facing angle not velo angle)
+  // dir = glm::vec2(car_->velocity_x(), car_->velocity_z());
+  // dir = glm::normalize(dir);
+  // glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+  // car_angle_ = -glm::orientedAngle(dir, road_dir);
+  // printf("ang = %f\n",car_angle_);
+
+  // Find collision point closest to car
+  //  warning closest_pair, and dis cannot be overridden above
+  float dis_opposite_point = glm::distance(closest_pair.second, car);
+  bool is_water_closest = true;
+  if (dis > dis_opposite_point)
+    is_water_closest = false;
+  // Decide which type of animation to play
+  //   i.e. cliff scrape or water bounce
+  // @warn also sets camera position for the crash
+  if (is_collision_) {
+    // camera_state_ = camera_->state(); //TODO
+    if (is_water_closest) {
+      current_state = kGameState::kCrashingFall;
+      // camera_->ChangeState(Camera::kFirstPerson); //TODO
+    } else {
+      current_state = kGameState::kCrashingCliff;
+      is_cliff_hit_ = false;
+      is_prev_positive_ = true;
+    }
+    colisn_anim_ticks_ = 0;
+    // UpdateCamera(); // Camera needs to be updated to change position
+  }
+
+  return current_state;
+}
+
+// Uses the left lane midpoint calculated in the collision update tick to
+//   automatically drive the car (or npc cars)
+//   Checks for alignment when passing the point, otherwise just uses rotation
 void CollisionController::AutoDrive(Car * car, float delta_time) {
     car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
     if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      float dt = delta_time / 1000;
-      float x_pos = car->translation().x + road_direction_.x * car->default_speed()/10.0f*dt;
-      float y_pos = car->translation().y;
-      float z_pos = car->translation().z + road_direction_.z * car->default_speed()/10.0f*dt;
+      const float dt = delta_time / 1000;
+      const float x_pos = car->translation().x + road_direction_.x * car->default_speed()/10.0f*dt;
+      const float y_pos = car->translation().y;
+      const float z_pos = car->translation().z + road_direction_.z * car->default_speed()/10.0f*dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     } else {
       glm::vec3 next_pt_dir = left_lane_midpoint_ - car->translation();
@@ -480,10 +610,10 @@ void CollisionController::AutoDrive(Car * car, float delta_time) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      float dt = delta_time / 1000;
-      float x_pos = car->translation().x + next_pt_dir.x * car->default_speed()/10.0f*dt;
-      float y_pos = car->translation().y;
-      float z_pos = car->translation().z + next_pt_dir.z * car->default_speed()/10.0f*dt;
+      const float dt = delta_time / 1000;
+      const float x_pos = car->translation().x + next_pt_dir.x * car->default_speed()/10.0f*dt;
+      const float y_pos = car->translation().y;
+      const float z_pos = car->translation().z + next_pt_dir.z * car->default_speed()/10.0f*dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     }
     prev_left_lane_midpoint_ = left_lane_midpoint_;

@@ -11,11 +11,12 @@ NpcCarController::NpcCarController(const Shaders * shaders,
   renderer_(renderer),
   camera_(camera),
   sun_(sun),
-  // Make road signs
+  // Make cars
   cars_{AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
 
+    collision_controllers_.assign(cars_.size(), CollisionController());
     active_cars_.assign(3, -1);
 
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
@@ -24,10 +25,23 @@ NpcCarController::NpcCarController(const Shaders * shaders,
         }
 
 // Update physics of all cars
-void NpcCarController::UpdateCars(float delta_time) {
-  for (Car * c : cars_) {
-    c->ControllerMovementTick(delta_time);
+kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_state) {
+  // for (Car * c : cars_) {
+    // c->ControllerMovementTick(delta_time);
+  // }
+
+    // printf("HERE\n");
+  for (unsigned int x = 0; x < cars_.size(); ++x) {
+    Car * c = cars_[x];
+    CollisionController cc = collision_controllers_[x];
+
+    cc.UpdateCollisionsNPC(c, terrain_, current_state);
+    cc.AutoDrive(c, delta_time);
+
+    c->UpdateModelMatrix();
   }
+
+  return current_state; //TODO does nothing
 }
 
 // Render all roadsigns

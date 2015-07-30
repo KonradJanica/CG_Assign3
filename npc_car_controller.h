@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include "terrain.h"
 #include "car.h"
+#include "collision_controller.h"
 #include "renderer.h"
 #include "camera.h"
 #include "sun.h"
@@ -34,7 +35,7 @@ class NpcCarController {
              const Sun * sun);
 
     // Update physics of all cars
-    void UpdateCars(float delta_time);
+    kGameState UpdateCars(float delta_time, kGameState current_state);
 
     // Render all roadsigns
     void DrawCars() const;
@@ -45,6 +46,9 @@ class NpcCarController {
     // Accessor for the signs that are active
     //   Used to optimize draw
     inline std::vector<int> active_cars() const;
+    // Accessor for the Collision Controllers
+    //   Used for decrementing the vector indices
+    inline std::vector<CollisionController*> collision_controllers() const;
 
   private:
     const Shaders * shaders_;
@@ -53,9 +57,14 @@ class NpcCarController {
     const Camera * camera_;
     const Sun * sun_;
 
+    // The NPC Cars
     std::vector<Car*> cars_;
+    // Their assosicated collision controllers
+    std::vector<CollisionController> collision_controllers_;
+    // Their assosicated pointers
+    std::vector<CollisionController*> collision_controllers_ptrs_;
 
-    // The active signs (in above order)
+    // The active cars (in above order)
     //   index = order, value = index in circular_vector
     std::vector<int> active_cars_;
 
@@ -72,6 +81,11 @@ inline std::vector<Car*> NpcCarController::cars() const {
 //   Used to optimize draw
 inline std::vector<int> NpcCarController::active_cars() const {
   return active_cars_;
+}
+// Accessor for the Collision Controllers
+//   Used for decrementing the vector indices
+inline std::vector<CollisionController*> NpcCarController::collision_controllers() const {
+  return collision_controllers_ptrs_;
 }
 
 #endif
