@@ -603,7 +603,7 @@ void CollisionController::AutoDrive(Car * car, float delta_time) {
 
     // Set speed to default speed
     // TODO only need to call this once when change state
-    car->ResetPhysics();
+    // car->ResetPhysics();
 
     car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
     const float dt = delta_time / 1000.0f;
