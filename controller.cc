@@ -146,12 +146,12 @@ void Controller::PositionLights() {
   // }
   dirLight.Direction =  sun_.sun_direction();
 
-  for (int i = -1; (int)i < (int)npc_car_controller_.cars().size(); i++) {
-    if (i == -1) {
+  for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
+    if (carIdx == -1) {
       car_mv_matrix = view_matrix * car_->model_matrix();
     }
     else {
-      car_mv_matrix = view_matrix * npc_car_controller_.cars()[i]->model_matrix();
+      car_mv_matrix = view_matrix * npc_car_controller_.cars()[carIdx]->model_matrix();
     }
 
     // Point lights
