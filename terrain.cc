@@ -64,7 +64,7 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     tile_turn_.push_back(kStraight);
     tile_turn_.push_back(kStraight);
 
-    for (int x = 0; x < 5; ++x) {
+    for (int x = 0; x < 7; ++x) {
       // Generates a random terrain piece and pushes it back
       // into circular_vector VAO buffer
       RandomizeGeneration(true);
@@ -135,7 +135,7 @@ void Terrain::GenerationTick() {
 // Generates a random terrain piece and pushes it back into circular_vector VAO buffer
 void Terrain::RandomizeGeneration(const bool is_start) {
   // Can be optimzed to enter enum directly and
-  // skip switch but this is much more readable
+  //  skip switch but this is much more readable
   RoadType next_turn;
   switch(prev_rand_) {
     case 0:
