@@ -346,7 +346,7 @@ kGameState CollisionController::UpdateCollisions(
   // Setup vars
   const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
   const glm::vec3 &car = car_->translation();
-  const Terrain::colisn_vec &head = col->front();
+  const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
   Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
 
   // Find closest edge point
@@ -378,20 +378,24 @@ kGameState CollisionController::UpdateCollisions(
     it++;
 
   if (it == head.end()) {
+    ++prev_colisn_pair_container_idx_;
     // Get next pair from next vector in circular_vector
-    closest_it = (*col)[1].begin(); // reassign to find new midpoint etc.
+    closest_it = (*col)[prev_colisn_pair_container_idx_].begin(); // reassign to find new midpoint etc.
     it = closest_it;
     it++; // We want next point (i.e. end-1 == begin)
     next_pair = *it;
 
-    terrain_->colisn_pop();
-    terrain_->ProceedTiles();
-    road_sign->ShiftIndexes();
-    // Decrement all vector indexes for npc controllers
-    for (CollisionController * cc : npc_controllers) {
-      cc->decrement_vector_index();
+    if (prev_colisn_pair_container_idx_ > 1) {
+      terrain_->colisn_pop();
+      terrain_->ProceedTiles();
+      // Decrement all vector indexes for npc controllers
+      for (CollisionController * cc : npc_controllers) {
+        cc->decrement_vector_index();
+      }
+      --prev_colisn_pair_container_idx_;
     }
     // Try to spawn a road sign
+    road_sign->ShiftIndexes();
     road_sign->SignSpawn();
     prev_colisn_pair_idx_ = 0;
   } else {
@@ -596,16 +600,20 @@ kGameState CollisionController::UpdateCollisionsNPC(
 //   automatically drive the car (or npc cars)
 //   Store previous point and either directs to next point or road direction
 void CollisionController::AutoDrive(Car * car, float delta_time) {
-    car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
 
+    // Set speed to default speed
+    // TODO only need to call this once when change state
+    car->ResetPhysics();
+
+    car->set_rotation(glm::vec3(car->rotation().x,road_y_rotation_,car->rotation().z));
+    const float dt = delta_time / 1000.0f;
     if (left_lane_midpoint_ == prev_left_lane_midpoint_) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      const float dt = delta_time / 1000;
-      const float x_pos = car->translation().x + road_direction_.x * car->default_speed()/10.0f*dt;
+      const float x_pos = car->translation().x + road_direction_.x * car->speed()/10.0f*dt;
       const float y_pos = car->translation().y;
-      const float z_pos = car->translation().z + road_direction_.z * car->default_speed()/10.0f*dt;
+      const float z_pos = car->translation().z + road_direction_.z * car->speed()/10.0f*dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     } else {
       glm::vec3 next_pt_dir = left_lane_midpoint_ - car->translation();
@@ -613,14 +621,10 @@ void CollisionController::AutoDrive(Car * car, float delta_time) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      const float dt = delta_time / 1000;
-      const float x_pos = car->translation().x + next_pt_dir.x * car->default_speed()/10.0f*dt;
+      const float x_pos = car->translation().x + next_pt_dir.x * car->speed()/10.0f*dt;
       const float y_pos = car->translation().y;
-      const float z_pos = car->translation().z + next_pt_dir.z * car->default_speed()/10.0f*dt;
+      const float z_pos = car->translation().z + next_pt_dir.z * car->speed()/10.0f*dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     }
     prev_left_lane_midpoint_ = left_lane_midpoint_;
-    // Set speed to default speed
-    // TODO only need to call this once when change state
-    car->ResetPhysics();
 }
