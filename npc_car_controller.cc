@@ -46,7 +46,7 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
       cc->UpdateCollisionsNPCReverse(c, terrain_, current_state);
     }
 
-    if (cc->dis() > 10.0f)
+    if (cc->dis() > 300.0f)
       if (rand() % 10 < 3)
         RespawnCar(c, x);
 
