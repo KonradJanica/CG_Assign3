@@ -94,6 +94,6 @@ void NpcCarController::RespawnCar(Car * car, int car_index) {
   spawn_point.y = car->default_height();
   car->set_translation(spawn_point);
   
-  printf("car bool = %d\n", random);
+  // printf("car bool = %d\n", random);
   cars_direction_[car_index] = random;
 }

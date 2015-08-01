@@ -503,13 +503,15 @@ kGameState CollisionController::UpdateCollisionsNPC(
     it++;
     ++prev_colisn_pair_idx_;
   }
-  if (it == head.end())
-    printf("DISTANCE CHECK GOING OPPOSITE DIRECTION\n");
+  // if (it == head.end())
+    // printf("DISTANCE CHECK GOING OPPOSITE DIRECTION\n");
   Terrain::boundary_pair next_pair;
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop
   it = closest_it;
-  it++;
+
+  if (it != head.end())
+    it++;
   // Reduce autodrive jerking
   if (it != head.end())
     it++;
