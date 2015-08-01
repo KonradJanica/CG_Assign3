@@ -135,13 +135,17 @@ void Controller::PositionLights() {
   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
   dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
   dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
-  dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
-  dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
+
+  // Time of day intensities
+  // dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
+  // dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
+
   // dirLight.SpecularIntensity *= 1.0f - sun_.LightIntensityMultiplier();
   // if (!sun_.IsDay()) {
   //   dirLight.SpecularIntensity.x *= 1.0f - sun_.LightIntensityMultiplier();
   //   dirLight.SpecularIntensity.y *= 1.0f - sun_.LightIntensityMultiplier();
   // }
+  //
   dirLight.Direction =  sun_.sun_direction();
 
   for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
