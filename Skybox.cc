@@ -37,12 +37,12 @@ Skybox::Skybox(const Shader &shader) :
   // faces.push_back("textures/morose_front.jpg"); // Front (side furthest from camera)
   // faces.push_back("textures/morose_back.jpg"); 	// Back (side closest to camera)
 
-  faces.push_back("textures/skybox/night/left.bmp"); // Left side of Cube
-  faces.push_back("textures/skybox/night/right.bmp");	// Right side of Cube
-  faces.push_back("textures/skybox/night/top.bmp");	// Top of cube
-  faces.push_back("textures/skybox/night/bottom.bmp"); 		// Bottom of cube
-  faces.push_back("textures/skybox/night/front.bmp"); // Front (side furthest from camera)
-  faces.push_back("textures/skybox/night/back.bmp"); 	// Back (side closest to camera)
+  faces.push_back("textures/skybox/night/left.png"); // Left side of Cube
+  faces.push_back("textures/skybox/night/right.png");	// Right side of Cube
+  faces.push_back("textures/skybox/night/top.png");	// Top of cube
+  faces.push_back("textures/skybox/night/bottom.png"); 		// Bottom of cube
+  faces.push_back("textures/skybox/night/front.png"); // Front (side furthest from camera)
+  faces.push_back("textures/skybox/night/back.png"); 	// Back (side closest to camera)
 
   // Load in the textures
   skybox_tex_ = loadCubeTex(faces);  

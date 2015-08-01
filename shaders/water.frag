@@ -147,7 +147,7 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 10;
+  int light_multiplier = 1000;
   for (int i = 0; i < gNumPointLights; i++)
   {
     litColour += light_multiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
@@ -159,9 +159,9 @@ void main(void) {
   }
 
   vec4 colour = litColour * texture(texMap, R);
+  // colour *= 0.2;
 
   fragColour = mix(vec4(0.0,0.0,0.0,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
-  fragColour *= 0.2;
 
   // Set transparency
   fragColour.a = 0.8;

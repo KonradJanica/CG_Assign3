@@ -98,7 +98,7 @@ void Controller::PositionLights() {
   dirLight.AmbientIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
   dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
 
-  dirLight.Direction = glm::vec3(0,-1,0);
+  dirLight.Direction = glm::vec3(-0.5,-0.5,0);
 
   for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
     if (carIdx == -1) {

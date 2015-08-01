@@ -41,6 +41,9 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   const float water_translate_z = water->height() / 2;
   const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
 
+  // const float mtlshininess = 1000000;
+  // glUniform1fv(shader.shininessHandle, 1, &mtlshininess);
+
   const glm::mat4 &VIEW = camera.view_matrix();
   // Make MVP
   const glm::mat4 MODEL = object_translate * water_translate;
