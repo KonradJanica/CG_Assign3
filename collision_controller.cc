@@ -481,7 +481,7 @@ kGameState CollisionController::UpdateCollisionsNPC(
   const glm::vec3 &car = car_->translation();
   const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
   Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
-    printf("prev idx = %d, what? = %d\n", prev_colisn_pair_container_idx_, prev_colisn_pair_idx_);
+    // printf("prev idx = %d, what? = %d\n", prev_colisn_pair_container_idx_, prev_colisn_pair_idx_);
 
   // Find closest edge point
   Terrain::boundary_pair closest_pair;
@@ -504,7 +504,7 @@ kGameState CollisionController::UpdateCollisionsNPC(
     ++prev_colisn_pair_idx_;
   }
   if (it == head.end())
-    printf("HMMM OKAY\n");
+    printf("DISTANCE CHECK GOING OPPOSITE DIRECTION\n");
   Terrain::boundary_pair next_pair;
   // Get vertice pair next to closest
   //   but make sure it isn't the last pair overwise pop

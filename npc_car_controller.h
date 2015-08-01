@@ -68,6 +68,10 @@ class NpcCarController {
 
     Car * AddCar(const std::string &file_name) const;
 
+    // Respawn car randomly in front or back of terrain
+    //  TODO collision spawn check (ensure no stacked spawn)
+    void RespawnCar(Car * car);
+
 };
 
 // Accessor for the signs

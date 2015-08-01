@@ -66,6 +66,9 @@ class Car : public Object {
     // Accessor for the constant default speed of the object
     //   @return default_speed_, the default speed of the object
     inline float default_speed() const;
+    // Accessor for the constant default height of the object
+    //   @return default_height_, the default height of the object (above road)
+    inline float default_height() const;
     // Reset speed and acceleration to 0
     inline void ResetPhysics();
     // Reduce speed by amount
@@ -91,6 +94,8 @@ class Car : public Object {
     float centri_speed_;
     // The default speed of the object
     const float default_speed_;
+    // The default height of the object
+    const float default_height_;
     // The centripetal velocitites of the object
     float centripeta_velocity_x_;
     float centripeta_velocity_z_;
@@ -127,6 +132,11 @@ inline float Car::speed() const {
 //   @return default_speed_, the default speed of the object
 inline float Car::default_speed() const {
   return default_speed_;
+}
+// Accessor for the constant default height of the object
+//   @return default_height_, the default height of the object (above road)
+inline float Car::default_height() const {
+  return default_height_;
 }
 // Accessor for the centripetal X velocity
 inline float Car::centripeta_velocity_x() const {

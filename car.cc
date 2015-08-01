@@ -11,7 +11,8 @@ Car::Car(const Shader &shader,
       translation,
       rotation,
       scale),
-  displacement_(0), speed_(default_speed), centri_speed_(0), default_speed_(default_speed),
+  displacement_(0), speed_(default_speed), centri_speed_(0),
+  default_speed_(default_speed), default_height_(translation.y),
   centripeta_velocity_x_(0.0f), centripeta_velocity_z_(0.0f),
   velocity_x_(0.0f), velocity_z_(0.1f), //Not zero for starting camera (pos behind car)
     is_debugging_(debugging_on)

@@ -16,9 +16,11 @@ NpcCarController::NpcCarController(const Shaders * shaders,
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
 
-    // collision_controllers_.assign(cars_.size(), CollisionController());
-    collision_controllers_.push_back(new CollisionController());
+    collision_controllers_.assign(cars_.size(), new CollisionController());
+    // collision_controllers_.push_back(new CollisionController());
     active_cars_.assign(3, -1);
+
+    RespawnCar(cars_[0]);
 
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
@@ -32,8 +34,7 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
   // }
 
     // printf("HERE\n");
-  // for (unsigned int x = 0; x < cars_.size(); ++x) {
-  for (unsigned int x = 0; x < 1; ++x) {
+  for (unsigned int x = 0; x < cars_.size(); ++x) {
     Car * c = cars_[x];
     CollisionController * cc = collision_controllers_[x];
 
@@ -65,5 +66,20 @@ Car * NpcCarController::AddCar(const std::string &model_filename) const {
       60, false); // starting speed and debugging mode
 
   return car;
+}
+
+// Respawn car randomly in front or back of terrain
+//  TODO collision spawn check (ensure no stacked spawn)
+void NpcCarController::RespawnCar(Car * car) {
+  int random = rand() % 1;
+  glm::vec3 spawn_point;
+  if (random) {
+    spawn_point = terrain_->colisn_boundary_pair_first();
+  } else {
+    spawn_point = terrain_->colisn_boundary_pair_last();
+    spawn_point = terrain_->colisn_boundary_pair_first();
+  }
+  spawn_point.y = car->default_height();
+  car->set_translation(spawn_point);
 }
 
