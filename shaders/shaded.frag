@@ -39,8 +39,6 @@ struct SpotLight
 
 const int MAX_POINT_LIGHTS = 10;
 const int MAX_SPOT_LIGHTS = 10;
-// Bias for trimming shadow acne
-const float BIAS = 0.001;
 
 // Light properties
 uniform int gNumPointLights;
@@ -57,17 +55,14 @@ uniform float shininess;
 uniform float dissolve;
 
 uniform int isBumped;
-uniform float shadowIntensity;
 
 uniform sampler2D texMap;
 uniform sampler2D normMap;
 uniform sampler2D mossMap;
-uniform sampler2DShadow shadowMap;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
 in vec2 a_tex_coord;
-in vec4 a_shadow_coord;
 
 out vec4 fragColour;
 
@@ -190,11 +185,6 @@ void main(void) {
     litColour = mix(litColour, texture(mossMap, a_tex_coord), 0.2);
   }
 
-  float visibility = texture(shadowMap, vec3(a_shadow_coord.xy, (a_shadow_coord.z-BIAS)/a_shadow_coord.w) );
-  visibility = visibility / 2 + 0.5; //Fit range between [0,0.5]
-  visibility *= shadowIntensity;
-  litColour *= 1.6+(1-shadowIntensity);
-
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), visibility * litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
   fragColour.a = dissolve;
 }
