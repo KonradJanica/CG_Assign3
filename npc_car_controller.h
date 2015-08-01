@@ -43,9 +43,6 @@ class NpcCarController {
     // Accessor for the signs
     //   Used for rendering the signs
     inline std::vector<Car*> cars() const;
-    // Accessor for the signs that are active
-    //   Used to optimize draw
-    inline std::vector<int> active_cars() const;
     // Accessor for the Collision Controllers
     //   Used for decrementing the vector indices
     inline std::vector<CollisionController*> collision_controllers() const;
@@ -62,27 +59,22 @@ class NpcCarController {
     // Their assosicated collision controllers
     std::vector<CollisionController*> collision_controllers_;
 
-    // The active cars (in above order)
-    //   index = order, value = index in circular_vector
-    std::vector<int> active_cars_;
+    // The direction of the cars (in above order)
+    //   index = order, value: true = forward, false = reverse
+    std::vector<bool> cars_direction_;
 
     Car * AddCar(const std::string &file_name) const;
 
     // Respawn car randomly in front or back of terrain
+    //  Notes this cars direction in cars_direction_ vector
     //  TODO collision spawn check (ensure no stacked spawn)
-    void RespawnCar(Car * car);
-
+    void RespawnCar(Car * car, int car_index);
 };
 
 // Accessor for the signs
 //   Used for rendering the signs
 inline std::vector<Car*> NpcCarController::cars() const {
   return cars_;
-}
-// Accessor for the signs that are active
-//   Used to optimize draw
-inline std::vector<int> NpcCarController::active_cars() const {
-  return active_cars_;
 }
 // Accessor for the Collision Controllers
 //   Used for decrementing the vector indices

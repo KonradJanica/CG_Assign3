@@ -72,7 +72,7 @@ void Controller::Draw() {
 
   // Car with physics
   renderer_.RenderDepthBuffer(car_, sun_);
-  // renderer_.RenderDepthBuffer(cars_[0], sun_);
+  // TODO render other car shadows
 
   // Road-signs
   const std::vector<Object*> signs = road_sign_.signs();
@@ -109,13 +109,11 @@ void Controller::Draw() {
     if (sun_.time_of_day() != 12)
       rain_->Render(camera_, car_, skybox_);
   // Car with physics
-  renderer_.Render(car_, camera_, sun_);
-  // renderer_.Render(cars_[0], camera_, sun_);
   npc_car_controller_.DrawCars();
+  renderer_.Render(car_, camera_, sun_);
   } else {
     // Car with physics
     renderer_.Render(car_, camera_, sun_);
-    // renderer_.Render(cars_[0], camera_, sun_);
     npc_car_controller_.DrawCars();
     // Rain (particles)
     if (sun_.time_of_day() != 12)

@@ -71,6 +71,18 @@ class CollisionController {
     //   Fixes indexing (for npcs) when terrain tiles pop
     inline void decrement_vector_index();
 
+    // Reset the collision controller default vars
+    //   Used when npc car is reset
+    //   @param  is_forward  whether the car is moving forwards or backwards
+    //                       true = forwards
+    //   @param  terrain     Used to find the last index of colisn vector
+    inline void Reset(bool is_forward, const Terrain * terrain);
+
+    // Return the distance away from chosen closest collision point
+    //   Used to respawn NPC cars
+    //   @note only works for npc cars (UpdateCollisionsNPC)
+    inline float dis() const;
+
   private:
     // The users camera state (for animations)
     Camera::State camera_state_;
@@ -102,6 +114,9 @@ class CollisionController {
     char prev_colisn_pair_container_idx_;
 
     // TODO comment
+    float dis_;
+
+    // TODO comment
     float colisn_anim_ticks_;
 
     // COLLISION HELPERS
@@ -129,6 +144,30 @@ inline bool CollisionController::is_collision() const {
 inline void CollisionController::decrement_vector_index() {
   if (prev_colisn_pair_container_idx_ > 0)
   --prev_colisn_pair_container_idx_;
+}
+
+// Reset the collision controller default vars
+//   Used when npc car is reset
+//   @param  is_forward  Whether the car is moving forwards or backwards
+//                       true = forwards
+//   @param  terrain     Used to find the last index of colisn vector
+inline void CollisionController::Reset(bool is_forward, const Terrain * terrain) {
+  is_collision_ = false;
+  road_y_rotation_ = 0;
+  if (is_forward) {
+    prev_colisn_pair_idx_ = 0;
+    prev_colisn_pair_container_idx_ = 0;
+  } else {
+    prev_colisn_pair_idx_ = terrain->colisn_boundary_pairs()->back().size()-1;
+    prev_colisn_pair_container_idx_ = terrain->colisn_boundary_pairs()->size()-1;
+  }
+}
+
+// Return the distance away from chosen closest collision point
+//   Used to respawn NPC cars
+//   @note only works for npc cars (UpdateCollisionsNPC)
+inline float CollisionController::dis() const {
+  return dis_;
 }
 
 #endif

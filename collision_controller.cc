@@ -485,21 +485,21 @@ kGameState CollisionController::UpdateCollisionsNPC(
 
   // Find closest edge point
   Terrain::boundary_pair closest_pair;
-  float dis = FLT_MAX;
+  dis_ = FLT_MAX;
   Terrain::colisn_vec::const_iterator closest_it = head.begin();
 
   --prev_colisn_pair_idx_;
   while (it != head.end()) {
     const glm::vec3 &cur_vec = it->first; // current vector pair
     float cur_dis = glm::distance(cur_vec, car);
-    if (cur_dis > dis) {
+    if (cur_dis > dis_) {
       break;
     } else {
-      dis = cur_dis;
+      dis_ = cur_dis;
       closest_pair = *it;
       closest_it = it;
     }
-    // printf("Dis = %f, curr_dis = %f\n", dis, cur_dis);
+    // printf("Dis = %f, curr_dis = %f\n", dis_, cur_dis);
     it++;
     ++prev_colisn_pair_idx_;
   }
@@ -574,7 +574,7 @@ kGameState CollisionController::UpdateCollisionsNPC(
   //  warning closest_pair, and dis cannot be overridden above
   float dis_opposite_point = glm::distance(closest_pair.second, car);
   bool is_water_closest = true;
-  if (dis > dis_opposite_point)
+  if (dis_ > dis_opposite_point)
     is_water_closest = false;
   // Decide which type of animation to play
   //   i.e. cliff scrape or water bounce

@@ -16,11 +16,15 @@ NpcCarController::NpcCarController(const Shaders * shaders,
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
 
-    collision_controllers_.assign(cars_.size(), new CollisionController());
-    // collision_controllers_.push_back(new CollisionController());
-    active_cars_.assign(3, -1);
 
-    RespawnCar(cars_[0]);
+    // Initial npc car states
+    cars_direction_.assign(cars_.size(), false);
+    collision_controllers_.reserve(cars_.size());
+    for (unsigned int x = 0; x < cars_.size(); ++x) {
+      collision_controllers_.push_back(new CollisionController());
+      Car * c = cars_[x];
+      RespawnCar(c, x);
+    }
 
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_left.obj");
   // AddModel(shaders_->LightMappedGeneric, "models/Signs_OBJ/working/curve_right.obj");
@@ -39,6 +43,11 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     CollisionController * cc = collision_controllers_[x];
 
     cc->UpdateCollisionsNPC(c, terrain_, current_state);
+
+    if (cc->dis() > 10.0f)
+      if (rand() % 10 < 3)
+        RespawnCar(c, x);
+
     cc->AutoDrive(c, delta_time);
 
     c->UpdateModelMatrix();
@@ -69,17 +78,22 @@ Car * NpcCarController::AddCar(const std::string &model_filename) const {
 }
 
 // Respawn car randomly in front or back of terrain
+//  Notes this cars direction in cars_direction_ vector
+//  Creates a new CollisionController for each car
 //  TODO collision spawn check (ensure no stacked spawn)
-void NpcCarController::RespawnCar(Car * car) {
-  int random = rand() % 1;
+void NpcCarController::RespawnCar(Car * car, int car_index) {
+  bool random = rand() % 2;
   glm::vec3 spawn_point;
   if (random) {
     spawn_point = terrain_->colisn_boundary_pair_first();
+    collision_controllers_[car_index]->Reset(true, terrain_);
   } else {
     spawn_point = terrain_->colisn_boundary_pair_last();
-    spawn_point = terrain_->colisn_boundary_pair_first();
+    collision_controllers_[car_index]->Reset(false, terrain_);
   }
   spawn_point.y = car->default_height();
   car->set_translation(spawn_point);
+  
+  printf("car bool = %d\n", random);
+  cars_direction_[car_index] = random;
 }
-

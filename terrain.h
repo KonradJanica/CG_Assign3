@@ -399,7 +399,7 @@ inline const circular_vector<Terrain::colisn_vec> * Terrain::colisn_boundary_pai
 }
 // Accessor for the first pair for spawning car
 glm::vec3 Terrain::colisn_boundary_pair_first() const {
-  boundary_pair p = colisn_boundary_pairs_.front().front();
+  boundary_pair p = colisn_boundary_pairs_.back().back();
   // Find midpoint
   glm::vec3 road_midpoint = (p.first+p.second);
   road_midpoint /= 2;
@@ -412,7 +412,16 @@ glm::vec3 Terrain::colisn_boundary_pair_first() const {
 }
 // Accessor for the last pair for spawning car
 glm::vec3 Terrain::colisn_boundary_pair_last() const {
-  return colisn_boundary_pairs_.back().back().first;
+  boundary_pair p = colisn_boundary_pairs_.back().back();
+  // Find midpoint
+  glm::vec3 road_midpoint = (p.first+p.second);
+  road_midpoint /= 2;
+  road_midpoint.y = p.first.y;
+  // Find lane midpoints
+  glm::vec3 right_lane_midpoint = road_midpoint + p.first;
+  right_lane_midpoint /= 2;
+
+  return right_lane_midpoint;
 }
 // Accessor for the water collision checking data structure
 //   Holds all vertices right (water) side of road for crashing animation
