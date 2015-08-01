@@ -65,31 +65,8 @@ Car * Controller::AddCar(const Shader &shader, const std::string &model_filename
 // Renders all models in the vector member
 //   Should be called in the render loop
 void Controller::Draw() {
-  // Draw to shadow buffer
-  glBindFramebuffer(GL_FRAMEBUFFER, renderer_.fbo()->FrameBufferShadows);
-  glClear(GL_DEPTH_BUFFER_BIT);
-  glViewport(0, 0, renderer_.fbo()->textureX, renderer_.fbo()->textureY);
-
-  // Car with physics
-  renderer_.RenderDepthBuffer(car_, sun_);
-  // TODO render other car shadows
-
-  // Road-signs
-  const std::vector<Object*> signs = road_sign_.signs();
-  const std::vector<int> active_signs = road_sign_.active_signs();
-
-  // Unfortunately this does not work
-  // for (unsigned int x = 0; x < signs.size(); ++x) {
-  //   // if (active_signs[x] >= 0) // no point
-  //   renderer_.RenderDepthBuffer(signs[x], sun_);
-  // }
-  // Terrain
-  renderer_.RenderDepthBuffer(terrain_, sun_);
-
   // Draw to screen
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  // Bind shadow map texture
-  glBindTexture(GL_TEXTURE_2D, renderer_.fbo()->DepthTexture);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, camera_.width(), camera_.height());
 
@@ -102,23 +79,9 @@ void Controller::Draw() {
   // Road-signs
   road_sign_.DrawSigns();
 
-  // Draw Rain (when raining) and ensure doesn't
-  //   clip through the player car
-  if (camera_.state() == Camera::kFirstPerson) {
-    // Rain (particles)
-    if (sun_.time_of_day() != 12)
-      rain_->Render(camera_, car_, skybox_);
   // Car with physics
   npc_car_controller_.DrawCars();
   renderer_.Render(car_, camera_, sun_);
-  } else {
-    // Car with physics
-    renderer_.Render(car_, camera_, sun_);
-    npc_car_controller_.DrawCars();
-    // Rain (particles)
-    if (sun_.time_of_day() != 12)
-      rain_->Render(camera_, car_, skybox_);
-  }
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
