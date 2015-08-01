@@ -24,9 +24,6 @@ struct Shader {
   const GLint           mvHandle;
   const GLint         normHandle;
   const GLint       texMapHandle;
-  const GLint    shadowMapHandle;
-  const GLint depthBiasMvpHandle;
-  const GLint     depthMvpHandle;
   // Lighting
   const GLint   mtlAmbientHandle;
   const GLint   mtlDiffuseHandle;
@@ -55,9 +52,6 @@ struct Shader {
     mvHandle(           glGetUniformLocation(Id, "modelview_matrix")),
     normHandle(         glGetUniformLocation(Id, "normal_matrix")),
     texMapHandle(       glGetUniformLocation(Id, "texMap")),
-    shadowMapHandle(    glGetUniformLocation(Id, "shadowMap")),
-    depthBiasMvpHandle( glGetUniformLocation(Id, "depth_bias_mvp_matrix")),
-    depthMvpHandle(     glGetUniformLocation(Id, "depth_mvp_matrix")),
     // Lighting
     mtlAmbientHandle(   glGetUniformLocation(Id, "mtl_ambient")),
     mtlDiffuseHandle(   glGetUniformLocation(Id, "mtl_diffuse")),
@@ -80,9 +74,6 @@ struct Shader {
       CheckHandle(mvHandle,           "mvHandle",           file);
       CheckHandle(normHandle,         "normHandle",         file);
       CheckHandle(texMapHandle,       "texMapHandle",       file);
-      CheckHandle(shadowMapHandle,    "shadowMapHandle",    file);
-      CheckHandle(depthBiasMvpHandle, "depthBiasMvpHandle", file);
-      CheckHandle(depthMvpHandle,     "depthMvpHandle",     file);
       CheckHandle(mtlAmbientHandle,   "mtlAmbientHandle",   file);
       CheckHandle(mtlDiffuseHandle,   "mtlDiffuseHandle",   file);
       CheckHandle(mtlSpecularHandle,  "mtlSpecularHandle",  file);
@@ -124,7 +115,6 @@ struct Shaders {
   const Shader WaterGeneric;
   const Shader SkyboxGeneric;
   const Shader RainGeneric;
-  const Shader DepthBuffer;
 
   // Load in all the shaders
   //   @param is_debug, true = load axis shader
@@ -133,8 +123,7 @@ struct Shaders {
     LightMappedGeneric( Shader("shaders/shaded.vert", "shaders/shaded.frag", is_debug)),
     WaterGeneric(       Shader("shaders/water.vert", "shaders/water.frag", is_debug)),
     SkyboxGeneric(      Shader("shaders/sky.vert", "shaders/sky.frag", is_debug)),
-    RainGeneric(        Shader("shaders/rain.vert", "shaders/rain.frag", is_debug)),
-    DepthBuffer(        Shader("shaders/depthbuffer.vert", "shaders/depthbuffer.frag", is_debug))
+    RainGeneric(        Shader("shaders/rain.vert", "shaders/rain.frag", is_debug))
     {
       if (is_debug)
         assert(AxisDebug->Id       && "Axis Shader failed to load");
@@ -142,7 +131,6 @@ struct Shaders {
       assert(WaterGeneric.Id       && "WaterGeneric Shader failed to load");
       assert(SkyboxGeneric.Id      && "SkyboxGeneric Shader failed to load");
       assert(RainGeneric.Id        && "RainGeneric Shader failed to load");
-      assert(DepthBuffer.Id        && "DepthBuffer Shader failed to load");
     }
 
 };
@@ -182,8 +170,8 @@ struct ShadersProjectionIterator {
   const_iterator end()   const {
     const_iterator temp(
         this->shaders_,
-        &(this->shaders_->DepthBuffer),
-        5);
+        &(this->shaders_->RainGeneric),
+        4);
     return temp;
   }
   // Dereference
@@ -203,9 +191,6 @@ struct ShadersProjectionIterator {
         break;
       case 3:
         shader_iter_ = &(shaders_->RainGeneric);
-        break;
-      case 4:
-        shader_iter_ = &(shaders_->DepthBuffer); // End of iterator
         break;
     }
     ++index_;
@@ -234,9 +219,6 @@ struct ShadersProjectionIterator {
       break;
       case 4:
       shader_iter_ = &(shaders_->RainGeneric);
-      break;
-      case 5:
-      shader_iter_ = &(shaders_->DepthBuffer); // End of iterator
       break;
     }
     return *this;

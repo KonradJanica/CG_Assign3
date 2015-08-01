@@ -340,7 +340,6 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   glBindTexture(GL_TEXTURE_2D, terrain->road_texture());
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
-  glUniform1i(shader.shadowMapHandle, 20);
 
   glCullFace(GL_FRONT); //Road is rendered with reverse facing
   int amount = terrain->road_indice_count();
