@@ -3,14 +3,12 @@
 NpcCarController::NpcCarController(const Shaders * shaders,
                    const Terrain * terrain,
                    const Renderer * renderer,
-                   const Camera * camera,
-                   const Sun * sun) :
+                   const Camera * camera) :
   // Reference objects
   shaders_(shaders),
   terrain_(terrain),
   renderer_(renderer),
   camera_(camera),
-  sun_(sun),
   // Make cars
   cars_{AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
         AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
@@ -63,7 +61,7 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
 // Render all roadsigns
 void NpcCarController::DrawCars() const {
   for (Car * c : cars_) {
-    renderer_->Render(c, *camera_, *sun_);
+    renderer_->Render(c, *camera_);
   }
 }
 

@@ -11,7 +11,6 @@
 #include "object.h"
 #include "Skybox.h"
 #include "Water.h"
-#include "sun.h"
 #include "shaders/shaders.h"
 
 #include "glm/glm.hpp"
@@ -35,20 +34,17 @@ class Renderer {
 
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
-    //   @warn this function is not responsible for NULL PTRs
-    //   @warn uses camera pointer for view matrix
-    void Render(const Object * object, const Camera &camera, const Sun &sun) const;
+    //   @param Camera * camera, a camera to build mvp matrices
+    void Render(const Object * object, const Camera &camera) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
-    //   @warn uses camera pointer for view matrix
-    void Render(const Terrain * terrain, const Camera &camera, const Sun &sun) const;
+    //   @param Camera * camera, a camera to build mvp matrices
+    void Render(const Terrain * terrain, const Camera &camera) const;
     // Render Coordinate Axis 
     //   Only renders in debugging mode
-    //   @warn requires VAO from EnableAxis
     void RenderAxis(const Camera &camera) const;
     // Enable x,y,z axis coordinates VAO
     //   @return a VAO to use for the Axis
-    //   @warn should only be called once, duplicate calls are irrelevant
     GLuint EnableAxis() const;
 
     void RenderWater(const Water * water, const Object * object, const Skybox * Sky, const Camera &camera) const;

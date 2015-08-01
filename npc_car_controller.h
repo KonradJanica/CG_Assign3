@@ -10,7 +10,6 @@
 #include "collision_controller.h"
 #include "renderer.h"
 #include "camera.h"
-#include "sun.h"
 
 #include "constants.h"
 
@@ -31,8 +30,7 @@ class NpcCarController {
     NpcCarController(const Shaders * shaders,
              const Terrain * terrain,
              const Renderer * renderer,
-             const Camera * camera,
-             const Sun * sun);
+             const Camera * camera);
 
     // Update physics of all cars
     kGameState UpdateCars(float delta_time, kGameState current_state);
@@ -52,7 +50,6 @@ class NpcCarController {
     const Terrain * terrain_;
     const Renderer * renderer_;
     const Camera * camera_;
-    const Sun * sun_;
 
     // The NPC Cars
     std::vector<Car*> cars_;

@@ -3,14 +3,12 @@
 RoadSign::RoadSign(const Shaders * shaders,
                    const Terrain * terrain,
                    const Renderer * renderer,
-                   const Camera * camera,
-                   const Sun * sun) :
+                   const Camera * camera) :
   // Reference objects
   shaders_(shaders),
   terrain_(terrain),
   renderer_(renderer),
   camera_(camera),
-  sun_(sun),
   // Make road signs
   signs_{(AddModel(shaders, "models/Signs_OBJ/working/60.obj")),
         (AddModel(shaders, "models/Signs_OBJ/working/curve_left.obj")),
@@ -83,7 +81,7 @@ void RoadSign::ShiftIndexes() {
 // Render all roadsigns
 void RoadSign::DrawSigns() const {
   for (Object * o : signs_) {
-    renderer_->Render(o, *camera_, *sun_);
+    renderer_->Render(o, *camera_);
   }
 }
 

@@ -9,7 +9,6 @@
 #include "object.h"
 #include "renderer.h"
 #include "camera.h"
-#include "sun.h"
 
 #include "constants.h"
 
@@ -30,8 +29,7 @@ class RoadSign {
     RoadSign(const Shaders * shaders,
              const Terrain * terrain,
              const Renderer * renderer,
-             const Camera * camera,
-             const Sun * sun);
+             const Camera * camera);
 
     // TODO comment, make const
     Object * SignSpawn();
@@ -55,7 +53,6 @@ class RoadSign {
     const Terrain * terrain_;
     const Renderer * renderer_;
     const Camera * camera_;
-    const Sun * sun_;
 
     // The actual road sign objects
     //   The indexing is as listed below

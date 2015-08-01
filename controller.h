@@ -12,7 +12,6 @@
 #include "object.h"
 #include "car.h"
 #include "renderer.h"
-#include "sun.h"
 #include "light_controller.h"
 #include "roadsign.h"
 #include "collision_controller.h"
@@ -81,8 +80,6 @@ class Controller {
     const Shaders * shaders_;
     // The camera object
     Camera camera_;
-    // The Sun object to control environment lighting
-    Sun sun_;
     // The terrain object
     Terrain * terrain_;
     // The light controller

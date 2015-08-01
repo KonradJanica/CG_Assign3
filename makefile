@@ -28,7 +28,7 @@ ifneq (, $(findstring MINGW, $(PLATFORM)))
 endif
 
 CC = g++ -Wno-switch-enum -std=c++11
-LINK = model_data.o model.o object.o car.o terrain.o roadsign.o npc_car_controller.o collision_controller.o light_controller.o Skybox.o Water.o rain.o sun.o camera.o renderer.o controller.o main.o
+LINK = model_data.o model.o object.o car.o terrain.o roadsign.o npc_car_controller.o collision_controller.o light_controller.o Skybox.o Water.o rain.o camera.o renderer.o controller.o main.o
 LIB = lib/tiny_obj_loader/tiny_obj_loader.o shaders/shader_compiler/shader.o
 
 .PHONY:  clean
@@ -42,11 +42,8 @@ assign3$(EXT): $(LINK) $(LIB)
 main.o: model_data.h model.h camera.h renderer.h controller.h Skybox.h main.cpp
 	$(CC) $(CPPFLAGS) -c main.cpp
 
-controller.o: controller.cc controller.h light_controller.h renderer.h camera.h sun.h roadsign.h npc_car_controller.h terrain.h object.h car.h constants.h
+controller.o: controller.cc controller.h light_controller.h renderer.h camera.h roadsign.h npc_car_controller.h terrain.h object.h car.h constants.h
 	$(CC) $(CPPFLAGS) -c controller.cc
-
-sun.o: sun.cc sun.h camera.h
-	$(CC) $(CPPFLAGS) -c sun.cc
 
 collision_controller.o: collision_controller.cc collision_controller.h car.h camera.h terrain.h constants.h
 	$(CC) $(CPPFLAGS) -c collision_controller.cc
@@ -69,10 +66,10 @@ renderer.o: renderer.cc renderer.h camera.h terrain.h object.h car.h
 camera.o: camera.cc camera.h
 	$(CC) $(CPPFLAGS) -c camera.cc
 
-roadsign.o: roadsign.cc roadsign.h terrain.h object.h	sun.h camera.h
+roadsign.o: roadsign.cc roadsign.h terrain.h object.h	camera.h
 	$(CC) $(CPPFLAGS) -c roadsign.cc
 
-npc_car_controller.o: npc_car_controller.cc npc_car_controller.h terrain.h car.h sun.h camera.h
+npc_car_controller.o: npc_car_controller.cc npc_car_controller.h terrain.h car.h camera.h
 	$(CC) $(CPPFLAGS) -c npc_car_controller.cc
 
 terrain.o: terrain.cc terrain.h

@@ -10,12 +10,11 @@ Controller::Controller(const int window_width, const int window_height, const bo
   renderer_(Renderer(debug_flag)),
   shaders_(renderer_.shaders()),
   camera_(Camera(shaders_, window_width, window_height)),
-  sun_(Sun(camera(), debug_flag)),
   terrain_(new Terrain(shaders_->LightMappedGeneric)),
   light_controller_(new LightController()),
   collision_controller_(CollisionController()),
-  npc_car_controller_(NpcCarController(shaders_, terrain_, &renderer_, &camera_, &sun_)),
-  road_sign_(RoadSign(shaders_, terrain_, &renderer_, &camera_, &sun_)),
+  npc_car_controller_(NpcCarController(shaders_, terrain_, &renderer_, &camera_)),
+  road_sign_(RoadSign(shaders_, terrain_, &renderer_, &camera_)),
   car_(AddCar(shaders_->LightMappedGeneric, "models/Pick-up_Truck/pickup_wind_alpha.obj")),
   // State and var defaults
   game_state_(kAutoDrive), light_pos_(glm::vec4(0,0,0,0)),
@@ -75,13 +74,13 @@ void Controller::Draw() {
   // Water
   renderer_.RenderWater(water_, car_, skybox_, camera_);
   // Terrain
-  renderer_.Render(terrain_, camera_, sun_);
+  renderer_.Render(terrain_, camera_);
   // Road-signs
   road_sign_.DrawSigns();
 
   // Car with physics
   npc_car_controller_.DrawCars();
-  renderer_.Render(car_, camera_, sun_);
+  renderer_.Render(car_, camera_);
 
   // Axis only renders in debugging mode
   renderer_.RenderAxis(camera_);
@@ -99,18 +98,7 @@ void Controller::PositionLights() {
   dirLight.AmbientIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
   dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
 
-  // Time of day intensities
-  // dirLight.DiffuseIntensity *= sun_.LightIntensityMultiplier();
-  // dirLight.AmbientIntensity *= sun_.LightIntensityMultiplier();
-
-  // dirLight.SpecularIntensity *= 1.0f - sun_.LightIntensityMultiplier();
-  // if (!sun_.IsDay()) {
-  //   dirLight.SpecularIntensity.x *= 1.0f - sun_.LightIntensityMultiplier();
-  //   dirLight.SpecularIntensity.y *= 1.0f - sun_.LightIntensityMultiplier();
-  // }
-  //
-
-  dirLight.Direction =  sun_.sun_direction();
+  dirLight.Direction = glm::vec3(0,-1,0);
 
   for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
     if (carIdx == -1) {
@@ -203,9 +191,6 @@ void Controller::UpdateGame() {
       delta_time_ = 20;
     // printf("dt = %f\n",delta_time_);
   }
-
-  // Update Sun/Moon position
-  sun_.Update();
 
   // Send time for water
   water_->SendTime(current_frame);

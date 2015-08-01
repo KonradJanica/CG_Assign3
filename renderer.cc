@@ -107,8 +107,10 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
 // Draws/Renders the passed in objects (with their models) to the scene
 //   Should be called in the render loop
 //   @param Object * object, an object to render
+//   @param Camera * camera, a camera to build mvp matrices
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::Render(const Object * object, const Camera &camera, const Sun &sun) const {
+//   @warn uses camera pointer for view matrix
+void Renderer::Render(const Object * object, const Camera &camera) const {
   const Shader * shader = object->shader();
   glUseProgram(shader->Id);
 
@@ -134,7 +136,6 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
   const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
   for (unsigned int y = 0; y < vao_texture_handle->size(); ++y) {
     // Pass Surface Colours to Shader
-    //   @note diffuse removed because Sun controls it
     const glm::vec3 &vao_ambient = object->ambient_surface_colours_at(y);
     const glm::vec3 &vao_diffuse = object->diffuse_surface_colours_at(y);
     const glm::vec3 &vao_specular = object->specular_surface_colours_at(y);
@@ -247,10 +248,12 @@ GLuint Renderer::EnableAxis() const {
 }
 
 // Draws/Renders the passed in terrain to the scene
+//   Should be called in the render loop
 //   @param Terrain * terrain, a terrain (cliffs/roads) to render
-//   @param vec4 light_pos, The position of the Light for lighting
+//   @param Camera * camera, a camera to build mvp matrices
 //   @warn Not responsible for NULL PTRs
-void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &sun) const {
+//   @warn uses camera pointer for view matrix
+void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   const Shader &shader = terrain->shader();
   glUseProgram(shader.Id);
   glCullFace(GL_BACK);
