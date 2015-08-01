@@ -161,7 +161,7 @@ inline void CollisionController::Reset(bool is_forward, const Terrain * terrain)
   road_y_rotation_ = 0;
   if (is_forward) {
     prev_colisn_pair_idx_ = 0;
-    prev_colisn_pair_container_idx_ = 0;
+    prev_colisn_pair_container_idx_ = terrain->colisn_boundary_pairs()->size()-1;
   } else {
     prev_colisn_pair_idx_ = terrain->colisn_boundary_pairs()->back().size()-1;
     prev_colisn_pair_container_idx_ = terrain->colisn_boundary_pairs()->size()-1;

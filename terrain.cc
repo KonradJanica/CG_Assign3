@@ -1018,6 +1018,34 @@ void Terrain::HelperMakeRoadCollisionMap() {
   colisn_boundary_pairs_.push_back(tile_map);
 }
 
+// Accessor for the first pair in the last vector for spawning car
+glm::vec3 Terrain::colisn_boundary_pair_first() const {
+  boundary_pair p = colisn_boundary_pairs_.back().front();
+  // Find midpoint
+  glm::vec3 road_midpoint = (p.first+p.second);
+  road_midpoint /= 2;
+  road_midpoint.y = p.first.y;
+  // Find lane midpoints
+  glm::vec3 left_lane_midpoint = road_midpoint + p.second;
+  left_lane_midpoint /= 2;
+
+  return left_lane_midpoint;
+}
+
+// Accessor for the last pair for spawning car
+glm::vec3 Terrain::colisn_boundary_pair_last() const {
+  boundary_pair p = colisn_boundary_pairs_.back().back();
+  // Find midpoint
+  glm::vec3 road_midpoint = (p.first+p.second);
+  road_midpoint /= 2;
+  road_midpoint.y = p.first.y;
+  // Find lane midpoints
+  glm::vec3 right_lane_midpoint = road_midpoint + p.first;
+  right_lane_midpoint /= 2;
+
+  return right_lane_midpoint;
+}
+
 // Pops the first collision map
 //   To be used after car has passed road tile
 void Terrain::colisn_pop() {
