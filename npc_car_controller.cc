@@ -12,9 +12,9 @@ NpcCarController::NpcCarController(const Shaders * shaders,
   camera_(camera),
   sun_(sun),
   // Make cars
-  cars_{AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
-        AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
-        AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
+  cars_{AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
+        // AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj"),
+        // AddCar("models/Pick-up_Truck/pickup_wind_alpha.obj")} {
 
 
     // Initial npc car states
@@ -42,7 +42,12 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     Car * c = cars_[x];
     CollisionController * cc = collision_controllers_[x];
 
-    cc->UpdateCollisionsNPC(c, terrain_, current_state);
+    if (cars_direction_[x]) {
+      // cc->UpdateCollisionsNPC(c, terrain_, current_state);
+      cc->UpdateCollisionsNPCReverse(c, terrain_, current_state);
+    } else {
+      cc->UpdateCollisionsNPCReverse(c, terrain_, current_state);
+    }
 
     if (cc->dis() > 10.0f)
       if (rand() % 10 < 3)
@@ -85,8 +90,10 @@ void NpcCarController::RespawnCar(Car * car, int car_index) {
   bool random = rand() % 2;
   glm::vec3 spawn_point;
   if (random) {
-    spawn_point = terrain_->colisn_boundary_pair_first();
-    collision_controllers_[car_index]->Reset(true, terrain_);
+    // spawn_point = terrain_->colisn_boundary_pair_first();
+    // collision_controllers_[car_index]->Reset(true, terrain_);
+    spawn_point = terrain_->colisn_boundary_pair_last();
+    collision_controllers_[car_index]->Reset(false, terrain_);
   } else {
     spawn_point = terrain_->colisn_boundary_pair_last();
     collision_controllers_[car_index]->Reset(false, terrain_);

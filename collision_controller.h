@@ -40,6 +40,11 @@ class CollisionController {
         kGameState current_state);
 
     // TODO comment
+    kGameState UpdateCollisionsNPCReverse(
+        const Car * car_, const Terrain * terrain_,
+        kGameState current_state);
+
+    // TODO comment
     void AutoDrive(Car * car, const float delta_time);
 
     // ANIMATION FUNCTIONS

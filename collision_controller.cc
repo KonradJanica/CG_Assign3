@@ -598,6 +598,130 @@ kGameState CollisionController::UpdateCollisionsNPC(
   return current_state;
 }
 
+// TODO comment
+//   Also calculates the middle of the road and it's direction if game state is autodrive
+kGameState CollisionController::UpdateCollisionsNPCReverse(
+    const Car * car_, const Terrain * terrain_,
+    kGameState current_state) {
+  // Setup vars
+  const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
+  const glm::vec3 &car = car_->translation();
+  const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
+  Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
+    // printf("prev idx = %d, what? = %d\n", prev_colisn_pair_container_idx_, prev_colisn_pair_idx_);
+
+  // Find closest edge point
+  Terrain::boundary_pair closest_pair;
+  dis_ = FLT_MAX;
+  Terrain::colisn_vec::const_iterator closest_it = head.begin();
+
+  ++prev_colisn_pair_idx_;
+  while (it != head.begin()) {
+    const glm::vec3 &cur_vec = it->first; // current vector pair
+    float cur_dis = glm::distance(cur_vec, car);
+    if (cur_dis > dis_) {
+      break;
+    } else {
+      dis_ = cur_dis;
+      closest_pair = *it;
+      closest_it = it;
+    }
+    // printf("Dis = %f, curr_dis = %f\n", dis_, cur_dis);
+    it--;
+    --prev_colisn_pair_idx_;
+  }
+  // if (it == head.end())
+    // printf("DISTANCE CHECK GOING OPPOSITE DIRECTION\n");
+  Terrain::boundary_pair next_pair;
+  // Get vertice pair next to closest
+  //   but make sure it isn't the last pair overwise pop
+  it = closest_it;
+
+  // Reduce autodrive jerking
+  if (it != head.begin())
+    it--;
+
+  if (it == head.begin()) {
+    --prev_colisn_pair_container_idx_;
+    // Get next pair from next vector in circular_vector
+    closest_it = (*col)[prev_colisn_pair_container_idx_].end(); // reassign to find new midpoint etc.
+    closest_it--;
+    it = closest_it;
+    it--;
+    next_pair = *it;
+
+    prev_colisn_pair_idx_ = terrain_->colisn_boundary_pairs()->back().size()-1;
+  } else {
+
+    // If conditions flow through then make box with neighbours of the closest pair
+    //   and check if car is inside the box
+    next_pair = *it;
+  }
+  // Make boundary box the neighbours of current pair
+
+  // Check if car is in range
+  // if (IsInside(car, *closest_it)) {
+  //   //inside bounds
+  //   is_collision_ = false;
+  // } else {
+  //   printf("collision on edge of road!\n");
+  //   is_collision_ = true;
+  // }
+
+  // Calculate middle of road and it's direction
+  // Get the next points to smooth it
+  it = closest_it;
+  // Find midpoint
+  glm::vec3 road_midpoint = ((*it).first+(*it).second);
+  road_midpoint /= 2;
+  road_midpoint.y = car_->translation().y;
+  // Find lane midpoints
+  left_lane_midpoint_ = road_midpoint + (*it).first; // Actually right_lane_midpoint
+  left_lane_midpoint_ /= 2;
+  // Find road direction
+  glm::vec3 first_point = closest_it->first;
+  glm::vec3 next_point = next_pair.first;
+  glm::vec3 direction = next_point - first_point;
+  road_direction_ = glm::normalize(direction);
+  road_y_rotation_ = RAD2DEG(atan2(direction.x, direction.z)); // atan2 handles division by 0 and proper quadrant
+
+  // BLOCK BELOW IS UNUSED BUT COULD BE USED FOR BLOCKING TURNING AROUND
+  // Find angle between car dir and road dir
+  //   Angle is clockwise from direction of road
+  // glm::vec2 dir = glm::vec2(car_->direction().x, car_->direction().z);
+  // TODO remove top line (saved for getting facing angle not velo angle)
+  // dir = glm::vec2(car_->velocity_x(), car_->velocity_z());
+  // dir = glm::normalize(dir);
+  // glm::vec2 road_dir = glm::vec2(road_direction_.x, road_direction_.z);
+  // car_angle_ = -glm::orientedAngle(dir, road_dir);
+  // printf("ang = %f\n",car_angle_);
+
+  // Find collision point closest to car
+  //  warning closest_pair, and dis cannot be overridden above
+  float dis_opposite_point = glm::distance(closest_pair.second, car);
+  bool is_water_closest = true;
+  if (dis_ > dis_opposite_point)
+    is_water_closest = false;
+  // Decide which type of animation to play
+  //   i.e. cliff scrape or water bounce
+  // @warn also sets camera position for the crash
+  if (is_collision_) {
+    // camera_state_ = camera_->state(); //TODO
+    if (is_water_closest) {
+      current_state = kGameState::kCrashingFall;
+      // camera_->ChangeState(Camera::kFirstPerson); //TODO
+    } else {
+      current_state = kGameState::kCrashingCliff;
+      is_cliff_hit_ = false;
+      is_prev_positive_ = true;
+    }
+    colisn_anim_ticks_ = 0;
+    // UpdateCamera(); // Camera needs to be updated to change position
+  }
+
+  return current_state;
+}
+
 // Uses the left lane midpoint calculated in the collision update tick to
 //   automatically drive the car (or npc cars)
 //   Store previous point and either directs to next point or road direction
