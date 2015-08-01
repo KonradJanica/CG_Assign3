@@ -132,8 +132,8 @@ void Controller::PositionLights() {
   std::vector<PointLight> pointLights;
   std::vector<SpotLight> spotLights;
 
-  dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
-  dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
+  dirLight.DiffuseIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
+  dirLight.AmbientIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
   dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
 
   // Time of day intensities
@@ -146,6 +146,7 @@ void Controller::PositionLights() {
   //   dirLight.SpecularIntensity.y *= 1.0f - sun_.LightIntensityMultiplier();
   // }
   //
+
   dirLight.Direction =  sun_.sun_direction();
 
   for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
