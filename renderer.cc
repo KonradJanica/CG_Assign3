@@ -1,7 +1,6 @@
 #include "renderer.h"
 
 // Construct with a camera and verbose debugging mode
-//   Creates a depth buffer (used for shadows)
 //   Allows for Verbose Debugging Mode
 //   @param camera, The camera object used to get view matrix
 //   @param bool debug_flag, true will enable verbose debugging
@@ -124,39 +123,12 @@ void Renderer::Render(const Object * object, const Camera &camera, const Sun &su
   const glm::mat4 VIEW = camera.view_matrix();
   const glm::mat4 MODEL = object->model_matrix();
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
-  const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
-      0.0f, 0.5f, 0.0f, 0.0f,
-      0.0f, 0.0f, 0.5f, 0.0f,
-      0.5f, 0.5f, 0.5f, 1.0f);
-
-  // Compute the MVP matrix from the light's point of view
-  const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  // const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
-  // const glm::vec3 snapped_cam_pos = glm::vec3(
-  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-  //     float(),
-  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
-  const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
-  const glm::mat4 D_MODEL = glm::mat4(1.0);
-  const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
-
-  const glm::mat4 DEPTH_BIAS_MVP = BIAS * DEPTH_MVP;
 
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(VIEW * MODEL)));
   glUniformMatrix4fv(shader->mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
   glUniformMatrix4fv(shader->mvpHandle, 1, false, glm::value_ptr(MVP));
-  glUniformMatrix4fv(shader->depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
   glUniformMatrix3fv(shader->normHandle, 1, false, glm::value_ptr(NORMAL));
 
   const std::vector<std::pair<unsigned int, GLuint> > * vao_texture_handle = object->vao_texture_handle();
@@ -292,39 +264,12 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera, const Sun &
   const glm::mat4 VIEW = camera.view_matrix();
   const glm::mat4 MODEL = glm::mat4(1.0f);
   const glm::mat4 MVP = PROJECTION * VIEW * MODEL;
-  const glm::mat4 BIAS = glm::mat4(0.5f, 0.0f, 0.0f, 0.0f,
-      0.0f, 0.5f, 0.0f, 0.0f,
-      0.0f, 0.0f, 0.5f, 0.0f,
-      0.5f, 0.5f, 0.5f, 1.0f);
-
-  // Compute the MVP matrix from the light's point of view
-  const glm::mat4 D_PROJECTION = glm::ortho<float> (-100,100,-40,40,-100,100);
-  // const glm::vec2 texel_size = glm::vec2(1.0f/1024.0f, 1.0f/1024.0f);
-  // const glm::vec3 snapped_cam_pos = glm::vec3(
-  //     floor(camera.cam_pos().x / texel_size.x) * texel_size.x,
-  //     float(),
-  //     floor(camera.cam_pos().z / texel_size.y) * texel_size.y);
-  // const glm::vec3 light_start = glm::vec3(snapped_cam_pos.x+35.0f,10.0f,snapped_cam_pos.z);
-  // const glm::vec3 light_end = glm::vec3(snapped_cam_pos.x-00.0f,-10.0f,snapped_cam_pos.z);
-  const glm::vec3 light_start = glm::vec3(sun.sun_start(), sun.sun_height(), sun.sun_target_z());
-  const glm::vec3 light_end = glm::vec3(sun.sun_target_x(),-10.0f, sun.sun_target_z());
-  // const float snapped_sun_start = floor(sun.sun_start() / texel_size.x) * texel_size.x;
-  // const float snapped_sun_target_x = floor(sun.sun_target_x() / texel_size.x) * texel_size.x;
-  // const float snapped_sun_target_z = floor(sun.sun_target_z() / texel_size.y) * texel_size.y;
-  // const glm::vec3 light_start = glm::vec3(snapped_sun_start, sun.sun_height(), snapped_sun_target_z);
-  // const glm::vec3 light_end = glm::vec3(snapped_sun_target_x, -10.0f, snapped_sun_target_z);
-  const glm::mat4 D_VIEW = glm::lookAt(light_start, light_end, glm::vec3(0,1,0));
-  const glm::mat4 D_MODEL = glm::mat4(1.0);
-  const glm::mat4 DEPTH_MVP = D_PROJECTION * D_VIEW * D_MODEL;
-
-  const glm::mat4 DEPTH_BIAS_MVP = BIAS * DEPTH_MVP;
 
   // We compute the normal matrix from the current modelview matrix
   // and give it to our program
   glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(VIEW * MODEL)));
   glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(VIEW * MODEL));
   glUniformMatrix4fv(shader.mvpHandle, 1, false, glm::value_ptr(MVP));
-  glUniformMatrix4fv(shader.depthBiasMvpHandle, 1, false, glm::value_ptr(DEPTH_BIAS_MVP));
   glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
   // Pass Surface Colours to Shader
