@@ -128,9 +128,9 @@ void Controller::Draw() {
 void Controller::PositionLights() {
   glm::mat4 view_matrix = camera_.view_matrix();
   glm::mat4 car_mv_matrix = view_matrix * car_->model_matrix();
-  // glm::mat3 norm_matrix = glm::mat3(view_matrix);
-
   DirectionalLight dirLight;
+  std::vector<PointLight> pointLights;
+  std::vector<SpotLight> spotLights;
 
   dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
   dirLight.AmbientIntensity = glm::vec3(0.50f, 0.50f, 0.50f);
@@ -144,58 +144,67 @@ void Controller::PositionLights() {
   // }
   dirLight.Direction =  sun_.sun_direction();
 
-  // Point lights
-  std::vector<PointLight> pointLights;
-  // Main car brake lights
-  for (unsigned int i = 0; i < 2; i++) {
-    glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.85f + i * 1.7f, 0.0f, -3.3f));
+  for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
+    if (carIdx == -1) {
+      car_mv_matrix = view_matrix * car_->model_matrix();
+    }
+    else {
+      car_mv_matrix = view_matrix * npc_car_controller_.cars()[carIdx]->model_matrix();
+    }
 
-    PointLight brakeLight;
-    brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
-    brakeLight.Position = glm::vec3(car_mv_matrix * brakeLightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    brakeLight.Attenuation.Constant = 0.001f;
-    brakeLight.Attenuation.Linear = 2.0f;
-    brakeLight.Attenuation.Exp = 3.0f;
+    // Point lights
+    // Main car brake lights
+    for (unsigned int i = 0; i < 2; i++) {
+      glm::mat4 brakeLightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.85f + i * 1.7f, 0.0f, -3.3f));
 
-    if (is_key_pressed_hash_.at('s')) {
-      brakeLight.Attenuation.Constant = 0.00001f;
-      brakeLight.Attenuation.Linear = 0.5f;
+      PointLight brakeLight;
+      brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
+      brakeLight.Position = glm::vec3(car_mv_matrix * brakeLightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+      brakeLight.Attenuation.Constant = 0.001f;
+      brakeLight.Attenuation.Linear = 2.0f;
       brakeLight.Attenuation.Exp = 3.0f;
+
+      if (is_key_pressed_hash_.at('s')) {
+        brakeLight.Attenuation.Constant = 0.00001f;
+        brakeLight.Attenuation.Linear = 0.5f;
+        brakeLight.Attenuation.Exp = 3.0f;
+      }
+
+      pointLights.push_back(brakeLight);
     }
 
-    pointLights.push_back(brakeLight);
-  }
 
+    // Spot lights
+    // Main car headlights
+    for (unsigned int i = 0; i < 2; i++) {
+      glm::mat4 headlightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.0f, 1.45f));
+      glm::mat3 headlightNormMatrix = glm::mat3(car_mv_matrix);
 
-  // Spot lights
-  std::vector<SpotLight> spotLights;
-  // Main car headlights
-  for (unsigned int i = 0; i < 2; i++) {
-    glm::mat4 headlightTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f + i * 1.0f, 0.0f, 1.45f));
-    glm::mat3 headlightNormMatrix = glm::mat3(car_mv_matrix);
+      SpotLight headlight;
+      headlight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
+      headlight.SpecularIntensity = glm::vec3(0.1f, 0.1f, 0.1f);
+      headlight.Position = glm::vec3(car_mv_matrix * headlightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+      headlight.Direction = headlightNormMatrix * glm::vec3(0.0f, -0.3f, 1.0f);
+      headlight.CosineCutoff = cos(DEG2RAD(30.0f));
+      headlight.Attenuation.Constant = 0.3f;
+      headlight.Attenuation.Linear = 0.01f;
+      headlight.Attenuation.Exp = 0.01f;
+      
+      if (is_key_pressed_hash_.at('r')) {
+        headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+        headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
+      }
 
-    SpotLight headlight;
-    headlight.DiffuseIntensity = glm::vec3(1.0f, 1.0f, 1.0f);
-    headlight.SpecularIntensity = glm::vec3(0.1f, 0.1f, 0.1f);
-    headlight.Position = glm::vec3(car_mv_matrix * headlightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    headlight.Direction = headlightNormMatrix * glm::vec3(0.0f, -0.3f, 1.0f);
-    headlight.CosineCutoff = cos(DEG2RAD(30.0f));
-    headlight.Attenuation.Constant = 0.3f;
-    headlight.Attenuation.Linear = 0.01f;
-    headlight.Attenuation.Exp = 0.01f;
+      spotLights.push_back(headlight);
+    }
     
-    if (is_key_pressed_hash_.at('r')) {
-      headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-      headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
-    }
-
-    spotLights.push_back(headlight);
   }
 
-  light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
+  light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
   light_controller_->SetSpotLights(water_->shader().Id, spotLights.size(), &spotLights[0]);
   light_controller_->SetDirectionalLight(water_->shader().Id, dirLight);
 
+  light_controller_->SetDirectionalLight(car_->shader()->Id, dirLight);
   light_controller_->SetPointLights(car_->shader()->Id, pointLights.size(), &pointLights[0]);
   light_controller_->SetSpotLights(car_->shader()->Id, spotLights.size(), &spotLights[0]);
 }
