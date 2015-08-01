@@ -170,7 +170,7 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 10;
+  int light_multiplier = 200;
 
   for (int i = 0; i < gNumPointLights; i++)
   {
@@ -188,6 +188,6 @@ void main(void) {
   }
 
   fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
-  fragColour *= 0.2;
+  fragColour *= 0.01;
   fragColour.a = dissolve;
 }
