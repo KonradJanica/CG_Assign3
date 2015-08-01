@@ -5,9 +5,11 @@ uniform mat4 modelview_matrix;
 uniform mat3 normal_matrix;
 
 in vec3 a_vertex;
+in vec2 a_texture;
+
 out vec4 a_vertex_mv;
 out vec3 a_normal_mv;
-
+out vec2 a_tex_coord;
 
 
 // Wave equations from http://jayconrod.com/posts/34/water-simulation-in-glsl
@@ -75,6 +77,9 @@ void main()
 	// Create the MV normals, normals need to be generated in this shader
 	vec3 normals = waveNormal(a_vertex.x, a_vertex.z);
 	a_normal_mv = normal_matrix * normalize(normals);
+
+  // Texture coordinates 
+  a_tex_coord = a_texture;
 
 	a_vertex_mv = modelview_matrix * vec4(a_vertex.x, h, a_vertex.z, 1.0);
 	// Apply full MVP transformation

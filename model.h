@@ -1,23 +1,11 @@
 #ifndef ASSIGN3_MODEL_H_
 #define ASSIGN3_MODEL_H_
 
-#include <vector>
-#include <string>
-#include <cassert>
 #include "model_data.h"
-#include "shaders/shaders.h"
-
-#include "glm/glm.hpp"
-#include <GL/glew.h>
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
 
 #include "lib/stb_image/stb_image.h"
+
+#include "utils/includes.h"
 
 // A model to draw via opengl
 //   Creates and stores VAO and Material data for rendering

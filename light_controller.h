@@ -13,19 +13,7 @@
 #ifndef ASSIGN3_LIGHT_CONTROLLER_H_
 #define ASSIGN3_LIGHT_CONTROLLER_H_
 
-#include <cassert>
-#include <iostream>
-#include <stdio.h>
-#include <vector>
-#include <GL/glew.h>
-#include "glm/glm.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
 
 // The light structures help the LightController class deal with light input
 

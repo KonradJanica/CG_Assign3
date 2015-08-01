@@ -1,9 +1,6 @@
 #ifndef ASSIGN3_RENDERER_H_
 #define ASSIGN3_RENDERER_H_
 
-#include <vector>
-#include <string>
-#include <cassert>
 #include "model_data.h"
 #include "model.h"
 #include "camera.h"
@@ -11,18 +8,8 @@
 #include "object.h"
 #include "Skybox.h"
 #include "Water.h"
-#include "shaders/shaders.h"
 
-#include "glm/glm.hpp"
-#include <GL/glew.h>
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
 
 // The Class used for rendering
 //   All DrawElement etc. openGL calls are made through this class

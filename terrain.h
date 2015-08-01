@@ -1,29 +1,12 @@
 #ifndef ASSIGN3_TERRAIN_H_
 #define ASSIGN3_TERRAIN_H_
 
-#include <vector>
-#include <string>
-#include <cassert>
-#include <queue>
-#include <ctime>
-#include <algorithm>
-#include <list>
-
 #include "model_data.h"
 #include "model.h"
 #include "camera.h"
 
-#include "glm/glm.hpp"
-#include <GL/glew.h>
-#include "shaders/shaders.h"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
+#include "utils/helpers.h"
 
 #include "lib/circular_vector/circular_vector.h"
 // Check better performance container

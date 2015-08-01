@@ -14,22 +14,12 @@
 #ifndef ASSIGN3_Water_H_
 #define ASSIGN3_Water_H_
 
-#include <vector>
-#include <GL/glew.h>
 #include <random>
 
 #include "camera.h"
-#include "shaders/shaders.h"
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
+#include "utils/helpers.h"
 
 class Water {
   public:
@@ -49,10 +39,13 @@ class Water {
     // Return the shader
     inline const Shader shader() const;
 
-    // Return the amount of indices   
+    // Return the water texture
+    inline GLuint water_texture() const;
+
+    // Return the amount of indices
     inline unsigned int water_index_count() const;
 
-    // Return the amount of Vertices 
+    // Return the amount of Vertices
     inline unsigned int water_vertex_count() const;
 
     // Return the Water width
@@ -70,6 +63,9 @@ class Water {
 
     // The shader with uniforms and Id
     const Shader shader_;
+
+    // GLuint to store the water texture
+    const GLuint water_texture_;
 
     // VAO to store the Water
     const GLuint water_vao_;
@@ -91,6 +87,7 @@ class Water {
 
     // Vector to hold Vertex data
     float * vertices_;
+
 };
 
 // =======================================================================// 
@@ -115,6 +112,11 @@ inline unsigned int Water::water_vertex_count() const {
 // Return the Water shader
 inline const Shader Water::shader() const {
   return shader_;
+}
+
+// Return the water texture
+inline GLuint Water::water_texture() const {
+  return water_texture_;
 }
 
 // Return the Water width

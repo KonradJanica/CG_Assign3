@@ -1,29 +1,14 @@
 #ifndef ASSIGN3_NPCCARCONTROLLER_H_
 #define ASSIGN3_NPCCARCONTROLLER_H_
 
-#include <string>
-#include <vector>
-#include <cassert>
-#include <cstdlib>
 #include "terrain.h"
 #include "car.h"
 #include "collision_controller.h"
 #include "renderer.h"
 #include "camera.h"
 
-#include "constants.h"
-
-#include "glm/glm.hpp"
-#include "shaders/shader_compiler/shader.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/gtx/vector_angle.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h> 
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
+#include "utils/constants.h"
 
 class NpcCarController {
   public:

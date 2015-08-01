@@ -24,7 +24,6 @@ Controller::Controller(const int window_width, const int window_height, const bo
     is_key_pressed_hash_.resize(256);
     playSound = 1;
 
-    rain_ = new Rain(shaders_->RainGeneric, debug_flag);
     water_ = new Water(shaders_->WaterGeneric);
     skybox_ = new Skybox(shaders_->SkyboxGeneric);
 
@@ -94,8 +93,8 @@ void Controller::PositionLights() {
   std::vector<PointLight> pointLights;
   std::vector<SpotLight> spotLights;
 
-  dirLight.DiffuseIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
-  dirLight.AmbientIntensity = glm::vec3(0.00f, 0.00f, 0.00f);
+  dirLight.DiffuseIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
+  dirLight.AmbientIntensity = glm::vec3(1.00f, 1.00f, 1.00f);
   dirLight.SpecularIntensity = glm::vec3(0.35f, 0.35f, 0.40f);
 
   dirLight.Direction = glm::vec3(-0.5,-0.5,0);
@@ -171,8 +170,6 @@ void Controller::UpdateGame() {
 
   // Lights need to be transformed with view/normal matrix
   PositionLights();
-  // Update the position of the rain
-  rain_->UpdatePosition();
 
   // FPS counter - also determine delta time
   long long current_frame = glutGet(GLUT_ELAPSED_TIME);

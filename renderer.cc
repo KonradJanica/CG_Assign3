@@ -25,7 +25,7 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   glUseProgram(shader.Id);
 
   // Setup rendering options
-  glEnable(GL_BLEND);
+  // glEnable(GL_BLEND);
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   // Cull Appropriately
   glCullFace(GL_FRONT);
@@ -56,16 +56,22 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
   // Send the cubemap (for reflections)
+  // glActiveTexture(GL_TEXTURE0);
+  // glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
+  // glUniform1i(shader.texMapHandle, 0);
+
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
   glUniform1i(shader.texMapHandle, 0);
+  glBindTexture(GL_TEXTURE_2D, water->water_texture());
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
   // Render the Skybox
   glBindVertexArray(water->watervao());
 
   // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
   glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
-  glDisable(GL_BLEND);
+  // glDisable(GL_BLEND);
 
   // Unbind
   glBindVertexArray(0);
@@ -154,7 +160,6 @@ void Renderer::Render(const Object * object, const Camera &camera) const {
     glUniform1fv(shader->dissolveHandle, 1, &mtldissolve);
 
     // Bind Textures
-    // Apply Shadow textures
     // We are using texture unit 0 (the default)
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(shader->texMapHandle, 0);

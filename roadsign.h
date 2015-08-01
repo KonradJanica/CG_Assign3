@@ -1,28 +1,12 @@
 #ifndef ASSIGN3_ROADSIGN_H_
 #define ASSIGN3_ROADSIGN_H_
 
-#include <string>
-#include <vector>
-#include <cassert>
-#include <cstdlib>
 #include "terrain.h"
 #include "object.h"
 #include "renderer.h"
 #include "camera.h"
 
-#include "constants.h"
-
-#include "glm/glm.hpp"
-#include "shaders/shader_compiler/shader.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/gtx/vector_angle.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h> 
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
 
 class RoadSign {
   public:

@@ -15,6 +15,7 @@
 
 Water::Water(const Shader &shader) :
   shader_(shader),
+  water_texture_(helpers::LoadTexture("textures/water/water.bmp")),
   // Create the VAO based on the index and vertex data
   water_vao_(CreateVao())
 {
@@ -147,9 +148,29 @@ unsigned int Water::CreateVao()
     fprintf(stderr,"Could not find uniform: 'a_vertex' In: Water - CreateVao\n This may cause unexpected behaviour in the program\n");
   }
 
+  // Vector to hold UV coordinates
+  std::vector<glm::vec2> texture_coordinates_uv_;
+  // set up uv coordinates
+  unsigned int w = plane_width_ + 1;
+  unsigned int h = plane_height_ + 1;
+  texture_coordinates_uv_.assign(w*h, glm::vec2());
+  int offset;
+  // First, build the data for the vertex buffer
+  for (unsigned int y = 0; y < h; y++) {
+    for (unsigned int x = 0; x < w; x++) {
+      offset = (y*w)+x;
+      float xRatio = x / (float) (w - 1);
+      float yRatio = y / (float) (h - 1);
+
+      texture_coordinates_uv_.at(offset) = glm::vec2(
+          xRatio*float(w)*0.10,
+          yRatio*float(h)*0.10);
+    }
+  }
+
   // Two buffer [vertex, index]
-  unsigned int buffer[2];
-  glGenBuffers(2, buffer);
+  unsigned int buffer[3];
+  glGenBuffers(3, buffer);
 
   // Set vertex attribute
   glBindBuffer(GL_ARRAY_BUFFER, buffer[0]);
@@ -157,15 +178,25 @@ unsigned int Water::CreateVao()
   glEnableVertexAttribArray(vertLoc);
   glVertexAttribPointer(vertLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
+  // UV
+  glBindBuffer(GL_ARRAY_BUFFER, buffer[1]);
+  glBufferData(GL_ARRAY_BUFFER,
+      sizeof(glm::vec2) * texture_coordinates_uv_.size(), &texture_coordinates_uv_[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(shader().textureLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(shader().textureLoc);
+
   // Index
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[1]);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[2]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*water_num_indices_, indices_, GL_STATIC_DRAW);
-    
+
   // Un-bind
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
-  return vaoHandle;  
+
+  delete[] vertices_;
+  delete[] indices_;
+
+  return vaoHandle;
 }
 
 // Create a mesh to be used for water, based on code given in
@@ -220,4 +251,5 @@ void Water::GenerateMesh()
           indices_[i++] = ((y + 1) * width);
       }
   }
+
 }

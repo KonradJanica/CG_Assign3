@@ -14,20 +14,9 @@
 #ifndef ASSIGN3_Skybox_H_
 #define ASSIGN3_Skybox_H_
 
-#include <vector>
 #include "camera.h"
-#include "shaders/shaders.h"
 
-#include "glm/glm.hpp"
-#include <GL/glew.h>
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
 
 class Skybox {
   public:

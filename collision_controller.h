@@ -1,27 +1,13 @@
 #ifndef ASSIGN3_COLLISION_CONTROLLER_H_
 #define ASSIGN3_COLLISION_CONTROLLER_H_
 
-#include <string>
-#include <vector>
-#include <cassert>
-#include <cstdlib>
 #include "camera.h"
 #include "terrain.h"
 #include "car.h"
 #include "roadsign.h"
 
-#include "constants.h"
-
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/gtx/vector_angle.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h> 
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
+#include "utils/constants.h"
 
 class CollisionController {
   public:

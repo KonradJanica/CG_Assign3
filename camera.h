@@ -15,31 +15,12 @@
 #ifndef ASSIGN3_CAMERA_H_
 #define ASSIGN3_CAMERA_H_
 
-#include <vector>
-#include <string>
-#include <cassert>
 #include "model_data.h"
 #include "model.h"
 #include "car.h"
-#include "shaders/shaders.h"
 
-#include "glm/glm.hpp"
-#include <GL/glew.h>
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-
-#define kPi 3.14159265358979323846
-#define k89DegreesToRadians 1.55334303
-
-#define M_PI 3.14159265358979323846
-#define DEG2RAD(x) ((x)*M_PI/180.0)
-#define RAD2DEG(x) ((x)*180.0/M_PI)
+#include "utils/includes.h"
+#include "utils/constants.h"
 
 class Camera {
   public:

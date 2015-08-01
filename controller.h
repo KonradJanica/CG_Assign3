@@ -1,10 +1,6 @@
 #ifndef ASSIGN3_CONTROLLER_H_
 #define ASSIGN3_CONTROLLER_H_
 
-#include <string>
-#include <vector>
-#include <cassert>
-#include <cstdlib>
 #include "model_data.h"
 #include "model.h"
 #include "camera.h"
@@ -18,22 +14,11 @@
 #include "npc_car_controller.h"
 #include "Skybox.h"
 #include "Water.h"
-#include "rain.h"
 
-#include "constants.h"
-
-#include "glm/glm.hpp"
-#include <GL/glew.h>
 #include "shaders/shader_compiler/shader.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/gtx/vector_angle.hpp"
 
-#ifdef __APPLE__
-#include <GLUT/glut.h> 
-#else
-#include <GL/glut.h>
-#endif
+#include "utils/includes.h"
+#include "utils/constants.h"
 
 class Controller {
   public:
@@ -107,8 +92,6 @@ class Controller {
     Skybox * skybox_;
     // The water object
     Water * water_;
-    // The rain object
-    Rain * rain_;
 
     bool playSound;
 

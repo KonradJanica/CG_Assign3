@@ -50,12 +50,13 @@ uniform vec3 mtl_diffuse;
 uniform vec3 mtl_specular;
 uniform float shininess;
 
-uniform samplerCube texMap;
+uniform sampler2D texMap;
 
 in vec4 a_vertex_mv;
 in vec3 a_normal_mv;
-out vec4 fragColour;
+in vec2 a_tex_coord;
 
+out vec4 fragColour;
 
 
 // lightDirection is the vector from the light source to the target point
@@ -137,8 +138,8 @@ void main(void) {
   // Refractive index of water
   // Water refractions
   float ratio = 1.00 / 1.33;
-  vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
-  vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
+  // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
+  // vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
 
   // Uncomment for water reflections
   // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
@@ -147,7 +148,7 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 1000;
+  int light_multiplier = 10;
   for (int i = 0; i < gNumPointLights; i++)
   {
     litColour += light_multiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
@@ -158,11 +159,12 @@ void main(void) {
     litColour += light_multiplier*calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
-  vec4 colour = litColour * texture(texMap, R);
+  // vec4 colour = litColour * texture(texMap, R);
+  vec4 colour = litColour * texture(texMap, a_tex_coord);
   // colour *= 0.2;
 
-  fragColour = mix(vec4(0.0,0.0,0.0,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
+  fragColour = mix(vec4(0.0,0.0,0.0,0.8), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
 
   // Set transparency
-  fragColour.a = 0.8;
+  // fragColour.a = 0.8;
 }
