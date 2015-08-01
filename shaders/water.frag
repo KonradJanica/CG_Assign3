@@ -124,8 +124,7 @@ float fogFactor(vec4 fogCoord, float begin, float end, float density)
   float fogZ = abs(fogCoord.z);
   float fogY = abs(fogCoord.y);
 
-  fogFac = exp(-pow(density*fogZ, 2.0)); 
-  
+  fogFac = exp(-pow(density*fogZ, 2.0));
 
   fogFac = clamp( fogFac, 0.0, 1.0 );
   return fogFac;
@@ -147,21 +146,23 @@ void main(void) {
   
 
   vec4 litColour = calcDirectionalLight(normal_mv);
+
+  int light_multiplier = 10;
   for (int i = 0; i < gNumPointLights; i++)
   {
-    litColour += calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
+    litColour += light_multiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
   }
 
   for (int i = 0; i < gNumSpotLights; i++)
   {
-    litColour += calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
+    litColour += light_multiplier*calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
   vec4 colour = litColour * texture(texMap, R);
+
+  fragColour = mix(vec4(0.0,0.0,0.0,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
+  fragColour *= 0.2;
+
   // Set transparency
-  colour.a = 0.8;
-
-  fragColour = mix(vec4(0.7,0.7,0.9,1.0), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
-
-
+  fragColour.a = 0.8;
 }

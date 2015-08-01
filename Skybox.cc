@@ -29,12 +29,20 @@ Skybox::Skybox(const Shader &shader) :
 		GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
 		GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
 	*/
-  faces.push_back("textures/morose_right.jpg"); // Left side of Cube
-  faces.push_back("textures/morose_left.jpg");	// Right side of Cube
-  faces.push_back("textures/morose_top.jpg");	// Top of cube
-  faces.push_back("textures/morose_top.jpg"); 		// Bottom of cube
-  faces.push_back("textures/morose_front.jpg"); // Front (side furthest from camera)
-  faces.push_back("textures/morose_back.jpg"); 	// Back (side closest to camera)
+
+  // faces.push_back("textures/morose_right.jpg"); // Left side of Cube
+  // faces.push_back("textures/morose_left.jpg");	// Right side of Cube
+  // faces.push_back("textures/morose_top.jpg");	// Top of cube
+  // faces.push_back("textures/morose_top.jpg"); 		// Bottom of cube
+  // faces.push_back("textures/morose_front.jpg"); // Front (side furthest from camera)
+  // faces.push_back("textures/morose_back.jpg"); 	// Back (side closest to camera)
+
+  faces.push_back("textures/skybox/night/left.bmp"); // Left side of Cube
+  faces.push_back("textures/skybox/night/right.bmp");	// Right side of Cube
+  faces.push_back("textures/skybox/night/top.bmp");	// Top of cube
+  faces.push_back("textures/skybox/night/bottom.bmp"); 		// Bottom of cube
+  faces.push_back("textures/skybox/night/front.bmp"); // Front (side furthest from camera)
+  faces.push_back("textures/skybox/night/back.bmp"); 	// Back (side closest to camera)
 
   // Load in the textures
   skybox_tex_ = loadCubeTex(faces);  
