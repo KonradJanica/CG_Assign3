@@ -7,6 +7,7 @@
 #include "roadsign.h"
 
 #include "utils/includes.h"
+#include "utils/helpers.h"
 #include "utils/constants.h"
 #include "utils/constants_physics.h"
 
@@ -110,20 +111,6 @@ class CollisionController {
 
     // TODO comment
     float colisn_anim_ticks_;
-
-    // COLLISION HELPERS
-    // Checks whether car is between boundary pair
-    //   Creates 4 triangles out of the 4 points of the given square and returns 
-    //   @param car, the car object (to find it's position)
-    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-    //   @return true if car is inside corner of rectangle
-    //   @warn input must be square for accurate results
-    bool IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp);
-    // Checks whether car is between a pair of points
-    //   @param car, the car vec3 (to find it's position)
-    //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-    //   @return true if car is within the points
-    bool IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp);
 
 };
 

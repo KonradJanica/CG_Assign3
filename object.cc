@@ -55,3 +55,20 @@ glm::vec3 Object::translation_left_side() const {
 
   return translation() + left;
 }
+
+// Accessor for the corners of the object's position
+std::vector<glm::vec2> Object::translation_corners() const {
+  std::vector<glm::vec2> corners;
+
+  float left = (this->GetMin(Model::kX) * scale_.x);
+  float right = (this->GetMax(Model::kX) * scale_.x);
+  float top = (this->GetMin(Model::kZ) * scale_.z);
+  float bottom = (this->GetMax(Model::kZ) * scale_.z);
+
+  corners.push_back(glm::vec2(left+translation().x, top+translation().z));
+  corners.push_back(glm::vec2(right+translation().x, top+translation().z));
+  corners.push_back(glm::vec2(left+translation().x, bottom+translation().z));
+  corners.push_back(glm::vec2(right+translation().x, bottom+translation().z));
+
+  return corners;
+}

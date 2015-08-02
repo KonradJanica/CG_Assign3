@@ -46,8 +46,11 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
       cc->UpdateCollisionsNPCReverse(c, terrain_, current_state);
     }
 
-    if (cc->dis() > 300.0f)
-      if (rand() % 10 < 3)
+    // if (x == 0)
+      // printf("dis[0] = %f\n", cc->dis());
+
+    if (cc->dis() > 100.0f)
+      if (rand() % 3)
         RespawnCar(c, x);
 
     cc->AutoDrive(c, delta_time);
@@ -71,9 +74,9 @@ void NpcCarController::DrawCars() const {
 Car * NpcCarController::AddCar(const std::string &model_filename) const {
   const Shader &shader = shaders_->LightMappedGeneric;
   Car * car = new Car(shader, model_filename,
-      glm::vec3(0.95f, 0.55f, 35.0f),     // Translation  move behind first tile (i.e. start on 2nd tile)
-      glm::vec3(0.0f,  0.0f, 0.0f),       // Rotation
-      glm::vec3(0.4f,  0.4f*1.6f, 0.4f),  // Scale
+      glm::vec3(1000.0f, 0.55f,    -1000.0f),  // Translation  move behind first tile (i.e. start on 2nd tile)
+      glm::vec3(0.0f,    0.0f,      0.0f),  // Rotation
+      glm::vec3(0.4f,    0.4f*1.6f, 0.4f),  // Scale
       60, false); // starting speed and debugging mode
 
   return car;
@@ -93,9 +96,20 @@ void NpcCarController::RespawnCar(Car * car, int car_index) {
     spawn_point = terrain_->colisn_boundary_pair_last();
     collision_controllers_[car_index]->Reset(false, terrain_);
   }
+
+  // Check for clipping through other cars
+  for (Car * c : cars_) {
+    if (c != car) {
+      if (helpers::IsInside(car->translation(),
+            c->translation_corners())) {
+        return;
+      }
+    }
+  }
+
   spawn_point.y = car->default_height();
   car->set_translation(spawn_point);
   
-  // printf("car bool = %d\n", random);
+  // printf("car respawn bool = %d\n", random);
   cars_direction_[car_index] = random;
 }

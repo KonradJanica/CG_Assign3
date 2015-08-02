@@ -287,58 +287,6 @@ kGameState CollisionController::CrashAnimationFall(
   return kGameState::kCrashingFall;
 }
 
-// Checks whether car is between the biggest rectangle than can be formed
-//   @param car, the car object (to find it's position)
-//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-// @return  true  if can is inside corner of rectangle
-// @warn input must be square for accurate results
-bool CollisionController::IsInside(const glm::vec3 &car, const std::pair<Terrain::boundary_pair,Terrain::boundary_pair> &bp) {
-  Terrain::boundary_pair curr = bp.first;
-  Terrain::boundary_pair next = bp.second;
-  glm::vec3 a = curr.first;
-  glm::vec3 b = curr.second;
-  glm::vec3 c = next.second;
-  glm::vec3 d = next.first;
-  glm::vec3 arr[] = {b,c,d};
-
-  float min_x = a.x, max_x = a.x;
-  float min_z = a.z, max_z = a.z;
-  for (int i = 0; i < 3; ++i) {
-    // Find max x bounding box
-    if (arr[i].x > max_x)
-      max_x = arr[i].x;
-    // Find min x bounding box
-    if (arr[i].x < min_x)
-      min_x = arr[i].x;
-    // Find max z bounding box
-    if (arr[i].z > max_z)
-      max_z = arr[i].z;
-    // Find min x bounding box
-    if (arr[i].z < min_z)
-      min_z = arr[i].z;
-  }
-
-  return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
-}
-
-// Checks whether car is between the biggest rectangle than can be formed
-//   @param car, the car vec3 (to find it's position)
-//   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
-//   @return  true  if can is inside corner of rectangle
-//   @warn input must be square for accurate results
-bool CollisionController::IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp) {
-  const glm::vec3 &a = bp.first;
-  const glm::vec3 &b = bp.second;
-
-  float dot_product = (car.x - a.x) * (b.x - a.x) + (car.z - a.z) * (b.z - a.z);
-  if (dot_product < 0)
-    return false;
-  float squared_dis = (b.x - a.x) * (b.x - a.x) + (b.z - a.z) * (b.z - a.z);
-  if (dot_product > squared_dis)
-    return false;
-
-  return true;
-}
 
 // TODO comment
 //   Also calculates the middle of the road and it's direction if game state is autodrive
@@ -411,7 +359,7 @@ kGameState CollisionController::UpdateCollisions(
   // Make boundary box the neighbours of current pair
 
   // Check if car is in range
-  if (IsInside(car, *closest_it)) {
+  if (helpers::IsInside(car, *closest_it)) {
     //inside bounds
     is_collision_ = false;
   } else {
@@ -539,7 +487,7 @@ kGameState CollisionController::UpdateCollisionsNPC(
   // Make boundary box the neighbours of current pair
 
   // Check if car is in range
-  // if (IsInside(car, *closest_it)) {
+  // if (helpers::IsInside(car, *closest_it)) {
   //   //inside bounds
   //   is_collision_ = false;
   // } else {
@@ -664,7 +612,7 @@ kGameState CollisionController::UpdateCollisionsNPCReverse(
   // Make boundary box the neighbours of current pair
 
   // Check if car is in range
-  // if (IsInside(car, *closest_it)) {
+  // if (helpers::IsInside(car, *closest_it)) {
   //   //inside bounds
   //   is_collision_ = false;
   // } else {

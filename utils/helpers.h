@@ -1,6 +1,8 @@
 #ifndef ASSIGN3_HELPERS_H_
 #define ASSIGN3_HELPERS_H_
 
+#include "includes.h"
+
 namespace helpers {
 
   // Creates a single texture pointer from file
@@ -42,6 +44,59 @@ namespace helpers {
     glBindTexture(GL_TEXTURE_2D, 0);
     return new_texture;
   }
+
+  // Checks whether car is between the biggest rectangle than can be formed
+  //   @param car, the car object (to find it's position)
+  //   @param arr, the array containing the corner points
+  // @return  true  if can is inside corner of rectangle
+  // @warn input must be square for accurate results
+  static bool IsInside(const glm::vec3 &car,
+      const std::vector<glm::vec2> &arr) {
+
+    if (arr.size() != 4)
+      return false;
+
+    // glm::vec3 arr[] = {b,c,d};
+
+    float min_x = arr[0].x, max_x = arr[0].x;
+    float min_z = arr[0].y, max_z = arr[0].y;
+    for (int i = 1; i < 3; ++i) {
+      // Find max x bounding box
+      if (arr[i].x > max_x)
+        max_x = arr[i].x;
+      // Find min x bounding box
+      if (arr[i].x < min_x)
+        min_x = arr[i].x;
+      // Find max z bounding box
+      if (arr[i].y > max_z)
+        max_z = arr[i].y;
+      // Find min x bounding box
+      if (arr[i].y < min_z)
+        min_z = arr[i].y;
+    }
+
+    return !(car.x < min_x || car.x > max_x || car.z < min_z || car.z > max_z);
+  }
+
+  // Checks whether car is between the biggest rectangle than can be formed
+  //   @param car, the car vec3 (to find it's position)
+  //   @param bp, 2x pairs (ie. 2x2 points), each pair is the horizontal bound
+  //   @return  true  if can is inside corner of rectangle
+  //   @warn input must be square for accurate results
+  static bool IsInside(const glm::vec3 &car, const std::pair<glm::vec3,glm::vec3> &bp) {
+    const glm::vec3 &a = bp.first;
+    const glm::vec3 &b = bp.second;
+
+    float dot_product = (car.x - a.x) * (b.x - a.x) + (car.z - a.z) * (b.z - a.z);
+    if (dot_product < 0)
+      return false;
+    float squared_dis = (b.x - a.x) * (b.x - a.x) + (b.z - a.z) * (b.z - a.z);
+    if (dot_product > squared_dis)
+      return false;
+
+    return true;
+  }
+
 }
 
 #endif

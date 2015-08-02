@@ -30,6 +30,8 @@ class Object : public Model {
     // ACCESSORS:
     // Accessor for the left-most side of the object's position
     glm::vec3 translation_left_side() const;
+    // Accessor for the corners of the object's position
+    std::vector<glm::vec2> translation_corners() const;
     // Accessor for the current model matrix
     inline glm::mat4 model_matrix() const;
     // Accessor for the position vector
