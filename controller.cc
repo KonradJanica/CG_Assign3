@@ -207,9 +207,9 @@ void Controller::UpdateGame() {
   }
   car_->UpdateModelMatrix();
 
-  UpdateCamera();
-
   npc_car_controller_.UpdateCars(delta_time_, game_state_);
+
+  UpdateCamera();
 
   if (game_state_ == kCrashingFall) {
     // delta_time_ /= 5; //slowmo
