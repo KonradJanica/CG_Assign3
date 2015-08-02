@@ -4,6 +4,7 @@
 #include "object.h"
 
 #include "utils/includes.h"
+#include "utils/constants_physics.h"
 
 // Car contains a model and object by inhertiance
 //  Adds extra methods and members to control matrix transformations

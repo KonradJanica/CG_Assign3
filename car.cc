@@ -55,8 +55,6 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   const float BRAKINGFORCE = ENGINEFORCE * 5; //newtons
   const float AIRRESSISTANCE = 0.4257;  //proportional constant
   const float FRICTION = AIRRESSISTANCE * 30;
-  const float SPEEDSCALE = 5; //the conversions from real speed to game movement
-  // WARN speedscale = 5 breaks tiling (7 seems to work)
   const float WEIGHT = MASS * 9.8; // m * g
   const float LENGTH = 4.8; //metres  length of car
   const float HEIGHT = 0.7; //metres  height of CG (centre of gravity)
@@ -242,8 +240,8 @@ void Car::ControllerMovementTick(float delta_time_in, const std::vector<bool> &i
   }
   // convert speed to game world speed
   // TODO put into separate constants class
-  velocity_x_ /= SPEEDSCALE;
-  velocity_z_ /= SPEEDSCALE;
+  velocity_x_ /= kSpeedScale;
+  velocity_z_ /= kSpeedScale;
 
   // CALCULATE NEW POSITION => p = p+dt*v
   glm::vec3 new_translation = translation();
@@ -267,9 +265,6 @@ void Car::ControllerMovementTick(float delta_time_in) {
   //   Currently ticks per milisecond
   const float delta_time = delta_time_in / 1000;
 
-  // CONSTANTS
-  const float SPEEDSCALE = 10; //the conversions from real speed to game movement
-
   // SETUP VARS
   // The current velocity vector
   float direction_x = direction().x;
@@ -281,8 +276,8 @@ void Car::ControllerMovementTick(float delta_time_in) {
     printf("speed = %f\n", speed_);
   }
   // convert speed to game world speed
-  velocity_x_ /= SPEEDSCALE;
-  velocity_z_ /= SPEEDSCALE;
+  velocity_x_ /= kSpeedScale;
+  velocity_z_ /= kSpeedScale;
 
   // CALCULATE NEW POSITION => p = p+dt*v
   glm::vec3 new_translation = translation();
