@@ -132,7 +132,7 @@ inline void CollisionController::decrement_vector_index() {
 //   @param  terrain     Used to find the last index of colisn vector
 inline void CollisionController::Reset(bool is_forward, const Terrain * terrain) {
   is_collision_ = false;
-  road_y_rotation_ = 0;
+  road_y_rotation_ = 90;
   if (is_forward) {
     prev_colisn_pair_idx_ = 0;
     prev_colisn_pair_container_idx_ = terrain->colisn_boundary_pairs()->size()-1;
