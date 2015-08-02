@@ -40,6 +40,8 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     Car * c = cars_[x];
     CollisionController * cc = collision_controllers_[x];
 
+    cc->AutoDrive(c, delta_time);
+
     if (cars_direction_[x]) {
       cc->UpdateCollisionsNPC(c, terrain_, current_state);
     } else {
@@ -52,8 +54,6 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     if (cc->dis() > 5.0f)
       if (rand() % 3)
         RespawnCar(c, x);
-
-    cc->AutoDrive(c, delta_time);
 
     c->UpdateModelMatrix();
   }
