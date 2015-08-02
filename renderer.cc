@@ -113,15 +113,18 @@ void Renderer::RenderSkybox(const Skybox * Sky, const Camera &camera) const {
 //   Should be called in the render loop
 //   @param Object * object, an object to render
 //   @param Camera * camera, a camera to build mvp matrices
+//   @param bool,  whether or not to do blending
 //   @warn this function is not responsible for NULL PTRs
 //   @warn uses camera pointer for view matrix
-void Renderer::Render(const Object * object, const Camera &camera) const {
+void Renderer::Render(const Object * object, const Camera &camera, const bool is_blend) const {
   const Shader * shader = object->shader();
   glUseProgram(shader->Id);
 
   glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND); // For windshield
-  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  if (is_blend) {
+    glEnable(GL_BLEND); // For windshield
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  }
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -264,8 +267,10 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
   // glLineWidth(1.0f);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glEnable(GL_LINE_SMOOTH);
-  glEnable(GL_POINT_SMOOTH);
+
+  // Anti-aliasing (remember to disable at bottom)
+  // glEnable(GL_LINE_SMOOTH);
+  // glEnable(GL_POINT_SMOOTH);
 
   const glm::mat4 &PROJECTION = camera.projection_matrix();
   const glm::mat4 VIEW = camera.view_matrix();
@@ -361,6 +366,6 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
   // Un-bind
   glBindVertexArray(0);
-  glDisable(GL_LINE_SMOOTH);
-  glDisable(GL_POINT_SMOOTH);
+  // glDisable(GL_LINE_SMOOTH);
+  // glDisable(GL_POINT_SMOOTH);
 }

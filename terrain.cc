@@ -780,18 +780,15 @@ void Terrain::HelperMakeVertices(const RoadType road_type, const TileType tile_t
           zPosition + next_tile_start_.y);
     }
   }
-  // Water or Terrain
-  switch(tile_type) {
-    case kTerrain:
-      const glm::vec3 &pivot_end = vertices_.at(pivot_x + (z_length_-1)*x_length_);
-      // Set next z position
-      next_tile_start_.y = pivot_end.z;
 
-      // Calculate next_tile_start_.x position (next X tile position)
-      float displacement_x = pivot_end.x - pivot.x;
-      next_tile_start_.x += displacement_x;
-      break;
-  }
+  const glm::vec3 &pivot_end = vertices_.at(pivot_x + (z_length_-1)*x_length_);
+  // Set next z position
+  next_tile_start_.y = pivot_end.z;
+
+  // Calculate next_tile_start_.x position (next X tile position)
+  float displacement_x = pivot_end.x - pivot.x;
+  next_tile_start_.x += displacement_x;
+
   switch(road_type) {
     case kTurnLeft:
       {
@@ -1013,7 +1010,11 @@ void Terrain::HelperMakeRoadCollisionMap() {
     min_max_x_pair.first = left; // left? side vertices
     min_max_x_pair.second = right; // other side vertices
 
-    tile_map.push_back(min_max_x_pair);
+    // Autodrive right turn stutter fix
+    //   Higher values than 0.3f drive better but cause inaccurate collisions
+    //   on left side
+    if (glm::distance(min_max_x_pair.second, tile_map.back().second) > 0.3f)
+      tile_map.push_back(min_max_x_pair);
   }
 
   colisn_boundary_pairs_.push_back(tile_map);

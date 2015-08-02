@@ -64,7 +64,7 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
 // Render all roadsigns
 void NpcCarController::DrawCars() const {
   for (Car * c : cars_) {
-    renderer_->Render(c, *camera_);
+    renderer_->Render(c, *camera_, false);
   }
 }
 

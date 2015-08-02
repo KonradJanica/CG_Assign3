@@ -22,7 +22,8 @@ class Renderer {
     // Draws/Renders the passed in objects (with their models) to the scene
     //   @param Object * object, an object to render
     //   @param Camera * camera, a camera to build mvp matrices
-    void Render(const Object * object, const Camera &camera) const;
+    //   @param bool,  whether or not to do blending
+    void Render(const Object * object, const Camera &camera, const bool is_blend = true) const;
     // Draws/Renders the passed in terrain to the scene
     //   @param Terrain * terrain, a terrain (cliffs/roads) to render
     //   @param Camera * camera, a camera to build mvp matrices
