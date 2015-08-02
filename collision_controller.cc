@@ -32,7 +32,7 @@ kGameState CollisionController::CrashAnimationCliff(
   // Calc next movement (avoid going through)
   glm::vec3 dir = car_->direction();
   float dt = delta_time_ / 1000;
-  float scale = 10.0f;
+  float scale = kSpeedScale;
   // Move car in its direction
   float vel_x = dir.x * car_->speed();
   vel_x += car_->centripeta_velocity_x();
@@ -44,7 +44,7 @@ kGameState CollisionController::CrashAnimationCliff(
   vel_z /= scale;
   float z_pos = car_pos.z;
   z_pos += vel_z * dt;
-  float y_pos = car_pos.y + dir.y * car_->speed()/10.0f*dt;
+  float y_pos = car_pos.y + dir.y * car_->speed()/kSpeedScale*dt;
   if (y_pos < 0.3f)
     y_pos = 0.3f;
 
@@ -135,16 +135,16 @@ kGameState CollisionController::CrashAnimationCliff(
     float dt = delta_time_ / 1000;
     // glm::vec3 cliff_dir = closest_vertice - snd_clst_vertice;
     glm::vec3 cliff_dir = road_direction_;
-    float velocity_x = road_direction_.x * car_->speed()/10.0f*dt;
-    float velocity_z = road_direction_.z * car_->speed()/10.0f*dt;
-    velocity_x = cliff_dir.x * car_->speed()/10.0f*dt;
-    velocity_z = cliff_dir.z * car_->speed()/10.0f*dt;
+    float velocity_x = road_direction_.x * car_->speed()/kSpeedScale*dt;
+    float velocity_z = road_direction_.z * car_->speed()/kSpeedScale*dt;
+    velocity_x = cliff_dir.x * car_->speed()/kSpeedScale*dt;
+    velocity_z = cliff_dir.z * car_->speed()/kSpeedScale*dt;
     float x_pos = car_->translation().x + velocity_x;
     float y_pos = car_->translation().y - dir.y * car_->speed()/30.0f*dt;
     float z_pos = car_->translation().z + velocity_z;
     car_->set_translation(glm::vec3(x_pos, y_pos, z_pos));
-    if (car_->speed() > 10.0f) {
-      car_->ReduceSpeed(car_->speed() * car_->speed()/10.0f*dt);
+    if (car_->speed() > kSpeedScale) {
+      car_->ReduceSpeed(car_->speed() * car_->speed()/kSpeedScale*dt);
       car_->ReduceCentriVelocity(0); //0 side speed
     } else {
       car_->ReduceSpeed(car_->speed()); //0 speed
@@ -202,13 +202,13 @@ kGameState CollisionController::CrashAnimationFall(
   // TODO make member in object for this
   glm::vec3 dir = car_->direction();
   float dt = delta_time_ / 1000;
-  float scale = 10.0f;
+  float scale = kSpeedScale;
   float vel_x = dir.x * car_->speed();
   vel_x += car_->centripeta_velocity_x();
   vel_x /= scale;
   float x_pos = car_->translation().x;
   x_pos += vel_x * dt;
-  float y_pos = car_->translation().y + dir.y * car_->speed()/10.0f*dt;
+  float y_pos = car_->translation().y + dir.y * car_->speed()/kSpeedScale*dt;
   float vel_z = dir.z * car_->speed();
   vel_z += car_->centripeta_velocity_z();
   vel_z /= scale;
@@ -741,9 +741,9 @@ void CollisionController::AutoDrive(Car * car, float delta_time) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      const float x_pos = car->translation().x + road_direction_.x * car->speed()/10.0f*dt;
+      const float x_pos = car->translation().x + road_direction_.x * car->speed() / kSpeedScale * dt;
       const float y_pos = car->translation().y;
-      const float z_pos = car->translation().z + road_direction_.z * car->speed()/10.0f*dt;
+      const float z_pos = car->translation().z + road_direction_.z * car->speed() / kSpeedScale * dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     } else {
       glm::vec3 next_pt_dir = left_lane_midpoint_ - car->translation();
@@ -751,9 +751,9 @@ void CollisionController::AutoDrive(Car * car, float delta_time) {
       // These position updates are from object movement tick
       //   i.e. p = p + dt*v, v /= SPEEDSCALE, v = speed * direction;
       // TODO put constants somewhere
-      const float x_pos = car->translation().x + next_pt_dir.x * car->speed()/10.0f*dt;
+      const float x_pos = car->translation().x + next_pt_dir.x * car->speed()/kSpeedScale*dt;
       const float y_pos = car->translation().y;
-      const float z_pos = car->translation().z + next_pt_dir.z * car->speed()/10.0f*dt;
+      const float z_pos = car->translation().z + next_pt_dir.z * car->speed()/kSpeedScale*dt;
       car->set_translation(glm::vec3(x_pos, y_pos, z_pos));
     }
     prev_left_lane_midpoint_ = left_lane_midpoint_;
