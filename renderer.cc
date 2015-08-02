@@ -52,7 +52,7 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
 
     const glm::vec3 center = (*tile_centers)[x];
     const glm::mat4 tile_translate = glm::translate(glm::mat4(1.0f),
-        glm::vec3(center.x, -2.0f, center.z));
+        glm::vec3(center.x, -2.5f, center.z));
 
     const glm::mat4 &VIEW = camera.view_matrix();
     // Make MVP
