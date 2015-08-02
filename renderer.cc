@@ -18,8 +18,7 @@ Renderer::Renderer(const bool debug_flag) :
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Object* object,
-    const Skybox * Sky, const Camera &camera) const {
+void Renderer::RenderWater(const Water * water, const Camera &camera) const {
   // Get and setup shader
   const Shader &shader = water->shader();
   glUseProgram(shader.Id);
@@ -30,23 +29,18 @@ void Renderer::RenderWater(const Water * water, const Object* object,
   // Cull Appropriately
   glCullFace(GL_FRONT);
 
-  // Get only the needed components of the object's model matrix
-  // Translation to put water where car is
-  // Y component is fixed at -3.0f so that it does not follow car falling down
-  glm::mat4 object_translate = glm::translate(glm::mat4(1.0f),
-      glm::vec3(object->translation().x, -3.0f, object->translation().z));
-
   // Translate to reposition the origin of the water
   const float water_translate_x = water->width() / 2;
   const float water_translate_z = water->height() / 2;
-  const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
+  // const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
+  const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, -1.0f, -water_translate_z));
 
   // const float mtlshininess = 1000000;
   // glUniform1fv(shader.shininessHandle, 1, &mtlshininess);
 
   const glm::mat4 &VIEW = camera.view_matrix();
   // Make MVP
-  const glm::mat4 MODEL = object_translate * water_translate;
+  const glm::mat4 MODEL = water_translate;
   const glm::mat4 MODELVIEW = VIEW * MODEL;
   // Make NORMAL
   const glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(MODELVIEW)));

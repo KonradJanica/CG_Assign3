@@ -34,7 +34,7 @@ class Renderer {
     //   @return a VAO to use for the Axis
     GLuint EnableAxis() const;
 
-    void RenderWater(const Water * water, const Object * object, const Skybox * Sky, const Camera &camera) const;
+    void RenderWater(const Water * water, const Camera &camera) const;
 
     void RenderSkybox(const Skybox * Sky, const Camera &camera) const;
 

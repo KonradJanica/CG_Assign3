@@ -71,7 +71,7 @@ void Controller::Draw() {
   // Ordering of renderering is very important due to transparency
   renderer_.RenderSkybox(skybox_, camera_);
   // Water
-  renderer_.RenderWater(water_, car_, skybox_, camera_);
+  renderer_.RenderWater(water_, camera_);
   // Terrain
   renderer_.Render(terrain_, camera_);
   // Road-signs
