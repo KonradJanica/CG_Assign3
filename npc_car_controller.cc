@@ -49,7 +49,7 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     // if (x == 0)
       // printf("dis[0] = %f\n", cc->dis());
 
-    if (cc->dis() > 100.0f)
+    if (cc->dis() > 5.0f)
       if (rand() % 3)
         RespawnCar(c, x);
 
