@@ -40,14 +40,14 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
 
     // Textures
     glActiveTexture(GL_TEXTURE0);
-    texture_ = helpers::LoadTexture("textures/rock01.jpg");
-    road_texture_ = helpers::LoadTexture("textures/road.jpg");
+    texture_ = helpers::LoadTexture("textures/terrain/moss-texture.jpg");
+    road_texture_ = helpers::LoadTexture("textures/terrain/road.jpg");
 
     glActiveTexture(GL_TEXTURE1);
-    cliff_bump_ = helpers::LoadTexture("textures/rock01_NRM.jpg");
+    cliff_bump_ = helpers::LoadTexture("textures/terrain/rock01_NRM.jpg");
 
     glActiveTexture(GL_TEXTURE2);
-    road_bump_ =  helpers::LoadTexture("textures/lichen.jpg");
+    road_bump_ =  helpers::LoadTexture("textures/terrain/lichen.jpg");
 
     //  Road Normals only have to be generated once
     //    because the surface is relatively flat
