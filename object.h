@@ -28,6 +28,8 @@ class Object : public Model {
     glm::vec3 direction() const;
 
     // ACCESSORS:
+    // Accessor for the left-most side of the object's position
+    glm::vec3 translation_left_side() const;
     // Accessor for the current model matrix
     inline glm::mat4 model_matrix() const;
     // Accessor for the position vector

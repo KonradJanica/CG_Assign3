@@ -45,3 +45,13 @@ glm::vec3 Object::direction() const {
   direction = glm::normalize(direction);
   return direction;
 }
+
+// Accessor for the left-most side of the object's position
+glm::vec3 Object::translation_left_side() const {
+  glm::vec3 left = glm::cross(direction(), glm::vec3(0,1,0));
+
+  // Left displacement is half of scaled model min X
+  left *= (this->GetMin(Model::kX) * scale_.x) / 2.0f;
+
+  return translation() + left;
+}

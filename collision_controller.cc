@@ -345,7 +345,7 @@ kGameState CollisionController::UpdateCollisions(
     kGameState current_state) {
   // Setup vars
   const circular_vector<Terrain::colisn_vec> * col = terrain_->colisn_boundary_pairs();
-  const glm::vec3 &car = car_->translation();
+  const glm::vec3 &car = car_->translation_left_side();
   const Terrain::colisn_vec &head = (*col)[prev_colisn_pair_container_idx_];
   Terrain::colisn_vec::const_iterator it = head.begin()+prev_colisn_pair_idx_;
 
