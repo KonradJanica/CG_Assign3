@@ -162,7 +162,6 @@ void Terrain::RandomizeGeneration(const bool is_start) {
 //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
-//   @note  Also updates tiles_center
 void Terrain::GenerateStartingTerrain(RoadType road_type) {
   HelperMakeHeights(0, kRandomIterations);
   HelperMakeSmoothHeights(true);
@@ -196,7 +195,6 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
 //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
-//   @note  Also updates tiles_center
 void Terrain::GenerateTerrain(RoadType road_type) {
   if (generated_ticks_ < kHeightGenerationTicks
       && generated_ticks_ >= 0) {
@@ -1112,6 +1110,7 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
 //   Also stores created VBOs to allow deleting the reference
 //   @param  tile_type  An enum representing the proper members to use
 //   @return vao_handle, the vao handle
+//   @note  Also updates tiles_center
 GLuint Terrain::CreateVao(TileType tile_type) {
   GLuint vao;
   // Create storage pair (for freeing buffer)

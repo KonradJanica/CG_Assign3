@@ -327,7 +327,7 @@ void Renderer::Render(const Terrain * terrain, const Camera &camera) const {
 
   // Bind VAO and texture - Terrain
   const circular_vector<unsigned int> * terrain_vao_handle = terrain->terrain_vao_handle();
-  for (unsigned int x = 0; x < terrain_vao_handle->size(); ++x) {
+  for (unsigned int x = 2; x < terrain_vao_handle->size(); ++x) {
     // Populate Shader
     glBindVertexArray((*terrain_vao_handle)[x]);
     // glBindAttribLocation(shader->Id, shader->vertLoc, "a_vertex");
