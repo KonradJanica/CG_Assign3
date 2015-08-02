@@ -37,7 +37,7 @@ Terrain::Terrain(const Shader & shader, const int width, const int height) :
     x_cliff_position_ = center_right_x, z_cliff_position_ = center_z;
     // Reserve space (required to ensure default iterators are not invalidated)
     colisn_boundary_pairs_.reserve(10);
-
+    
     // Textures
     glActiveTexture(GL_TEXTURE0);
     texture_ = helpers::LoadTexture("textures/terrain/moss-texture.jpg");
@@ -93,6 +93,8 @@ void Terrain::ProceedTiles() {
   glDeleteVertexArrays(1, &road_vao_handle_[0]);
   terrain_vao_handle_.pop_front();
   road_vao_handle_.pop_front();
+  // for tile center
+  tile_centers_.pop_front();
 
   // Reset generation state
   generated_ticks_ = 0;
@@ -160,6 +162,7 @@ void Terrain::RandomizeGeneration(const bool is_start) {
 //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
+//   @note  Also updates tiles_center
 void Terrain::GenerateStartingTerrain(RoadType road_type) {
   HelperMakeHeights(0, kRandomIterations);
   HelperMakeSmoothHeights(true);
@@ -184,7 +187,6 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
   terrain_vao_handle_.push_back(terrain_vao);
   GLuint road_vao = CreateVao(kRoad);
   road_vao_handle_.push_back(road_vao);
-
 }
 
 // Generate Terrain tile piece with road
@@ -194,6 +196,7 @@ void Terrain::GenerateStartingTerrain(RoadType road_type) {
 //   @param The tile type to generate e.g. kStraight, kTurnLeft etc.
 //   @warn creates and pushes back a road VAO based on the terrain middle section
 //   @warn pushes next road collision map into member queue
+//   @note  Also updates tiles_center
 void Terrain::GenerateTerrain(RoadType road_type) {
   if (generated_ticks_ < kHeightGenerationTicks
       && generated_ticks_ >= 0) {
@@ -1101,6 +1104,7 @@ GLuint Terrain::CreateVao(const std::vector<glm::vec3> &vertices, const std::vec
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
   return VAO_handle;
 }
 
@@ -1117,9 +1121,12 @@ GLuint Terrain::CreateVao(TileType tile_type) {
       vao = CreateVao(vertices_, normals_, terrain_vbo_uv_indices_, terrain_vbo_handle_);
       break;
     case kRoad:
+      // Populate tile centers
+      tile_centers_.push_back(vertices_road_.front());
       vao = CreateVao(vertices_road_, normals_road_, road_vbo_uv_indices_, road_vbo_handle_);
       break;
   }
+
   return vao;
 }
 

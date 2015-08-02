@@ -18,7 +18,7 @@ Renderer::Renderer(const bool debug_flag) :
 //   Should be called in the controller
 //   @param Water * water, the skybox to render
 //   @warn this function is not responsible for NULL PTRs
-void Renderer::RenderWater(const Water * water, const Camera &camera) const {
+void Renderer::Render(const Water * water, const Terrain * terrain, const Camera &camera) const {
   // Get and setup shader
   const Shader &shader = water->shader();
   glUseProgram(shader.Id);
@@ -32,40 +32,43 @@ void Renderer::RenderWater(const Water * water, const Camera &camera) const {
   // Translate to reposition the origin of the water
   const float water_translate_x = water->width() / 2;
   const float water_translate_z = water->height() / 2;
-  // const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
-  const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, -1.0f, -water_translate_z));
+  const glm::mat4 water_translate = glm::translate(glm::mat4(1.0f), glm::vec3(-water_translate_x, 0.0f, -water_translate_z));
 
   // const float mtlshininess = 1000000;
   // glUniform1fv(shader.shininessHandle, 1, &mtlshininess);
-
-  const glm::mat4 &VIEW = camera.view_matrix();
-  // Make MVP
-  const glm::mat4 MODEL = water_translate;
-  const glm::mat4 MODELVIEW = VIEW * MODEL;
-  // Make NORMAL
-  const glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(MODELVIEW)));
-
-  // Send Uniforms
-  glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(MODELVIEW));
-  glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
-
-  // Send the cubemap (for reflections)
-  // glActiveTexture(GL_TEXTURE0);
-  // glBindTexture(GL_TEXTURE_CUBE_MAP, Sky->skyboxtex());
-  // glUniform1i(shader.texMapHandle, 0);
-
+  //
   glActiveTexture(GL_TEXTURE0);
   glUniform1i(shader.texMapHandle, 0);
   glBindTexture(GL_TEXTURE_2D, water->water_texture());
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);	
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);	
 
-  // Render the Skybox
+  // Bind VAO
   glBindVertexArray(water->watervao());
 
-  // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
-  glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
-  // glDisable(GL_BLEND);
+  // Bind VAO and texture - Terrain TODO
+  const circular_vector<glm::vec3> tile_centers = terrain->tile_centers();
+  for (unsigned int x = 2; x < tile_centers.size(); ++x) {
+
+    const glm::vec3 center = tile_centers[x];
+    const glm::mat4 tile_translate = glm::translate(glm::mat4(1.0f),
+        glm::vec3(center.x, -1.0f, center.z));
+
+    const glm::mat4 &VIEW = camera.view_matrix();
+    // Make MVP
+    const glm::mat4 MODEL = tile_translate * water_translate;
+    const glm::mat4 MODELVIEW = VIEW * MODEL;
+    // Make NORMAL
+    const glm::mat3 NORMAL = glm::transpose(glm::inverse(glm::mat3(MODELVIEW)));
+
+    // Send Uniforms
+    glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(MODELVIEW));
+    glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
+
+    // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
+    glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
+    // glDisable(GL_BLEND);
+  }
 
   // Unbind
   glBindVertexArray(0);

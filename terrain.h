@@ -74,6 +74,8 @@ class Terrain {
     // Accessor for the turn type for tile at index
     //   Used for road sign type spawn decision
     inline const circular_vector<RoadType> * tile_turn() const;
+    // Accessor for the center of each terrain tile
+    inline const circular_vector<glm::vec3> tile_centers() const;
     // Pops the first collision map
     //   To be used after car has passed road tile
     void colisn_pop();
@@ -168,6 +170,12 @@ class Terrain {
 
     // Road Sign Vars
     circular_vector<RoadType> tile_turn_;
+
+    // The center of all the terrain tiles
+    //   The index corresponds to the appropriate tile
+    //   Is updated in createVAO
+    //   And popped in proceedTiles
+    circular_vector<glm::vec3> tile_centers_;
 
     // GENERATE TERRAIN VARS
     // Vertices to be generated for next terrain (or water) tile
@@ -394,6 +402,10 @@ inline const circular_vector<std::vector<glm::vec3> > * Terrain::colisn_lst_clif
 //   Used for road sign type spawn decision
 inline const circular_vector<Terrain::RoadType> * Terrain::tile_turn() const {
   return &tile_turn_;
+}
+// Accessor for the center of each terrain tile
+inline const circular_vector<glm::vec3> Terrain::tile_centers() const {
+  return tile_centers_;
 }
 
 #endif
