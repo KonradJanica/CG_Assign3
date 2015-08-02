@@ -47,10 +47,10 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
   glBindVertexArray(water->watervao());
 
   // Bind VAO and texture - Terrain TODO
-  const circular_vector<glm::vec3> tile_centers = terrain->tile_centers();
-  for (unsigned int x = 2; x < tile_centers.size(); ++x) {
+  const circular_vector<glm::vec3> * tile_centers = terrain->tile_centers();
+  for (unsigned int x = 2; x < tile_centers->size(); ++x) {
 
-    const glm::vec3 center = tile_centers[x];
+    const glm::vec3 center = (*tile_centers)[x];
     const glm::mat4 tile_translate = glm::translate(glm::mat4(1.0f),
         glm::vec3(center.x, -1.0f, center.z));
 
