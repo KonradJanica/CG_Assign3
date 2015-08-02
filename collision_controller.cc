@@ -211,14 +211,18 @@ kGameState CollisionController::CrashAnimationFall(
   float z_pos = car_->translation().z;
   z_pos += vel_z * dt;
 
+  glm::vec3 car_left_side = car_->translation_left_side();
+  float x_pos_left = car_left_side.x;
+  float z_pos_left = car_left_side.z;
+
   typedef Terrain::anim_vec w_vec;
   typedef Terrain::anim_container w_list;
   const w_list * water = terrain_->colisn_lst_water();
   const w_list * cliff = terrain_->colisn_lst_cliff();
   glm::vec3 closest_vertice = cliff->begin()->at(0);
   glm::vec3 snd_clst_vertice = cliff->begin()->at(1);
-  float dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos,z_pos));
-  float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos,z_pos));
+  float dis = glm::distance(glm::vec2(closest_vertice.x,closest_vertice.z),glm::vec2(x_pos_left,z_pos_left));
+  float snd_dis = glm::distance(glm::vec2(snd_clst_vertice.x,snd_clst_vertice.z),glm::vec2(x_pos_left,z_pos_left));
 
   w_list::const_iterator it = water->begin();
   for (unsigned int i = 0; i < 2; ++i) {
