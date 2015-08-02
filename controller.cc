@@ -168,7 +168,7 @@ void Controller::PositionLights() {
       brakeLight.Attenuation.Linear = 2.0f;
       brakeLight.Attenuation.Exp = 3.0f;
 
-      if (is_key_pressed_hash_.at('s')) {
+      if (carIdx == -1 && is_key_pressed_hash_.at('s')) {
         brakeLight.Attenuation.Constant = 0.00001f;
         brakeLight.Attenuation.Linear = 0.5f;
         brakeLight.Attenuation.Exp = 3.0f;
@@ -194,7 +194,7 @@ void Controller::PositionLights() {
       headlight.Attenuation.Linear = 0.01f;
       headlight.Attenuation.Exp = 0.01f;
       
-      if (is_key_pressed_hash_.at('r')) {
+      if (carIdx == -1 && is_key_pressed_hash_.at('r')) {
         headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
         headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
       }
