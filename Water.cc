@@ -206,8 +206,8 @@ unsigned int Water::CreateVao()
 void Water::GenerateMesh()
 {
   // Define vertex data
-  plane_width_ = 50;      // amount of columns
-  plane_height_ = 50;     // amount of rows
+  plane_width_ = 60;      // amount of columns
+  plane_height_ = 60;     // amount of rows
   int total_vertices = (plane_width_ + 1) * (plane_height_ + 1);
   vertices_ = new float[ total_vertices * 3];
   water_num_vertices_ = total_vertices;
