@@ -143,7 +143,7 @@ void Controller::PositionLights() {
       headlight.CosineCutoff = cos(DEG2RAD(30.0f));
       headlight.Attenuation.Constant = 0.3f;
       headlight.Attenuation.Linear = 0.01f;
-      headlight.Attenuation.Exp = 0.01f;
+      headlight.Attenuation.Exp = 0.10f;
       
       if (is_key_pressed_hash_.at('r')) {
         headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
