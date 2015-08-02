@@ -60,7 +60,7 @@ Water::Water(const Shader &shader) :
     char uniformName[256];
     memset(uniformName, 0, sizeof(uniformName));
 
-    float amplitude = 0.3f / (i + 1);
+    float amplitude = 0.8f / (i + 1);
     //printf("amplitude[%d] = %f \n", i, amplitude);
     snprintf(uniformName, sizeof(uniformName), "amplitude[%d]", i);
     int amplitudeHandle = glGetUniformLocation(shader_.Id, uniformName);
@@ -72,7 +72,7 @@ Water::Water(const Shader &shader) :
     glUniform1f(amplitudeHandle, amplitude * 5.0);
 
 
-    float wavelength = 5 * M_PI / (i + 1);
+    float wavelength = (rand() % 4+8) * M_PI / (i + 1);
     //printf("wavelength[%d] = %f \n", i, wavelength);
     snprintf(uniformName, sizeof(uniformName), "wavelength[%d]", i);
     int wavelengthHandle = glGetUniformLocation(shader_.Id, uniformName);
@@ -84,7 +84,7 @@ Water::Water(const Shader &shader) :
     glUniform1f(wavelengthHandle, wavelength * 2.0);   
 
 
-    float speed = 4.5f + 2*i;
+    float speed = (rand() % 4+10.5f) + 2*i;
     //printf("speed[%d] = %f \n", i, speed);
     snprintf(uniformName, sizeof(uniformName), "speed[%d]", i);
     int speedHandle = glGetUniformLocation(shader_.Id, uniformName);
@@ -94,8 +94,9 @@ Water::Water(const Shader &shader) :
     }
     glUniform1f(speedHandle, speed * 2.0);
   
-    float angle = distr(eng);
-    angle = 3.14 - 3.14 / 7.0;
+    // float angle = distr(eng);
+    // Starting from right to close left (shore waves)
+    float angle = 3.14 - 3.14 / (rand() % 2 + 7.0);
     //printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
     snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
     int directionHandle = glGetUniformLocation(shader_.Id, uniformName);
