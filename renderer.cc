@@ -25,7 +25,7 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
 
   // Setup rendering options
   // glEnable(GL_BLEND);
-  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  // glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   // Cull Appropriately
   glCullFace(GL_FRONT);
 
@@ -65,7 +65,6 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
     glUniformMatrix4fv(shader.mvHandle, 1, false, glm::value_ptr(MODELVIEW));
     glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
-    // MITCH - TODO COnsider changing this to triangles, whichever gives most FPS
     glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
     // glDisable(GL_BLEND);
   }
