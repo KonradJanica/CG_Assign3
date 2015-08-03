@@ -94,9 +94,9 @@ Water::Water(const Shader &shader) :
     }
     glUniform1f(speedHandle, speed * 2.0);
   
-    // float angle = distr(eng);
+    float angle = distr(eng);
     // Starting from right to close left (shore waves)
-    float angle = 3.14 - 3.14 / (rand() % 2 + 7.0);
+    // float angle = 3.14 - 3.14 / (rand() % 2 + 7.0);
     //printf("angle[%d] = cos(%f), sin(%f) \n", i, cos(angle), sin(angle));
     snprintf(uniformName, sizeof(uniformName), "direction[%d]", i);
     int directionHandle = glGetUniformLocation(shader_.Id, uniformName);
@@ -104,7 +104,7 @@ Water::Water(const Shader &shader) :
     {
       fprintf(stderr,"Could not find uniform: direction[%d] In: Water - Constructor\n This may cause unexpected behaviour in the program\n", i);
     }
-    glUniform2f(directionHandle, cos(angle), sin(angle));
+    glUniform2f(directionHandle, sin(angle), cos(angle));
     
   }
 
