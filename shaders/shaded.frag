@@ -187,7 +187,8 @@ void main(void) {
     litColour = mix(litColour, texture(mossMap, a_tex_coord), 0.2);
   }
 
-  fragColour = mix(vec4(0.7,0.7,0.7,1.0), litColour * texture(texMap, a_tex_coord), fogFactor(vertex_mv,15.0,80.0,0.008));
+  fragColour = litColour * texture(texMap, a_tex_coord);
   fragColour *= 0.01;
+  fragColour = mix(vec4(0.0835,0.0835,0.0835,1.0), fragColour, fogFactor(vertex_mv,30.0,100.0,0.010));
   fragColour.a = dissolve;
 }

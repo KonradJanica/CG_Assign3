@@ -24,8 +24,8 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
   glUseProgram(shader.Id);
 
   // Setup rendering options
-  // glEnable(GL_BLEND);
-  // glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  glEnable(GL_BLEND);
+  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   // Cull Appropriately
   glCullFace(GL_FRONT);
 
@@ -66,10 +66,10 @@ void Renderer::Render(const Water * water, const Terrain * terrain, const Camera
     glUniformMatrix3fv(shader.normHandle, 1, false, glm::value_ptr(NORMAL));
 
     glDrawElements(GL_TRIANGLE_STRIP, water->water_index_count(), GL_UNSIGNED_INT, 0 );
-    // glDisable(GL_BLEND);
   }
 
   // Unbind
+  glDisable(GL_BLEND);
   glBindVertexArray(0);
 }
 

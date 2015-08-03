@@ -137,7 +137,7 @@ void main(void) {
 
   // Refractive index of water
   // Water refractions
-  float ratio = 1.00 / 1.33;
+  // float ratio = 1.00 / 1.33;
   // vec3 I = normalize(vec3(a_vertex_mv.x, a_vertex_mv.y, a_vertex_mv.z));
   // vec3 R = refract(I, normalize(vec3(normal_mv.x, normal_mv.y, 1.0)), ratio);
 
@@ -148,7 +148,7 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 10;
+  int light_multiplier = 200;
   for (int i = 0; i < gNumPointLights; i++)
   {
     litColour += light_multiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
@@ -163,8 +163,10 @@ void main(void) {
   vec4 colour = litColour * texture(texMap, a_tex_coord);
   // colour *= 0.2;
 
-  fragColour = mix(vec4(0.0,0.0,0.0,0.8), colour, fogFactor(a_vertex_mv,30.0,100.0,0.008));
+  fragColour = colour;
+  fragColour *= 0.4;
+  fragColour = mix(vec4(0.0835,0.0835,0.0835,0.01), fragColour, fogFactor(a_vertex_mv,30.0,100.0,0.020));
 
   // Set transparency
-  // fragColour.a = 0.8;
+   //fragColour.a = 0.8;
 }
