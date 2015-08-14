@@ -40,13 +40,13 @@ kGameState NpcCarController::UpdateCars(float delta_time, kGameState current_sta
     Car * c = cars_[x];
     CollisionController * cc = collision_controllers_[x];
 
-    cc->AutoDrive(c, delta_time);
-
     if (cars_direction_[x]) {
       cc->UpdateCollisionsNPC(c, terrain_, current_state);
     } else {
       cc->UpdateCollisionsNPCReverse(c, terrain_, current_state);
     }
+
+    cc->AutoDrive(c, delta_time);
 
     // if (x == 0)
       // printf("dis[0] = %f\n", cc->dis());
