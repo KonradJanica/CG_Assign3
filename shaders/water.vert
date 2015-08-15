@@ -75,11 +75,12 @@ void main()
 	float h = a_vertex.y + 0.25 * ( waveHeight(a_vertex.x, a_vertex.z) );	
 
 	// Create the MV normals, normals need to be generated in this shader
-	vec3 normals = waveNormal(a_vertex.x, a_vertex.z);
-	a_normal_mv = normal_matrix * normalize(normals);
-
-  // Texture coordinates 
-  a_tex_coord = a_texture;
+	//vec3 normals = waveNormal(a_vertex.x, a_vertex.z);
+	//a_normal_mv = normal_matrix * normalize(normals);
+    a_normal_mv = normal_matrix * vec3(0,1,0);
+    
+    // Texture coordinates 
+    a_tex_coord = a_texture;
 
 	a_vertex_mv = modelview_matrix * vec4(a_vertex.x, h, a_vertex.z, 1.0);
 	// Apply full MVP transformation
