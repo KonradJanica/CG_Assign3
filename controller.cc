@@ -115,14 +115,14 @@ void Controller::PositionLights() {
       PointLight brakeLight;
       brakeLight.DiffuseIntensity = glm::vec3(1.0f, 0.0f, 0.0f);
       brakeLight.Position = glm::vec3(car_mv_matrix * brakeLightTranslation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-      brakeLight.Attenuation.Constant = 0.001f;
+      brakeLight.Attenuation.Constant = 0.0001f;
       brakeLight.Attenuation.Linear = 2.0f;
       brakeLight.Attenuation.Exp = 3.0f;
 
       if (is_key_pressed_hash_.at('s')) {
         brakeLight.Attenuation.Constant = 0.00001f;
-        brakeLight.Attenuation.Linear = 0.5f;
-        brakeLight.Attenuation.Exp = 3.0f;
+        brakeLight.Attenuation.Linear = 0.25f;
+        brakeLight.Attenuation.Exp = 1.75f;
       }
 
       pointLights.push_back(brakeLight);

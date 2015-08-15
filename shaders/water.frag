@@ -148,8 +148,8 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  float pointLightMultiplier = 1.0;
-  float spotLightMultiplier = 40.0;
+  float pointLightMultiplier = 25.0;
+  float spotLightMultiplier = 50.0;
   
   for (int i = 0; i < gNumPointLights; i++)
   {
