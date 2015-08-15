@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <stdio.h>
+#include <ctime>
 #include <GL/glew.h>
 
 #include "../glm/glm.hpp"
