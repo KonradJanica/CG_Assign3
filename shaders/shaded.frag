@@ -170,16 +170,17 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 200;
+  float pointLightMultiplier = 1.0;
+  float spotLightMultiplier = 1.0;
 
   for (int i = 0; i < gNumPointLights; i++)
   {
-    litColour += light_multiplier*calcPointLight(gPointLights[i], vertex_mv, normal_mv);
+    litColour += pointLightMultiplier*calcPointLight(gPointLights[i], vertex_mv, normal_mv);
   }
 
   for (int i = 0; i < gNumSpotLights; i++)
   {
-    litColour += light_multiplier*calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
+    litColour += spotLightMultiplier*calcSpotLight(gSpotLights[i], vertex_mv, normal_mv);
   }
 
 	if(isBumped > 0)
@@ -188,7 +189,7 @@ void main(void) {
   }
 
   fragColour = litColour * texture(texMap, a_tex_coord);
-  fragColour *= 0.01;
+  //fragColour *= 0.1;
   fragColour = mix(vec4(0.0835,0.0835,0.0835,1.0), fragColour, fogFactor(vertex_mv,30.0,100.0,0.010));
   fragColour.a = dissolve;
 }

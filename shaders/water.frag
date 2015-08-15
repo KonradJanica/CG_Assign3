@@ -148,15 +148,17 @@ void main(void) {
 
   vec4 litColour = calcDirectionalLight(normal_mv);
 
-  int light_multiplier = 200;
+  float pointLightMultiplier = 1.0;
+  float spotLightMultiplier = 1.0;
+  
   for (int i = 0; i < gNumPointLights; i++)
   {
-    litColour += light_multiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
+    litColour += pointLightMultiplier*calcPointLight(gPointLights[i], a_vertex_mv, normal_mv);
   }
 
   for (int i = 0; i < gNumSpotLights; i++)
   {
-    litColour += light_multiplier*calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
+    litColour += spotLightMultiplier*calcSpotLight(gSpotLights[i], a_vertex_mv, normal_mv);
   }
 
   // vec4 colour = litColour * texture(texMap, R);
