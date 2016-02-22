@@ -87,7 +87,7 @@ void Camera::Movement(float delta_time, const std::vector<bool> &is_key_pressed_
 
 // Updates all the currently loaded shaders' projection uniforms
 void Camera::UpdateProjections() {
-  projection_matrix_ = glm::perspective(fov_, (float)width_ / (float)height_, 0.1f, 100.0f);
+  projection_matrix_ = glm::perspective(fov_, (float)resW_ / (float)resH_, 0.1f, 100.0f);
   ShadersProjectionIterator iter(shaders_);
   for (iter = iter.begin(); iter != iter.end(); ++iter) {
     const Shader * shader = *(iter);

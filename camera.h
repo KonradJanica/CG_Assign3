@@ -122,6 +122,10 @@ class Camera {
     // The height of the Window
     int height_;
 
+    // HARDCODED RESOLUTION
+    int resW_ = 640;
+    int resH_ = 400;
+
     // CALCULATED MATRICES
     // The modelview matrix for the viewing camera
     glm::mat4 view_matrix_;
