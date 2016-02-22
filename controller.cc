@@ -99,6 +99,7 @@ void Controller::PositionLights() {
 
   dirLight.Direction = glm::vec3(0.5f,-0.5f,0.0f);
 
+  // carIdx = -1 when dealing with player model. Only player car's lights are modified with keypresses.
   for (int carIdx = -1; carIdx < (int) npc_car_controller_.cars().size(); carIdx++) {
     if (carIdx == -1) {
       car_mv_matrix = view_matrix * car_->model_matrix();
@@ -119,7 +120,7 @@ void Controller::PositionLights() {
       brakeLight.Attenuation.Linear = 2.0f;
       brakeLight.Attenuation.Exp = 3.0f;
 
-      if (is_key_pressed_hash_.at('s')) {
+      if (carIdx == -1 && is_key_pressed_hash_.at('s')) {
         brakeLight.Attenuation.Constant = 0.00001f;
         brakeLight.Attenuation.Linear = 0.25f;
         brakeLight.Attenuation.Exp = 1.75f;
@@ -144,7 +145,7 @@ void Controller::PositionLights() {
       headlight.Attenuation.Linear = 0.00025f;
       headlight.Attenuation.Exp = 0.0175f;
       
-      if (is_key_pressed_hash_.at('r')) {
+      if (carIdx == -1 && is_key_pressed_hash_.at('r')) {
         headlight.DiffuseIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
         headlight.SpecularIntensity = glm::vec3(0.0f, 0.0f, 0.0f);
       }
