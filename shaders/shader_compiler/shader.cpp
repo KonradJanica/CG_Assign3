@@ -38,7 +38,7 @@ int CompileShader(const char *ShaderPath, const GLuint ShaderID)
 	glGetShaderiv(ShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     printf("compiled shader %d %d\n", Result, InfoLogLength);
 	if ( InfoLogLength > 1 ) {
-        char ShaderErrorMessage[InfoLogLength+1];
+        std::vector<char> ShaderErrorMessage(InfoLogLength+1);
 		glGetShaderInfoLog( ShaderID,
                             InfoLogLength,
                             NULL,
