@@ -2,5 +2,11 @@
 ###################
 *.o
 *.exe
-assign3.exe.stackdump
-assign3
+.vs
+Debug/*.obj
+Debug/*.tlog
+Debug/*.exe
+Debug/*.ilk
+Debug/*.log
+Debug/*.pdb
+Debug/*.idb

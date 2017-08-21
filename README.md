@@ -1,5 +1,12 @@
 ## Computer Graphics Assignment 3 (Semester 1 2015)
 
+** Demos of finished Assignment as per required specifications **
+* https://www.youtube.com/watch?v=uJMAXWHHwJ4
+* https://youtu.be/B2gSzWuBYIc
+* https://www.youtube.com/watch?v=6qjZ1y81dtM
+* https://www.youtube.com/watch?v=PtSWgpJvmBw
+* https://www.youtube.com/watch?v=ZU_o4mNiNvM
+
 17th May - Current Build</br>
 Added Water, Circular Tiling, Car movement, collision prototypes</br>
 Cleaned up Terrain.cc</br>
